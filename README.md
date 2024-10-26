@@ -1,5 +1,5 @@
-SQ
---
+Sququel
+-------
 SQ: The Simple Query Tool
 
 SQ is a modern database, written from the ground-up to take advantage of Phext: 11-dimensional plain hypertext.
