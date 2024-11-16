@@ -11,7 +11,7 @@ const WORK_SEGMENT_SIZE: usize = 1024;
 fn fetch_source(filename: String) -> String {
     let message = format!("Unable to open {}", filename);
     let mut buffer:String = std::fs::read_to_string(filename).expect(&message);
-    
+
     if buffer.len() > MAX_BUFFER_SIZE {
         buffer = buffer[0..MAX_BUFFER_SIZE].to_string();
     }
@@ -22,6 +22,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let zeros = vec![0 as u8; SHARED_SEGMENT_SIZE];
     let shared_name = "phext_link";
     let work_name = "phext_work";
+
+    let ps1 = phext::to_coordinate("1.1.1/1.1.1/1.1.1");
+    let ps2 = phext::to_coordinate("1.1.1/1.1.1/1.1.2");
+    let ps3 = phext::to_coordinate("1.1.1/1.1.1/1.1.3");
 
     let error_message = format!("unable to locate {}", shared_name);
     let error_message_work = format!("unable to locate {}", work_name);
@@ -39,12 +43,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut connection_id: u64 = 0;
 
     if shmem.is_owner() {
+        // server
         let filename = env::args().nth(1).expect("Usage: sq.exe <phext>");
         println!("Loading {} into memory...", filename);
-        
-        let phext_buffer = fetch_source(filename.clone());
+
+        let mut phext_buffer = fetch_source(filename.clone());
         println!("Serving {} bytes.", phext_buffer.len());
-        
+
         let (evt, _used_evt_bytes) = unsafe {
             Event::new(shmem.as_ptr(), true)
         }.expect("shmem error 1");
@@ -56,39 +61,83 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Waiting for connection...");
             evt.wait(Timeout::Infinite)?;
             connection_id += 1;
-            println!("Client #{}", connection_id);
             unsafe {
-                let raw = std::slice::from_raw_parts(shmem.as_ptr().add(4), 100);
-                let coord_string = String::from_utf8_lossy(raw).to_string();
-                let coordinate = phext::to_coordinate(coord_string.as_str());
-                println!("Fetching {} from {}...", coord_string, filename);
+                let raw = std::slice::from_raw_parts(shmem.as_ptr().add(4), 20);
+                let length_string = String::from_utf8_unchecked(raw.to_vec()).to_string();
+                let length: usize = length_string.parse().unwrap();
+                let unparsed = std::slice::from_raw_parts(shmem.as_ptr().add(24), length);
+                let parts = String::from_utf8_unchecked(unparsed.to_vec()).to_string();
+                let command = phext::fetch(parts.as_str(), ps1);
+                let argtemp = phext::fetch(parts.as_str(), ps2);
+                let coordinate = phext::to_coordinate(argtemp.as_str());
+                println!("WTF: {} -> {}", command, parts.len());
 
-                let scroll = phext::fetch(phext_buffer.as_str(), coordinate);
+                let update = phext::fetch(parts.as_str(), ps3);
+                println!("Processing command={}, coordinate={}, update={}", command, coordinate, update);
+
+                let mut scroll = String::new();
+                if command == "select" {
+                    scroll = phext::fetch(phext_buffer.as_str(), coordinate);
+                } else if command == "insert" {
+                    scroll = format!("Inserted {} bytes", update.len());
+                    phext_buffer = phext::insert(phext_buffer.clone(), coordinate, update.as_str());
+                } else if command == "update" {
+                    scroll = format!("Updated {} bytes", update.len());
+                    phext_buffer = phext::replace(phext_buffer.as_str(), coordinate, update.as_str());
+                } else if command == "delete" {
+                    let old = phext::fetch(phext_buffer.as_str(), coordinate);
+                    scroll = format!("Removed {} bytes", old.len());
+                    phext_buffer = phext::replace(phext_buffer.as_str(), coordinate, "");
+                } else if command == "save" {
+                    let output = argtemp.clone();
+                    let _ = std::fs::write(output.clone(), phext_buffer.as_str());
+                    scroll = format!("Wrote {} bytes to {}", phext_buffer.len(), output);
+                }
+
                 std::ptr::copy_nonoverlapping(zeros.as_ptr(), shmem.as_ptr().add(4), SHARED_SEGMENT_SIZE-4);
                 std::ptr::copy_nonoverlapping(scroll.as_ptr(), shmem.as_ptr().add(4), scroll.len());
                 work.set(EventState::Signaled)?;
-                println!("\nServiced client with {}/{} bytes.", scroll.len(), phext_buffer.len());
+                println!("Sending {}/{} bytes to client #{}.\n", scroll.len(), phext_buffer.len(), connection_id);
             }
         }
     } else {
-        let coordinate = env::args().nth(1).expect("Usage: sq.exe <coordinate>");
-        println!("Contacting SQ...");
+        // client
+        let args: Vec<String> = env::args().collect();
+        let usage = "Usage: sq.exe <command> <coordinate> <message>";
+        if args.len() < 3 {
+            println!("{}", usage);
+            return Ok(());
+        }
+        let nothing: String = String::new();
+        let command = args.get(1).unwrap();
+        let coordinate = args.get(2).unwrap();
+        let message = args.get(3).unwrap_or(&nothing);
+        let mut encoded = String::new();
+        encoded.push_str(command);
+        encoded.push('\x17');
+        encoded.push_str(coordinate);
+        encoded.push('\x17');
+        encoded.push_str(message);
+        let prepared = format!("{:020}{}", encoded.len(), encoded);
+
+        let t1 = phext::fetch(encoded.as_str(), ps1);
+        let t2 = phext::fetch(encoded.as_str(), ps2);
+        let t3 = phext::fetch(encoded.as_str(), ps3);
+        println!("WTF 1: {}, WTF 2: {}, WTF 3: {}", t1, t2, t3);
 
         let (evt, _used_bytes) = unsafe { Event::from_existing(shmem.as_ptr()) }.expect("failed to open SQ connection (1)");
         let (work, _used_work_bytes) = unsafe { Event::from_existing(wkmem.as_ptr()) }.expect("failed to open SQ connection (2)");
 
         unsafe {
             std::ptr::copy_nonoverlapping(zeros.as_ptr(), shmem.as_ptr().add(4), SHARED_SEGMENT_SIZE-4);
-            std::ptr::copy_nonoverlapping(coordinate.as_ptr(), shmem.as_ptr().add(4), coordinate.len());
+            std::ptr::copy_nonoverlapping(prepared.as_ptr(), shmem.as_ptr().add(4), prepared.len());
             evt.set(EventState::Signaled)?;
-            println!("Requested {}", coordinate);
             work.wait(Timeout::Infinite)?;
             let slice = std::slice::from_raw_parts(shmem.as_ptr().add(4), 1000);
-            let message = String::from_utf8_lossy(slice).to_string();
-            println!("Scroll {}: {}", coordinate, message);
+            let response = String::from_utf8_lossy(slice).to_string();
+            println!("{}: {}", coordinate, response);
         }
     }
 
-    println!("Done !");
     Ok(())
 }

@@ -3,3 +3,4 @@ Cargo.lock
 phext_link
 phext_work
 *.history
+.vscode/*
