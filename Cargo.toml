@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-libphext = "0.1.7"
+libphext = "0.1.9"
 raw_sync = "0.1.5"
 shared_memory = "0.12.4"

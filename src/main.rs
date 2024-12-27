@@ -27,8 +27,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ps2 = phext::to_coordinate("1.1.1/1.1.1/1.1.2");
     let ps3 = phext::to_coordinate("1.1.1/1.1.1/1.1.3");
 
-    let error_message = format!("unable to locate {}", shared_name);
-    let error_message_work = format!("unable to locate {}", work_name);
+    let error_message = format!("unable to link {}", shared_name);
+    let error_message_work = format!("unable to work {}", work_name);
 
     let shmem = match ShmemConf::new().size(SHARED_SEGMENT_SIZE).flink(shared_name).create() {
         Ok(m) => m,
@@ -70,10 +70,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let command = phext::fetch(parts.as_str(), ps1);
                 let argtemp = phext::fetch(parts.as_str(), ps2);
                 let coordinate = phext::to_coordinate(argtemp.as_str());
-                println!("WTF: {} -> {}", command, parts.len());
-
                 let update = phext::fetch(parts.as_str(), ps3);
-                println!("Processing command={}, coordinate={}, update={}", command, coordinate, update);
+                println!("Processing command='{}', coordinate='{}', update='{}'", command, coordinate, update);
 
                 let mut scroll = String::new();
                 if command == "select" {
@@ -109,8 +107,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             return Ok(());
         }
         let nothing: String = String::new();
-        let command = args.get(1).unwrap();
-        let coordinate = args.get(2).unwrap();
+        let command = args.get(1).unwrap_or(&nothing);
+        let coordinate = args.get(2).unwrap_or(&nothing);
         let message = args.get(3).unwrap_or(&nothing);
         let mut encoded = String::new();
         encoded.push_str(command);
@@ -118,12 +116,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         encoded.push_str(coordinate);
         encoded.push('\x17');
         encoded.push_str(message);
+        encoded.push('\x17');
         let prepared = format!("{:020}{}", encoded.len(), encoded);
-
-        let t1 = phext::fetch(encoded.as_str(), ps1);
-        let t2 = phext::fetch(encoded.as_str(), ps2);
-        let t3 = phext::fetch(encoded.as_str(), ps3);
-        println!("WTF 1: {}, WTF 2: {}, WTF 3: {}", t1, t2, t3);
 
         let (evt, _used_bytes) = unsafe { Event::from_existing(shmem.as_ptr()) }.expect("failed to open SQ connection (1)");
         let (work, _used_work_bytes) = unsafe { Event::from_existing(wkmem.as_ptr()) }.expect("failed to open SQ connection (2)");
