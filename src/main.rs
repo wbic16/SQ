@@ -47,7 +47,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if shmem.is_owner() {
         // server
-        let filename = env::args().nth(1).expect("Usage: sq.exe <phext>");
+        let mut filename = env::args().nth(1).expect("Usage: sq.exe <phext>");
+        if filename == "init" {
+            println!("Init was previously completed - launching with world.phext...");
+            filename = "world.phext".to_string();
+        }
+        println!("SQ v{}", env!("CARGO_PKG_VERSION"));
         println!("Loading {} into memory...", filename);
 
         let mut phext_buffer = fetch_source(filename.clone());
@@ -87,14 +92,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     } else {
         // client
+        let nothing: String = String::new();
         let args: Vec<String> = env::args().collect();
+
+        let command = args.get(1).unwrap_or(&nothing);
         let usage = "Usage: sq.exe <command> <coordinate> <message>";
         if args.len() < 3 {
+            if command == "init" {                
+                if std::fs::exists("phext_link").is_ok() {
+                    _ = std::fs::remove_file("phext_link");
+                }
+                if std::fs::exists("phext_work").is_ok() {
+                    _ = std::fs::remove_file("phext_work");
+                }
+                println!("Cleared working files");
+                return Ok(());
+            }
             println!("{}", usage);
             return Ok(());
         }
-        let nothing: String = String::new();
-        let command = args.get(1).unwrap_or(&nothing);
+        
         let coordinate = args.get(2).unwrap_or(&nothing);
         let message = args.get(3).unwrap_or(&nothing);
         let mut encoded = String::new();
