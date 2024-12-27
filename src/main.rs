@@ -3,6 +3,9 @@ use raw_sync::{events::*, Timeout};
 use shared_memory::*;
 use std::env;
 
+mod sq;
+mod tests;
+
 const SHARED_SEGMENT_SIZE: usize = 2*1024*1024; // work
 const MAX_BUFFER_SIZE: usize = SHARED_SEGMENT_SIZE/2;
 const WORK_SEGMENT_SIZE: usize = 1024;
@@ -65,7 +68,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let raw = std::slice::from_raw_parts(shmem.as_ptr().add(4), 20);
                 let length_string = String::from_utf8_unchecked(raw.to_vec()).to_string();
                 let length: usize = length_string.parse().unwrap();
-                let unparsed = std::slice::from_raw_parts(shmem.as_ptr().add(24), length);
+                let unparsed = std::slice::from_raw_parts(shmem.as_ptr().add(24), length);                
                 let parts = String::from_utf8_unchecked(unparsed.to_vec()).to_string();
                 let command = phext::fetch(parts.as_str(), ps1);
                 let argtemp = phext::fetch(parts.as_str(), ps2);
@@ -74,23 +77,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Processing command='{}', coordinate='{}', update='{}'", command, coordinate, update);
 
                 let mut scroll = String::new();
-                if command == "select" {
-                    scroll = phext::fetch(phext_buffer.as_str(), coordinate);
-                } else if command == "insert" {
-                    scroll = format!("Inserted {} bytes", update.len());
-                    phext_buffer = phext::insert(phext_buffer.clone(), coordinate, update.as_str());
-                } else if command == "update" {
-                    scroll = format!("Updated {} bytes", update.len());
-                    phext_buffer = phext::replace(phext_buffer.as_str(), coordinate, update.as_str());
-                } else if command == "delete" {
-                    let old = phext::fetch(phext_buffer.as_str(), coordinate);
-                    scroll = format!("Removed {} bytes", old.len());
-                    phext_buffer = phext::replace(phext_buffer.as_str(), coordinate, "");
-                } else if command == "save" {
-                    let output = argtemp.clone();
-                    let _ = std::fs::write(output.clone(), phext_buffer.as_str());
-                    scroll = format!("Wrote {} bytes to {}", phext_buffer.len(), output);
-                }
+                sq::process(&mut scroll, command, &mut phext_buffer, coordinate, update, argtemp.clone());
 
                 std::ptr::copy_nonoverlapping(zeros.as_ptr(), shmem.as_ptr().add(4), SHARED_SEGMENT_SIZE-4);
                 std::ptr::copy_nonoverlapping(scroll.as_ptr(), shmem.as_ptr().add(4), scroll.len());
