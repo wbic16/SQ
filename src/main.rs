@@ -23,8 +23,13 @@ fn fetch_source(filename: String) -> String {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let zeros = vec![0 as u8; SHARED_SEGMENT_SIZE];
-    let shared_name = "phext_link";
-    let work_name = "phext_work";
+    let shared_name = ".sq/link";
+    let work_name = ".sq/work";
+
+    let exists = std::fs::exists(".sq").unwrap_or(false);
+    if exists == false {
+        let _ = std::fs::create_dir(".sq");
+    }
 
     let ps1 = phext::to_coordinate("1.1.1/1.1.1/1.1.1");
     let ps2 = phext::to_coordinate("1.1.1/1.1.1/1.1.2");
@@ -82,12 +87,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Processing command='{}', coordinate='{}', update='{}'", command, coordinate, update);
 
                 let mut scroll = String::new();
-                sq::process(&mut scroll, command, &mut phext_buffer, coordinate, update, argtemp.clone());
+                let done = sq::process(&mut scroll, command, &mut phext_buffer, coordinate, update, argtemp.clone());
 
                 std::ptr::copy_nonoverlapping(zeros.as_ptr(), shmem.as_ptr().add(4), SHARED_SEGMENT_SIZE-4);
                 std::ptr::copy_nonoverlapping(scroll.as_ptr(), shmem.as_ptr().add(4), scroll.len());
                 work.set(EventState::Signaled)?;
                 println!("Sending {}/{} bytes to client #{}.\n", scroll.len(), phext_buffer.len(), connection_id);
+
+                if done {
+                    println!("Returning to the shell...");
+                    break;
+                }
             }
         }
     } else {
@@ -99,11 +109,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let usage = "Usage: sq.exe <command> <coordinate> <message>";
         if args.len() < 3 {
             if command == "init" {                
-                if std::fs::exists("phext_link").is_ok() {
-                    _ = std::fs::remove_file("phext_link");
+                if std::fs::exists(shared_name).is_ok() {
+                    _ = std::fs::remove_file(shared_name);
                 }
-                if std::fs::exists("phext_work").is_ok() {
-                    _ = std::fs::remove_file("phext_work");
+                if std::fs::exists(work_name).is_ok() {
+                    _ = std::fs::remove_file(work_name);
                 }
                 println!("Cleared working files");
                 return Ok(());

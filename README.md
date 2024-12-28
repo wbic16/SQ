@@ -19,8 +19,11 @@ SQ leverages Rust and libphext as a core data store. All database primitives in 
 * sq delete <coord>: Removes all content from the specified coordinate
 * sq save <file>: Writes the current phext back to disk
 * sq init: Fast initialization for hosting world.phext from any state
+* sq shutdown now: Instruct the daemon to terminate
 
 # Developing
+
+Shared memory handles are stored in the .sq directory where you invoked sq from.
 
 ## Linux
 - reset.sh: removes `phext_link` and `phext_work` from the file system and starts an instance on `world.phext`
