@@ -13,7 +13,7 @@ pub fn process(scroll: &mut String, command: String, phext_buffer: &mut String, 
         return false;
     }
     
-    if command == "select" {
+    if command == "select" || command == "pull" {
         *scroll = phext::fetch(phext_buffer.as_str(), coordinate);
         return false;
     }
@@ -24,7 +24,7 @@ pub fn process(scroll: &mut String, command: String, phext_buffer: &mut String, 
         return false;
     }
     
-    if command == "update" {
+    if command == "update" || command == "push" {
         *scroll = format!("Updated {} bytes", update.len());
         *phext_buffer = phext::replace(phext_buffer.as_str(), coordinate, update.as_str());
         return false;

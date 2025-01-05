@@ -11,6 +11,8 @@ SQ leverages Rust and libphext as a core data store. All database primitives in 
 
 * sq help: displays online help
 * sq <file>: launches a server that hosts a phext file via shared memory
+* sq push <coord> <file>: Overwrites the specified scroll with the local file
+* sq pull <coord> <file>: Fetches the specified scroll to a local file
 * sq select <coord>: Fetches content from the current phext
 * sq insert <coord> "text": Appends text at the specified coordinate
 * sq update <coord> "text": Overwrites text at the specified coordinate

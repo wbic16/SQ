@@ -6,3 +6,4 @@ phext_work
 .vscode/*
 .sq/*
 *.phext
+*.txt

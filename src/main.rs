@@ -16,6 +16,10 @@ const WORK_NAME: &str = ".sq/work";
 // -----------------------------------------------------------------------------------------------------------
 fn fetch_source(filename: String) -> String {
     let message = format!("Unable to open {}", filename);
+    let exists = std::fs::exists(filename.clone()).unwrap_or(false);
+    if exists == false {
+        let _ = std::fs::write(filename.clone(), "");
+    }
     let mut buffer:String = std::fs::read_to_string(filename).expect(&message);
 
     if buffer.len() > MAX_BUFFER_SIZE {
@@ -109,7 +113,6 @@ fn server(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
         let argtemp = phext::fetch(parts.as_str(), ps2);
         let coordinate = phext::to_coordinate(argtemp.as_str());
         let update = phext::fetch(parts.as_str(), ps3);
-        //println!("Processing command='{}', coordinate='{}', update='{}'", command, coordinate, update);
 
         let mut scroll = String::new();
         let done = sq::process(&mut scroll, command, &mut phext_buffer, coordinate, update, argtemp.clone());
@@ -156,20 +159,28 @@ fn client(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
     }
 
     let coordinate = args.get(2).unwrap_or(&nothing);
-    let message = args.get(3).unwrap_or(&nothing);
+    let mut message: String = args.get(3).unwrap_or(&nothing).to_string();
+    if command == "push" {
+        message = fetch_source(message);
+    }
     let mut encoded = String::new();
     encoded.push_str(command);
     encoded.push(phext::SCROLL_BREAK);
     encoded.push_str(coordinate);
     encoded.push(phext::SCROLL_BREAK);
-    encoded.push_str(message);
-    encoded.push(phext::SCROLL_BREAK);    
+    encoded.push_str(message.as_str());
+    encoded.push(phext::SCROLL_BREAK);
 
     send_message(shmem.as_ptr(), length_offset, encoded);    
 
     evt.set(EventState::Signaled)?;
     work.wait(Timeout::Infinite)?;
-    let response = fetch_message(shmem.as_ptr(), length_offset);
+    let mut response = fetch_message(shmem.as_ptr(), length_offset);
+    if command == "pull" {
+        let filename = message;
+        let _ = std::fs::write(filename.clone(), response.clone());
+        response = format!("Exported scroll at {coordinate} to {filename}.").to_string();
+    }
     println!("{}: {}", coordinate, response);
 
     Ok(())
