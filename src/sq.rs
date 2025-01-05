@@ -2,6 +2,17 @@
 use crate::phext;
 
 pub fn process(scroll: &mut String, command: String, phext_buffer: &mut String, coordinate: phext::Coordinate, update: String, filename: String) -> bool {
+    if command == "help" {
+        *scroll = "* help: display this online help screen
+* select: fetch a scroll of text from the loaded phext
+* insert: append text to the specified scroll
+* update: overwrite text at the specified scroll
+* delete: truncates the specified scroll
+* save: dumps the contents of the loaded phext to disk
+* shutdown: terminate the phext server".to_string();
+        return false;
+    }
+    
     if command == "select" {
         *scroll = phext::fetch(phext_buffer.as_str(), coordinate);
         return false;

@@ -50,12 +50,39 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 // -----------------------------------------------------------------------------------------------------------
-fn server(shmem: Shmem, _wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> {
-    let mut connection_id: u64 = 0;
-    let zeros = vec![0 as u8; SHARED_SEGMENT_SIZE];
+fn fetch_message(shmem: *mut u8, start: usize) -> String {
+    let length_size = 20;
+    unsafe {
+        let raw = std::slice::from_raw_parts(shmem.add(start), length_size);
+        let length_string = String::from_utf8_unchecked(raw.to_vec()).to_string();
+        let length: usize = length_string.parse().unwrap_or(0);
+        if length == 0 {
+            return String::new();
+        }
+        let unparsed = std::slice::from_raw_parts(shmem.add(start+length_size), length);
+        return String::from_utf8_unchecked(unparsed.to_vec()).to_string();
+    }
+}
 
-    let (evt, _evt_used_bytes) = unsafe { Event::new(shmem.as_ptr(), true)? };
-    //let (work, _used_work_bytes) = unsafe { Event::new(wkmem.as_ptr(), true) }.expect("wkmem error 1");
+// -----------------------------------------------------------------------------------------------------------
+fn send_message(shmem: *mut u8, start: usize, encoded: String) {
+    let zeros = vec![0 as u8; SHARED_SEGMENT_SIZE];
+    let prepared = format!("{:020}{}", encoded.len(), encoded);
+    unsafe {
+        let zero_length = prepared.len() + 1;
+        std::ptr::copy_nonoverlapping(zeros.as_ptr(), shmem.add(start), zero_length);
+        std::ptr::copy_nonoverlapping(prepared.as_ptr(), shmem.add(start), prepared.len());
+    }
+}
+
+// -----------------------------------------------------------------------------------------------------------
+fn server(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> {
+    let mut connection_id: u64 = 0;
+
+    let (evt, evt_used_bytes) = unsafe { Event::new(shmem.as_ptr(), true)? };
+    let (work, _used_work_bytes) = unsafe { Event::new(wkmem.as_ptr(), true)? };
+
+    let length_offset  = evt_used_bytes + 4;
 
     let ps1: phext::Coordinate = phext::to_coordinate("1.1.1/1.1.1/1.1.1");
     let ps2: phext::Coordinate = phext::to_coordinate("1.1.1/1.1.1/1.1.2");
@@ -75,36 +102,26 @@ fn server(shmem: Shmem, _wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>>
     loop {
         evt.wait(Timeout::Infinite)?;
         connection_id += 1;
-        println!("\tGot signal from Client #{connection_id}.");
 
-        unsafe {
-            let raw = std::slice::from_raw_parts(shmem.as_ptr().add(4), 20);
-            let length_string = String::from_utf8_unchecked(raw.to_vec()).to_string();
-            let length: usize = length_string.parse().unwrap_or(0);
-            if length == 0 {
-                println!("Ignoring invalid request.");
-                continue;
-            }
-            let unparsed = std::slice::from_raw_parts(shmem.as_ptr().add(24), length);
-            let parts = String::from_utf8_unchecked(unparsed.to_vec()).to_string();
-            let command = phext::fetch(parts.as_str(), ps1);
-            let argtemp = phext::fetch(parts.as_str(), ps2);
-            let coordinate = phext::to_coordinate(argtemp.as_str());
-            let update = phext::fetch(parts.as_str(), ps3);
-            println!("Processing command='{}', coordinate='{}', update='{}'", command, coordinate, update);
+        let parts = fetch_message(shmem.as_ptr(), length_offset);
 
-            let mut scroll = String::new();
-            let done = sq::process(&mut scroll, command, &mut phext_buffer, coordinate, update, argtemp.clone());
+        let command = phext::fetch(parts.as_str(), ps1);
+        let argtemp = phext::fetch(parts.as_str(), ps2);
+        let coordinate = phext::to_coordinate(argtemp.as_str());
+        let update = phext::fetch(parts.as_str(), ps3);
+        //println!("Processing command='{}', coordinate='{}', update='{}'", command, coordinate, update);
 
-            std::ptr::copy_nonoverlapping(zeros.as_ptr(), shmem.as_ptr().add(4), SHARED_SEGMENT_SIZE-4);
-            std::ptr::copy_nonoverlapping(scroll.as_ptr(), shmem.as_ptr().add(4), scroll.len());
-            //work.set(EventState::Signaled)?;
-            println!("Sending {}/{} bytes to client #{}.\n", scroll.len(), phext_buffer.len(), connection_id);
+        let mut scroll = String::new();
+        let done = sq::process(&mut scroll, command, &mut phext_buffer, coordinate, update, argtemp.clone());
+        let scroll_length = scroll.len();
 
-            if done {
-                println!("Returning to the shell...");
-                break;
-            }
+        send_message(shmem.as_ptr(), length_offset, scroll);
+        work.set(EventState::Signaled)?;
+        println!("Sending {}/{} bytes to client #{}.", scroll_length, phext_buffer.len(), connection_id);
+
+        if done {
+            println!("Returning to the shell...");
+            break;
         }
     }
 
@@ -114,11 +131,9 @@ fn server(shmem: Shmem, _wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>>
 
 // -----------------------------------------------------------------------------------------------------------
 fn client(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> {
-    let zeros = vec![0 as u8; SHARED_SEGMENT_SIZE];
     let (evt, evt_used_bytes) = unsafe { Event::from_existing(shmem.as_ptr())? };
-    let (_work, work_used_bytes) = unsafe { Event::from_existing(wkmem.as_ptr())? };
-
-    println!("Shared memory: {evt_used_bytes}, {work_used_bytes}.");
+    let (work, _work_used_bytes) = unsafe { Event::from_existing(wkmem.as_ptr())? };
+    let length_offset  = evt_used_bytes + 4;
 
     let nothing: String = String::new();
     let args: Vec<String> = env::args().collect();
@@ -148,24 +163,14 @@ fn client(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
     encoded.push_str(coordinate);
     encoded.push(phext::SCROLL_BREAK);
     encoded.push_str(message);
-    encoded.push(phext::SCROLL_BREAK);
-    let prepared = format!("{:020}{}", encoded.len(), encoded);
+    encoded.push(phext::SCROLL_BREAK);    
 
-    println!("Requesting {coordinate} from server (bytes={})...", encoded.len());
-    unsafe {
-        let zero_length = prepared.len() + 1;
-        std::ptr::copy_nonoverlapping(zeros.as_ptr(), shmem.as_ptr().add(4), zero_length);
-        std::ptr::copy_nonoverlapping(prepared.as_ptr(), shmem.as_ptr().add(4), prepared.len());
-    }
+    send_message(shmem.as_ptr(), length_offset, encoded);    
 
     evt.set(EventState::Signaled)?;
-    //work.wait(Timeout::Infinite)?;
-    unsafe {
-        let slice = std::slice::from_raw_parts(shmem.as_ptr().add(4), 1000);
-        let response = String::from_utf8_lossy(slice).to_string();
-        println!("{}: {}", coordinate, response);
-    }
+    work.wait(Timeout::Infinite)?;
+    let response = fetch_message(shmem.as_ptr(), length_offset);
+    println!("{}: {}", coordinate, response);
 
-    println!("Client Done.");
     Ok(())
 }
