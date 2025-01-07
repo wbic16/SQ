@@ -3,12 +3,15 @@ use crate::phext;
 
 pub fn process(scroll: &mut String, command: String, phext_buffer: &mut String, coordinate: phext::Coordinate, update: String, filename: String) -> bool {
     if command == "help" {
-        *scroll = "* help: display this online help screen
-* select: fetch a scroll of text from the loaded phext
-* insert: append text to the specified scroll
-* update: overwrite text at the specified scroll
-* delete: truncates the specified scroll
-* save: dumps the contents of the loaded phext to disk
+        *scroll = "
+* help: display this online help screen
+* push <coord> <file>: Imports a file into your phext at the given coordinate
+* pull <coord> <file>: Exports a scroll to a file of your choice
+* select <coord>: fetch a scroll of text from the loaded phext
+* insert <coord> \"text\": append text to the specified scroll
+* update <coord> \"text\": overwrite text at the specified scroll
+* delete <coord>: truncates the specified scroll
+* save <file>: dumps the contents of the loaded phext to disk
 * shutdown: terminate the phext server".to_string();
         return false;
     }

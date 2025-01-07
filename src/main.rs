@@ -133,6 +133,15 @@ fn server(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
 }
 
 // -----------------------------------------------------------------------------------------------------------
+fn args_required(command:&str) -> usize {
+    if command == "shutdown" || command == "help" || command == "init" {
+        return 2;
+    }
+
+    return 3;
+}
+
+// -----------------------------------------------------------------------------------------------------------
 fn client(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> {
     let (evt, evt_used_bytes) = unsafe { Event::from_existing(shmem.as_ptr())? };
     let (work, _work_used_bytes) = unsafe { Event::from_existing(wkmem.as_ptr())? };
@@ -142,8 +151,9 @@ fn client(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
     let args: Vec<String> = env::args().collect();
 
     let command = args.get(1).unwrap_or(&nothing);
-    let usage = "Usage: sq.exe <command> <coordinate> <message>";
-    if args.len() < 3 {
+    let usage = "Usage: sq <command> <coordinate> <message>";
+    
+    if args.len() < args_required(command) {
         if command == "init" {
             if std::fs::exists(SHARED_NAME).is_ok() {
                 _ = std::fs::remove_file(SHARED_NAME);
@@ -181,7 +191,11 @@ fn client(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
         let _ = std::fs::write(filename.clone(), response.clone());
         response = format!("Exported scroll at {coordinate} to {filename}.").to_string();
     }
-    println!("{}: {}", coordinate, response);
+    if coordinate.len() > 0 {
+        println!("{coordinate}: {response}");
+    } else {
+        println!("{response}");
+    }
 
     Ok(())
 }
