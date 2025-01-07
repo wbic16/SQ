@@ -5,6 +5,7 @@ pub fn process(scroll: &mut String, command: String, phext_buffer: &mut String, 
     if command == "help" {
         *scroll = "
 * help: display this online help screen
+* <file>: Hosts a new phext on startup if no daemon is running yet (creates a .sq directory)
 * push <coord> <file>: Imports a file into your phext at the given coordinate
 * pull <coord> <file>: Exports a scroll to a file of your choice
 * select <coord>: fetch a scroll of text from the loaded phext
