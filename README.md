@@ -5,7 +5,13 @@ SQ: The Simple Query Tool
 SQ is a modern database, written from the ground-up to take advantage of Phext: 11-dimensional plain hypertext. Like normal SQL databases, it has two pronunciations: "esque" and "S-Q".
 
 # Getting Started
-SQ leverages Rust and libphext as a core data store. All database primitives in SQ are built in terms of phext.
+SQ leverages Rust and libphext as a core data store. All database primitives in SQ are built in terms of phext. For more information about the phext encoding format, refer to https://phext.io.
+
+## SQ Design Philosophy
+
+SQ is a complete ground-up rewrite of database concepts. It probably doesn't have features you expect from a database. What it does offer is simplicity and performance. SQ is designed to mirror computer architecture in 2025, not 1970. Databases are stored in phext files using variable-length scrolls. Essentially, everything in a phext database is a string.
+
+Note: Indexing is not yet implemented - performance has not been optimized yet.
 
 ## Basic Commands
 

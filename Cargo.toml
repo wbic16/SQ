@@ -1,6 +1,6 @@
 [package]
 name = "sq"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["Will Bickford <wbic16@gmail.com>"]
 description = "A minimal client-server for phext hosting"
 homepage = "https://phext.io/"
@@ -8,6 +8,6 @@ license = "MIT"
 edition = "2021"
 
 [dependencies]
-libphext = "0.1.9"
+libphext = "0.2.0"
 raw_sync = "0.1.5"
 shared_memory = "0.12.4"
