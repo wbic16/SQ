@@ -26,7 +26,6 @@ Note: Indexing is not yet implemented - performance has not been optimized yet.
 * sq delete <coord>: Removes all content from the specified coordinate
 * sq save <file>: Writes the current phext back to disk
 * sq init: Fast initialization for hosting world.phext from any state
-* sq slurp <coord> <directory>: Slurps all of the files in the given directory
 * sq shutdown: Instruct the daemon to terminate
 
 # Developing

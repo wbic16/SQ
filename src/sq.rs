@@ -55,12 +55,6 @@ Phext Size: {}", source, connection_id, phext_buffer.len());
         *phext_buffer = phext::replace(phext_buffer.as_str(), coordinate, "");
         return false;
     }
-
-    if command == "slurp" {
-        let mut range = coordinate;
-        let _ = slurp_files(phext_buffer, filename.clone(), &mut range);
-        return false;
-    }
     
     if command == "save" {
         let _ = std::fs::write(filename.clone(), phext_buffer.as_str());
@@ -75,19 +69,4 @@ Phext Size: {}", source, connection_id, phext_buffer.len());
 
     *scroll = format!("Unexpected command ignored.");
     return false;
-}
-
-fn slurp_files(phext_buffer: &mut String, dir: String, coordinate: &mut phext::Coordinate) -> std::io::Result<()> {
-    for entry in std::fs::read_dir(dir)? {
-        let entry = entry?;
-        let path = entry.path();
-        if path.is_dir() {
-            // skip sub-directories for now
-        } else {
-            let contents = crate::fetch_source(path.into_os_string().into_string().unwrap());
-            *phext_buffer = phext::replace(phext_buffer.as_str(), *coordinate, contents.as_str());
-            (*coordinate).x.scroll += 1;
-        }
-    }
-    Ok(())
 }

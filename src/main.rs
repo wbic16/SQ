@@ -172,7 +172,7 @@ fn client(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
     encoded.push_str(message.as_str());
     encoded.push(phext::SCROLL_BREAK);
 
-    send_message(shmem.as_ptr(), length_offset, encoded);    
+    send_message(shmem.as_ptr(), length_offset, encoded);
 
     evt.set(EventState::Signaled)?;
     work.wait(Timeout::Infinite)?;
