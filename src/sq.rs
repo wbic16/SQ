@@ -1,10 +1,18 @@
-
 use crate::phext;
 
-pub fn process(scroll: &mut String, command: String, phext_buffer: &mut String, coordinate: phext::Coordinate, update: String, filename: String) -> bool {
+pub fn args_required(command:&str) -> usize {
+    if command == "shutdown" || command == "help" || command == "init" || command == "status" {
+        return 2;
+    }
+
+    return 3;
+}
+
+pub fn process(connection_id: u64, source: String, scroll: &mut String, command: String, phext_buffer: &mut String, coordinate: phext::Coordinate, update: String, filename: String) -> bool {
     if command == "help" {
         *scroll = "
 * help: display this online help screen
+* status: display daemon statistics
 * <file>: Hosts a new phext on startup if no daemon is running yet (creates a .sq directory)
 * push <coord> <file>: Imports a file into your phext at the given coordinate
 * pull <coord> <file>: Exports a scroll to a file of your choice
@@ -14,6 +22,13 @@ pub fn process(scroll: &mut String, command: String, phext_buffer: &mut String, 
 * delete <coord>: truncates the specified scroll
 * save <file>: dumps the contents of the loaded phext to disk
 * shutdown: terminate the phext server".to_string();
+        return false;
+    }
+
+    if command == "status" {
+        *scroll = format!("Hosting: {}
+Connection ID: {}
+Phext Size: {}", source, connection_id, phext_buffer.len());
         return false;
     }
     
@@ -40,6 +55,12 @@ pub fn process(scroll: &mut String, command: String, phext_buffer: &mut String, 
         *phext_buffer = phext::replace(phext_buffer.as_str(), coordinate, "");
         return false;
     }
+
+    if command == "slurp" {
+        let mut range = coordinate;
+        let _ = slurp_files(phext_buffer, filename.clone(), &mut range);
+        return false;
+    }
     
     if command == "save" {
         let _ = std::fs::write(filename.clone(), phext_buffer.as_str());
@@ -48,10 +69,25 @@ pub fn process(scroll: &mut String, command: String, phext_buffer: &mut String, 
     }
 
     if command == "shutdown" {
-      *scroll = format!("Instructed daemon to terminate.");
+      *scroll = format!("Shutdown Initiated.");
       return true;      
     }
 
     *scroll = format!("Unexpected command ignored.");
     return false;
+}
+
+fn slurp_files(phext_buffer: &mut String, dir: String, coordinate: &mut phext::Coordinate) -> std::io::Result<()> {
+    for entry in std::fs::read_dir(dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.is_dir() {
+            // skip sub-directories for now
+        } else {
+            let contents = crate::fetch_source(path.into_os_string().into_string().unwrap());
+            *phext_buffer = phext::replace(phext_buffer.as_str(), *coordinate, contents.as_str());
+            (*coordinate).x.scroll += 1;
+        }
+    }
+    Ok(())
 }

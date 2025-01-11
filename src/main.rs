@@ -115,7 +115,7 @@ fn server(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
         let update = phext::fetch(parts.as_str(), ps3);
 
         let mut scroll = String::new();
-        let done = sq::process(&mut scroll, command, &mut phext_buffer, coordinate, update, argtemp.clone());
+        let done = sq::process(connection_id, filename.clone(), &mut scroll, command, &mut phext_buffer, coordinate, update, argtemp.clone());
         let scroll_length = scroll.len();
 
         send_message(shmem.as_ptr(), length_offset, scroll);
@@ -133,15 +133,6 @@ fn server(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
 }
 
 // -----------------------------------------------------------------------------------------------------------
-fn args_required(command:&str) -> usize {
-    if command == "shutdown" || command == "help" || command == "init" {
-        return 2;
-    }
-
-    return 3;
-}
-
-// -----------------------------------------------------------------------------------------------------------
 fn client(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> {
     let (evt, evt_used_bytes) = unsafe { Event::from_existing(shmem.as_ptr())? };
     let (work, _work_used_bytes) = unsafe { Event::from_existing(wkmem.as_ptr())? };
@@ -153,7 +144,7 @@ fn client(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
     let command = args.get(1).unwrap_or(&nothing);
     let usage = "Usage: sq <command> <coordinate> <message>";
     
-    if args.len() < args_required(command) {
+    if args.len() < sq::args_required(command) {
         if command == "init" {
             if std::fs::exists(SHARED_NAME).is_ok() {
                 _ = std::fs::remove_file(SHARED_NAME);

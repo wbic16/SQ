@@ -17,6 +17,7 @@ Note: Indexing is not yet implemented - performance has not been optimized yet.
 
 * sq help: displays online help
 * sq <file>: launches a server that hosts a phext file via shared memory
+* sq status: Displays daemon statistics (loaded phext, size, connection count)
 * sq push <coord> <file>: Overwrites the specified scroll with the local file
 * sq pull <coord> <file>: Fetches the specified scroll to a local file
 * sq select <coord>: Fetches content from the current phext
@@ -25,7 +26,8 @@ Note: Indexing is not yet implemented - performance has not been optimized yet.
 * sq delete <coord>: Removes all content from the specified coordinate
 * sq save <file>: Writes the current phext back to disk
 * sq init: Fast initialization for hosting world.phext from any state
-* sq shutdown now: Instruct the daemon to terminate
+* sq slurp <coord> <directory>: Slurps all of the files in the given directory
+* sq shutdown: Instruct the daemon to terminate
 
 # Developing
 
