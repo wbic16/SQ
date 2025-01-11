@@ -14,6 +14,7 @@ pub fn process(connection_id: u64, source: String, scroll: &mut String, command:
 * help: display this online help screen
 * status: display daemon statistics
 * <file>: Hosts a new phext on startup if no daemon is running yet (creates a .sq directory)
+* <port>: Starts sq in listening mode (bypassing daemon setup)
 * push <coord> <file>: Imports a file into your phext at the given coordinate
 * pull <coord> <file>: Exports a scroll to a file of your choice
 * select <coord>: fetch a scroll of text from the loaded phext
