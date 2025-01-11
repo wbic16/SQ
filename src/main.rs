@@ -2,6 +2,9 @@ use libphext::phext;
 use raw_sync::{events::*, Timeout};
 use shared_memory::*;
 use std::env;
+use std::net::TcpListener;
+use std::io::BufRead;
+use std::io::Write;
 
 mod sq;
 mod tests;
@@ -80,6 +83,42 @@ fn send_message(shmem: *mut u8, start: usize, encoded: String) {
 }
 
 // -----------------------------------------------------------------------------------------------------------
+fn handle_tcp_connection(mut stream: std::net::TcpStream) {
+    let buf_reader = std::io::BufReader::new(&stream);
+    let http_request: Vec<_> = buf_reader
+        .lines()
+        .map(|result| result.unwrap())
+        .take_while(|line| !line.is_empty())
+        .collect();
+    let request = &http_request[0];
+    if request.starts_with("GET ") == false {
+        stream.write_all("HTTP/1.1 400 Bad Request\r\n".as_bytes()).unwrap();
+        println!("Ignoring {}", request);
+        return;
+    }
+    println!("Request: {}", request);
+
+    let headers = "HTTP/1.1 200 OK";
+    let mut contents = "";
+
+    if request.starts_with("GET /api/v2/select") {
+        contents = "<html><head><title>Selecting...</title></head><body>SELECT</body></html>";
+    } else if request.starts_with("GET /api/v2/insert") {
+        contents = "<html><head><title>Inserting...</title></head><body>INSERT</body></html>";
+    } else if request.starts_with("GET /api/v2/update") {
+        contents = "<html><head><title>Updating...</title></head><body>UPDATE</body></html>";
+    } else if request.starts_with("GET /api/v2/delete") {
+        contents = "<html><head><title>Deleting...</title></head><body>DELETE</body></html>";
+    }
+
+    let length = contents.len();
+    let response =
+        format!("{headers}\r\nContent-Length: {length}\r\n\r\n{contents}");
+
+    stream.write_all(response.as_bytes()).unwrap();
+}
+
+// -----------------------------------------------------------------------------------------------------------
 fn server(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> {
     let mut connection_id: u64 = 0;
 
@@ -92,7 +131,16 @@ fn server(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
     let ps2: phext::Coordinate = phext::to_coordinate("1.1.1/1.1.1/1.1.2");
     let ps3: phext::Coordinate = phext::to_coordinate("1.1.1/1.1.1/1.1.3");
 
-    let mut filename = env::args().nth(1).expect("Usage: sq.exe <phext>");
+    let mut filename = env::args().nth(1).expect("Usage: sq.exe <phext> <port>");
+    let port = env::args().nth(2).unwrap_or("11011".to_string());
+    let listener = TcpListener::bind(format!("127.0.0.1:{}", port)).unwrap();
+
+    for stream in listener.incoming() {
+        let stream = stream.unwrap();
+
+        handle_tcp_connection(stream);
+    }
+
     if filename == "init" {
         println!("Init was previously completed - launching with world.phext...");
         filename = "world.phext".to_string();
