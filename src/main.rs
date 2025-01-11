@@ -184,7 +184,7 @@ fn handle_tcp_connection(connection_id: u64, mut stream: std::net::TcpStream) {
     }
     
     let _ = sq::process(connection_id, phext.clone(), &mut output, command, &mut phext_buffer, phext::to_coordinate(coord.as_str()), scroll.clone(), nothing);
-    let contents = format!("<html><head><title>{title}</title></head><body>request: {action}<br />result: {output}</body></html>");
+    let contents = format!("<html><head><title>{title}</title></head><body>request: {action}<br />result: <pre>{output}</pre></body></html>");
     let _ = std::fs::write(phext, phext_buffer).unwrap();
 
     let length = contents.len();
