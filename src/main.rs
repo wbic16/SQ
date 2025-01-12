@@ -41,8 +41,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let phext_or_port = env::args().nth(1).unwrap_or("".to_string());
     let exists = std::fs::exists(phext_or_port.clone()).unwrap_or(false);
+    let is_port_number = phext_or_port.parse::<u16>().is_ok();
     
-    if exists == false && phext_or_port.len() > 0 {
+    if exists == false && phext_or_port.len() > 0 && is_port_number {
         let port = phext_or_port;
         let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).unwrap();
         println!("Listening on port {port}...");
