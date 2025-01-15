@@ -162,35 +162,34 @@ fn handle_tcp_connection(connection_id: u64, mut stream: std::net::TcpStream) {
     let coord  = parsed.get("c").unwrap_or(&nothing);
     let phext  = parsed.get("p").unwrap_or(&nothing).to_owned() + ".phext";
     let mut phext_buffer = fetch_source(phext.clone());
-    let mut title = "UNKNOWN";
+    //let mut title = "UNKNOWN";
     let mut output = String::new();
     let mut command = String::new();
-    let mut action = String::new();
+    //let mut action = String::new();
     if request.starts_with("GET /api/v2/select") {
         command = "select".to_string();
-        title = "SELECT";
-        action = format!("Selected...{coord} from {phext}.");
+        //title = "SELECT";
+        //action = format!("Selected...{coord} from {phext}.");
     } else if request.starts_with("GET /api/v2/insert") {
         command = "insert".to_string();
-        title = "INSERT";
-        action = format!("Inserted {scroll} at {coord} into {phext}.");
+        //title = "INSERT";
+        //action = format!("Inserted {scroll} at {coord} into {phext}.");
     } else if request.starts_with("GET /api/v2/update") {
         command = "update".to_string();
-        title = "UPDATE";
-        action = format!("Updated {phext}::{coord} = {scroll}.");
+        //title = "UPDATE";
+        //action = format!("Updated {phext}::{coord} = {scroll}.");
     } else if request.starts_with("GET /api/v2/delete") {
         command = "delete".to_string();
-        title = "DELETE";
-        action = format!("Removed scroll content at {coord} from {phext}.");
+        //title = "DELETE";
+        //action = format!("Removed scroll content at {coord} from {phext}.");
     }
     
     let _ = sq::process(connection_id, phext.clone(), &mut output, command, &mut phext_buffer, phext::to_coordinate(coord.as_str()), scroll.clone(), nothing);
-    let contents = format!("<html><head><title>{title}</title></head><body>request: {action}<br />result: <pre>{output}</pre></body></html>");
     let _ = std::fs::write(phext, phext_buffer).unwrap();
 
-    let length = contents.len();
+    let length = output.len();
     let response =
-        format!("{headers}\r\nContent-Length: {length}\r\n\r\n{contents}");
+        format!("{headers}\r\nContent-Length: {length}\r\n\r\n{output}");
 
     stream.write_all(response.as_bytes()).unwrap();
 }
