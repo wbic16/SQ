@@ -32,6 +32,11 @@ Connection ID: {}
 Phext Size: {}", source, connection_id, phext_buffer.len());
         return false;
     }
+
+    if command == "checksum" {
+        *scroll = phext::checksum(phext_buffer.as_str());
+        return false;
+    }
     
     if command == "select" || command == "pull" {
         *scroll = phext::fetch(phext_buffer.as_str(), coordinate);

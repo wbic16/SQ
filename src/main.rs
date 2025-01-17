@@ -182,6 +182,10 @@ fn handle_tcp_connection(connection_id: u64, mut stream: std::net::TcpStream) {
         command = "delete".to_string();
         //title = "DELETE";
         //action = format!("Removed scroll content at {coord} from {phext}.");
+    } else if request.starts_with("GET /api/v2/status") {
+        command = "status".to_string();
+    } else if request.starts_with("GET /api/v2/checksum") {
+        command = "checksum".to_string();
     }
     
     let _ = sq::process(connection_id, phext.clone(), &mut output, command, &mut phext_buffer, phext::to_coordinate(coord.as_str()), scroll.clone(), nothing);
