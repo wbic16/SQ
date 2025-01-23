@@ -2,6 +2,8 @@ use libphext::phext;
 use raw_sync::{events::*, Timeout};
 use shared_memory::*;
 use std::env;
+use std::fs;
+use std::path::Path;
 use std::net::TcpListener;
 use std::io::BufRead;
 use std::io::Write;
@@ -10,7 +12,7 @@ use std::collections::HashMap;
 mod sq;
 mod tests;
 
-const SHARED_SEGMENT_SIZE: usize = 4*1024*1024; // 4 MB limit
+const SHARED_SEGMENT_SIZE: usize = 1024*1024*1024; // 1 GB limit
 const MAX_BUFFER_SIZE: usize = SHARED_SEGMENT_SIZE/2;
 const WORK_SEGMENT_SIZE: usize = 1024;
 
@@ -42,7 +44,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let phext_or_port = env::args().nth(1).unwrap_or("".to_string());
     let exists = std::fs::exists(phext_or_port.clone()).unwrap_or(false);
     let is_port_number = phext_or_port.parse::<u16>().is_ok();
-    
+
     if exists == false && phext_or_port.len() > 0 && is_port_number {
         let port = phext_or_port;
         let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).unwrap();
@@ -107,7 +109,7 @@ fn url_decode(encoded: &str) -> String {
     let stage2 = percent_encoding::percent_decode(stage1.as_bytes())
         .decode_utf8_lossy()
         .to_string();
-    
+
     return stage2;
 }
 
@@ -187,7 +189,7 @@ fn handle_tcp_connection(connection_id: u64, mut stream: std::net::TcpStream) {
     } else if request.starts_with("GET /api/v2/checksum") {
         command = "checksum".to_string();
     }
-    
+
     let _ = sq::process(connection_id, phext.clone(), &mut output, command, &mut phext_buffer, phext::to_coordinate(coord.as_str()), scroll.clone(), nothing);
     let _ = std::fs::write(phext, phext_buffer).unwrap();
 
@@ -211,7 +213,7 @@ fn server(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
     let ps2: phext::Coordinate = phext::to_coordinate("1.1.1/1.1.1/1.1.2");
     let ps3: phext::Coordinate = phext::to_coordinate("1.1.1/1.1.1/1.1.3");
 
-    let mut filename = env::args().nth(1).expect("Usage: sq.exe <phext>|<port>");    
+    let mut filename = env::args().nth(1).expect("Usage: sq.exe <phext>|<port>");
 
     println!("Operating in daemon mode.");
 
@@ -255,6 +257,15 @@ fn server(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
 }
 
 // -----------------------------------------------------------------------------------------------------------
+fn is_media_resource(filename: &str) -> bool {
+    filename.ends_with(".jpg") ||
+    filename.ends_with(".mp4") ||
+    filename.ends_with(".mp3") ||
+    filename.ends_with(".gif") ||
+    filename.ends_with(".webp")
+}
+
+// -----------------------------------------------------------------------------------------------------------
 fn client(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> {
     let (evt, evt_used_bytes) = unsafe { Event::from_existing(shmem.as_ptr())? };
     let (work, _work_used_bytes) = unsafe { Event::from_existing(wkmem.as_ptr())? };
@@ -265,7 +276,7 @@ fn client(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
 
     let command = args.get(1).unwrap_or(&nothing);
     let usage = "Usage: sq <command> <coordinate> <message>";
-    
+
     if args.len() < sq::args_required(command) {
         if command == "init" {
             if std::fs::exists(SHARED_NAME).is_ok() {
@@ -281,27 +292,85 @@ fn client(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
         return Ok(());
     }
 
-    let coordinate = args.get(2).unwrap_or(&nothing);
+    let mut coordinate = args.get(2).unwrap_or(&nothing).to_string();
     let mut message: String = args.get(3).unwrap_or(&nothing).to_string();
     if command == "push" {
         message = fetch_source(message);
     }
+    if command == "slurp" {
+        let mut summary = String::new();
+        let dir = Path::new(&message);
+        println!("Slurping {message}...");
+        let mut coord = phext::to_coordinate(coordinate.as_str());
+        let toc = coord;
+        for entry in std::fs::read_dir(dir).ok().into_iter().flat_map(|e| e) {
+            if let Ok(entry) = entry {
+                coord.scroll_break();
+                if coord.x.scroll == (phext::COORDINATE_MAXIMUM - 1) {
+                    coord.section_break();
+                }
+                if coord.x.section == (phext::COORDINATE_MAXIMUM - 1) {
+                    coord.chapter_break();
+                }
+                if coord.x.chapter == (phext::COORDINATE_MAXIMUM - 1) {
+                    coord.book_break();
+                    println!("Warning: Slurp exceeded 900M scrolls.");
+                }
+                let path = entry.path();
+                let mut filename = String::new();
+                if let Some(parsed_filename) = path.file_name() {
+                    filename = parsed_filename.to_string_lossy().to_string();
+                }
+                let checker = filename.to_lowercase();
+                if is_media_resource(checker.as_str()) {
+                    summary.push_str(&format!("{coord} {filename} (Resource)\n").as_str());
+                    continue;
+                }
+                if path.is_file() {
+                    if let Ok(content) = fs::read_to_string(&path) {
+                        summary.push_str(&format!("{coord} {filename}\n").as_str());
+                        client_submit(command, coordinate.as_str(), content.as_str(), shmem.as_ptr(), length_offset);
+                        coordinate = coord.to_string();
+                        evt.set(EventState::Signaled)?;
+                        work.wait(Timeout::Infinite)?;
+                        client_response(shmem.as_ptr(), length_offset, command, message.as_str(), coordinate.as_str());
+                    }
+                }
+            }
+        }
+        coordinate = toc.to_string();
+        message = summary;
+    }
+
+    client_submit(command, coordinate.as_str(), message.as_str(), shmem.as_ptr(), length_offset);
+    evt.set(EventState::Signaled)?;
+    work.wait(Timeout::Infinite)?;
+    client_response(shmem.as_ptr(), length_offset, command, message.as_str(), coordinate.as_str());
+
+    Ok(())
+}
+
+// -------------------------------------------------------------------------------------------------
+fn client_submit(command: &str, coordinate: &str, message: &str, shmem: *mut u8, length_offset: usize)
+{
     let mut encoded = String::new();
     encoded.push_str(command);
     encoded.push(phext::SCROLL_BREAK);
     encoded.push_str(coordinate);
     encoded.push(phext::SCROLL_BREAK);
-    encoded.push_str(message.as_str());
+    encoded.push_str(message);
     encoded.push(phext::SCROLL_BREAK);
 
-    send_message(shmem.as_ptr(), length_offset, encoded);
+    send_message(shmem, length_offset, encoded);
+}
 
-    evt.set(EventState::Signaled)?;
-    work.wait(Timeout::Infinite)?;
-    let mut response = fetch_message(shmem.as_ptr(), length_offset);
+// -------------------------------------------------------------------------------------------------
+fn client_response(shmem: *mut u8, length_offset: usize, command: &str, message: &str, coordinate: &str)
+{
+    let mut response = fetch_message(shmem, length_offset);
     if command == "pull" {
         let filename = message;
-        let _ = std::fs::write(filename.clone(), response.clone());
+        let _ = std::fs::write(filename, response.clone());
         response = format!("Exported scroll at {coordinate} to {filename}.").to_string();
     }
     if coordinate.len() > 0 {
@@ -309,6 +378,4 @@ fn client(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
     } else {
         println!("{response}");
     }
-
-    Ok(())
 }
