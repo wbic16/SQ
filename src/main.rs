@@ -20,7 +20,7 @@ const SHARED_NAME: &str = ".sq/link";
 const WORK_NAME: &str = ".sq/work";
 
 // -----------------------------------------------------------------------------------------------------------
-fn fetch_source(filename: String) -> String {
+fn fetch_source(filename: String) -> HashMap::<phext::Coordinate, String> {
     let message = format!("Unable to open {}", filename);
     let exists = std::fs::exists(filename.clone()).unwrap_or(false);
     if exists == false {
@@ -31,7 +31,7 @@ fn fetch_source(filename: String) -> String {
     if buffer.len() > MAX_BUFFER_SIZE {
         buffer = buffer[0..MAX_BUFFER_SIZE].to_string();
     }
-    return buffer;
+    return phext::explode(&buffer);
 }
 
 // -----------------------------------------------------------------------------------------------------------
@@ -163,7 +163,7 @@ fn handle_tcp_connection(connection_id: u64, mut stream: std::net::TcpStream) {
     let scroll = parsed.get("s").unwrap_or(&nothing);
     let coord  = parsed.get("c").unwrap_or(&nothing);
     let phext  = parsed.get("p").unwrap_or(&nothing).to_owned() + ".phext";
-    let mut phext_buffer = fetch_source(phext.clone());
+    let mut phext_map = fetch_source(phext.clone());
     //let mut title = "UNKNOWN";
     let mut output = String::new();
     let mut command = String::new();
@@ -190,7 +190,8 @@ fn handle_tcp_connection(connection_id: u64, mut stream: std::net::TcpStream) {
         command = "checksum".to_string();
     }
 
-    let _ = sq::process(connection_id, phext.clone(), &mut output, command, &mut phext_buffer, phext::to_coordinate(coord.as_str()), scroll.clone(), nothing);
+    let _ = sq::process(connection_id, phext.clone(), &mut output, command, &mut phext_map, phext::to_coordinate(coord.as_str()), scroll.clone(), nothing);
+    let phext_buffer = phext::implode(phext_map);
     let _ = std::fs::write(phext, phext_buffer).unwrap();
 
     let length = output.len();
@@ -295,7 +296,7 @@ fn client(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
     let mut coordinate = args.get(2).unwrap_or(&nothing).to_string();
     let mut message: String = args.get(3).unwrap_or(&nothing).to_string();
     if command == "push" {
-        message = fetch_source(message);
+        message = phext::implode(fetch_source(message));
     }
     if command == "slurp" {
         let mut summary = String::new();

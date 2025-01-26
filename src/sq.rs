@@ -1,4 +1,5 @@
 use crate::phext;
+use std::collections::HashMap;
 
 pub fn args_required(command:&str) -> usize {
     if command == "shutdown" || command == "help" || command == "init" || command == "status" {
@@ -8,7 +9,7 @@ pub fn args_required(command:&str) -> usize {
     return 3;
 }
 
-pub fn process(connection_id: u64, source: String, scroll: &mut String, command: String, phext_buffer: &mut String, coordinate: phext::Coordinate, update: String, filename: String) -> bool {
+pub fn process(connection_id: u64, source: String, scroll: &mut String, command: String, phext_map: &mut HashMap::<phext::Coordinate, String>, coordinate: phext::Coordinate, update: String, filename: String) -> bool {
     if command == "help" {
         *scroll = "
 * help: display this online help screen
@@ -28,44 +29,62 @@ pub fn process(connection_id: u64, source: String, scroll: &mut String, command:
     }
 
     if command == "status" {
+        let buffer = phext::implode(phext_map.clone());
         *scroll = format!("Hosting: {}
 Connection ID: {}
-Phext Size: {}", source, connection_id, phext_buffer.len());
+Phext Size: {}", source, connection_id, buffer.len());
         return false;
     }
 
     if command == "checksum" {
-        *scroll = phext::checksum(phext_buffer.as_str());
+        let serialized = phext::implode(phext_map.clone());
+        *scroll = phext::checksum(serialized.as_str());
         return false;
     }
 
     if command == "select" || command == "pull" {
-        *scroll = phext::fetch(phext_buffer.as_str(), coordinate);
+        if phext_map.contains_key(&coordinate) {
+            let nothing = String::new();
+            *scroll = phext_map.get(&coordinate).unwrap_or(&nothing).clone();
+        } else {
+            *scroll = String::new();
+        }
         return false;
     }
 
     if command == "insert" {
         *scroll = format!("Inserted {} bytes", update.len());
-        *phext_buffer = phext::insert(phext_buffer.clone(), coordinate, update.as_str());
+        let mut concatenated = String::new();
+        if phext_map.contains_key(&coordinate) {
+            let nothing = String::new();
+            concatenated = phext_map.get(&coordinate).unwrap_or(&nothing).clone()
+        }
+        concatenated.push_str(update.as_str());
+        (*phext_map).insert(coordinate, concatenated);
         return false;
     }
 
     if command == "update" || command == "push" || command == "slurp" {
         *scroll = format!("Updated {} bytes", update.len());
-        *phext_buffer = phext::replace(phext_buffer.as_str(), coordinate, update.as_str());
+        phext_map.insert(coordinate, update);
         return false;
     }
 
     if command == "delete" {
-        let old = phext::fetch(phext_buffer.as_str(), coordinate);
+        let mut old = String::new();
+        if phext_map.contains_key(&coordinate) {
+            let nothing = String::new();
+            old = phext_map.get(&coordinate).unwrap_or(&nothing).clone();
+            phext_map.remove(&coordinate);
+        }
         *scroll = format!("Removed {} bytes", old.len());
-        *phext_buffer = phext::replace(phext_buffer.as_str(), coordinate, "");
         return false;
     }
 
     if command == "save" {
-        let _ = std::fs::write(filename.clone(), phext_buffer.as_str());
-        *scroll = format!("Wrote {} bytes to {}", phext_buffer.len(), filename);
+        let output_buffer = phext::implode(phext_map.clone());
+        let _ = std::fs::write(filename.clone(), output_buffer.as_str());
+        *scroll = format!("Wrote {} bytes to {}", output_buffer.len(), filename);
         return false;
     }
 
