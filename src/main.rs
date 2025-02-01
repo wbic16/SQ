@@ -36,11 +36,12 @@ fn fetch_source(filename: String) -> HashMap::<phext::Coordinate, String> {
 
 // -----------------------------------------------------------------------------------------------------------
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let exists = std::fs::exists(".sq").unwrap_or(false);
-    if exists == false {
+    let sq_exists = std::fs::exists(".sq").unwrap_or(false);
+    if sq_exists == false {
         let _ = std::fs::create_dir(".sq");
     }
 
+    let env_args_count = env::args().len();
     let phext_or_port = env::args().nth(1).unwrap_or("".to_string());
     let exists = std::fs::exists(phext_or_port.clone()).unwrap_or(false);
     let is_port_number = phext_or_port.parse::<u16>().is_ok();
@@ -59,18 +60,39 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
-    let error_message_link = format!("unable to link {}", SHARED_NAME);
-    let error_message_work = format!("unable to work {}", WORK_NAME);
+    let mut attempts = 0;
 
-    let shmem = match ShmemConf::new().size(SHARED_SEGMENT_SIZE).flink(SHARED_NAME).create() {
-        Ok(m) => m,
-        Err(ShmemError::LinkExists) => ShmemConf::new().flink(SHARED_NAME).open().expect(error_message_link.as_str()),
-        Err(e) => return Err(Box::new(e)),
-    };
-    let wkmem = match ShmemConf::new().size(WORK_SEGMENT_SIZE).flink(WORK_NAME).create() {
-        Ok(m) => m,
-        Err(ShmemError::LinkExists) => ShmemConf::new().flink(WORK_NAME).open().expect(error_message_work.as_str()),
-        Err(e) => return Err(Box::new(e)),
+    let (shmem, wkmem) = loop {
+        let shmem = match ShmemConf::new().size(SHARED_SEGMENT_SIZE).flink(SHARED_NAME).create() {
+            Ok(m) => m,
+            Err(ShmemError::LinkExists) => ShmemConf::new().flink(SHARED_NAME).open()?,
+            Err(e) => return Err(Box::new(e))
+        };
+        let wkmem = match ShmemConf::new().size(WORK_SEGMENT_SIZE).flink(WORK_NAME).create() {
+            Ok(m) => m,
+            Err(ShmemError::LinkExists) => ShmemConf::new().flink(WORK_NAME).open()?,
+            Err(e) => return Err(Box::new(e)),
+        };
+
+        let mut retry = false;
+        attempts += 1;
+        if shmem.is_owner() == false {
+            let unusable = match unsafe { Event::from_existing(shmem.as_ptr()) }
+            {
+                Ok(_) => false,
+                Err(_) => true
+            };
+
+            if unusable && exists && env_args_count == 2 && attempts == 1 {
+                let _ = std::fs::remove_dir_all(".sq");
+                let _ = std::fs::create_dir(".sq");
+                retry = true;
+            }
+        }
+
+        if retry == false {
+            break (shmem, wkmem);
+        }
     };
 
     if shmem.is_owner() { return server(shmem, wkmem); }
@@ -268,6 +290,7 @@ fn is_media_resource(filename: &str) -> bool {
 
 // -----------------------------------------------------------------------------------------------------------
 fn client(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> {
+
     let (evt, evt_used_bytes) = unsafe { Event::from_existing(shmem.as_ptr())? };
     let (work, _work_used_bytes) = unsafe { Event::from_existing(wkmem.as_ptr())? };
     let length_offset  = evt_used_bytes + 4;
