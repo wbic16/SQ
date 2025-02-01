@@ -2,7 +2,11 @@ use crate::phext;
 use std::collections::HashMap;
 
 pub fn args_required(command:&str) -> usize {
-    if command == "shutdown" || command == "help" || command == "init" || command == "status" {
+    if command == "shutdown" ||
+       command == "help" ||
+       command == "init" ||
+       command == "status" ||
+       command == "toc" {
         return 2;
     }
 
@@ -15,7 +19,8 @@ pub fn process(connection_id: u64, source: String, scroll: &mut String, command:
 * help: display this online help screen
 * status: display daemon statistics
 * <file>: Hosts a new phext on startup if no daemon is running yet (creates a .sq directory)
-* <port>: Starts sq in listening mode (bypassing daemon setup)
+* <port>: Starts sq in listening mode (bypassing daemon setup) - see the REST API reference
+* toc: Dumps the current navigation table for the loaded phext
 * slurp <coord> <directory>: Creates a TOC for files in the given directory, and imports any plain-text files found
 * push <coord> <file>: Imports a file into your phext at the given coordinate
 * pull <coord> <file>: Exports a scroll to a file of your choice
@@ -32,7 +37,14 @@ pub fn process(connection_id: u64, source: String, scroll: &mut String, command:
         let buffer = phext::implode(phext_map.clone());
         *scroll = format!("Hosting: {}
 Connection ID: {}
-Phext Size: {}", source, connection_id, buffer.len());
+Phext Size: {}
+Scrolls: {}", source, connection_id, buffer.len(), phext_map.iter().size_hint().0);
+        return false;
+    }
+
+    if command == "toc" {
+        let buffer = phext::implode(phext_map.clone());
+        *scroll = phext::textmap(buffer.as_str());
         return false;
     }
 
