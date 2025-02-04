@@ -7,6 +7,12 @@ SQ is a modern database, written from the ground-up to take advantage of Phext: 
 
 ## Getting Started
 
+you can either clone this repo and run `cargo build`, or just run `cargo install sq`.
+
+## Commands
+
+SQ is designed to keep abstractions at bay. You can interact with a loaded phext via shared memory (daemon mode) or a TCP socket with a simple REST API.
+
 * sq help: displays online help
 * sq <file>: launches a server that hosts a phext file via shared memory
 * sq status: Displays daemon statistics (loaded phext, size, connection count)
