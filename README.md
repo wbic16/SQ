@@ -7,11 +7,11 @@ SQ is a modern database, written from the ground-up to take advantage of Phext: 
 
 ## Getting Started
 
-you can either clone this repo and run `cargo build`, or just run `cargo install sq`.
+you can either clone this repo and run `cargo build`, or just install the latest stable build: `cargo install sq`.
 
 ## Commands
 
-SQ is designed to keep abstractions at bay. You can interact with a loaded phext via shared memory (daemon mode) or a TCP socket with a simple REST API.
+SQ is designed to keep abstractions to a minimum. You can interact with phexts via shared memory (daemon "esque" mode) or a TCP socket ("seek" mode) with a simple REST API.
 
 * sq help: displays online help
 * sq <file>: launches a server that hosts a phext file via shared memory
@@ -35,7 +35,7 @@ SQ is designed to keep abstractions at bay. You can interact with a loaded phext
 
 SQ is a complete ground-up rewrite of database concepts. It probably doesn't have features you expect from a database. What it does offer is simplicity. SQ is designed to mirror computer architecture in 2025, not 1970. Databases are stored in phext files using variable-length scrolls. Essentially, everything in a phext database is a string.
 
-SQ leverages Rust and libphext as a core data store. All database primitives in SQ are built in terms of phext. For more information about the phext encoding format, refer to https://phext.io.
+SQ leverages Rust and libphext-rs to provide the core data store. All database primitives in SQ are built in terms of phext. For more information about the phext encoding format, refer to https://phext.io.
 
 # Developing
 
@@ -50,7 +50,7 @@ SQ offers a simple CRUD-style REST API. The API allows you to interact with mult
 * /api/v2/select?p=<phext>&c=<coordinate>: Fetches the scroll of text found at `coordinate` in `phext`.phext
 * /api/v2/insert?p=<phext>&c=<coordinate>&s=<scroll>: Appends a scroll of text at `coordinate` in `phext`.phext
 * /api/v2/update?p=<phext>&c=<coordinate>&s=<scroll>: Overwrites the contents of the scroll at `coordinate` in `phext`.phext
-* /api/v2/delete?p=<phext>&c=<coordinate>: Clears the contents of the scroll at `coordinate` in `phext`
+* /api/v2/delete?p=<phext>&c=<coordinate>: Clears the contents of the scroll at `coordinate` in `phext`.phext
 
 ## Linux
 - `reset.sh`: removes the .sq folder from the file system and starts an instance on `world.phext`
