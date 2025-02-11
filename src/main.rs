@@ -20,6 +20,8 @@ const SHARED_NAME: &str = ".sq/link";
 const WORK_NAME: &str = ".sq/work";
 
 // -----------------------------------------------------------------------------------------------------------
+// Loads + explodes a source phext from disk into memory
+// -----------------------------------------------------------------------------------------------------------
 fn fetch_source(filename: String) -> HashMap::<phext::Coordinate, String> {
     let message = format!("Unable to open {}", filename);
     let exists = std::fs::exists(filename.clone()).unwrap_or(false);
@@ -34,6 +36,8 @@ fn fetch_source(filename: String) -> HashMap::<phext::Coordinate, String> {
     return phext::explode(&buffer);
 }
 
+// -----------------------------------------------------------------------------------------------------------
+// sq program loop
 // -----------------------------------------------------------------------------------------------------------
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let sq_exists = std::fs::exists(".sq").unwrap_or(false);
@@ -100,6 +104,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 // -----------------------------------------------------------------------------------------------------------
+// fetches an incoming scroll from shared memory
+// -----------------------------------------------------------------------------------------------------------
 fn fetch_message(shmem: *mut u8, start: usize) -> String {
     let length_size = 20;
     unsafe {
@@ -115,6 +121,8 @@ fn fetch_message(shmem: *mut u8, start: usize) -> String {
 }
 
 // -----------------------------------------------------------------------------------------------------------
+// sends a scroll over shared memory
+// -----------------------------------------------------------------------------------------------------------
 fn send_message(shmem: *mut u8, start: usize, encoded: String) {
     let zeros = vec![0 as u8; SHARED_SEGMENT_SIZE];
     let prepared = format!("{:020}{}", encoded.len(), encoded);
@@ -126,6 +134,8 @@ fn send_message(shmem: *mut u8, start: usize, encoded: String) {
 }
 
 // -----------------------------------------------------------------------------------------------------------
+// uses percent encoding to fetch URL parameters
+// -----------------------------------------------------------------------------------------------------------
 fn url_decode(encoded: &str) -> String {
     let stage1 = encoded.to_string().replace("+", " ");
     let stage2 = percent_encoding::percent_decode(stage1.as_bytes())
@@ -135,6 +145,8 @@ fn url_decode(encoded: &str) -> String {
     return stage2;
 }
 
+// -----------------------------------------------------------------------------------------------------------
+// quick key/value parsing from a query string
 // -----------------------------------------------------------------------------------------------------------
 fn parse_query_string(query: &str) -> HashMap<String, String> {
     let mut result = HashMap::new();
@@ -153,6 +165,8 @@ fn parse_query_string(query: &str) -> HashMap<String, String> {
 }
 
 // -----------------------------------------------------------------------------------------------------------
+// minimal HTTP parsing
+// -----------------------------------------------------------------------------------------------------------
 fn request_parse(request: &str) -> HashMap<String, String> {
     let mut result = HashMap::new();
     let mut parts = request.splitn(2, '?');
@@ -163,6 +177,8 @@ fn request_parse(request: &str) -> HashMap<String, String> {
     return result;
 }
 
+// -----------------------------------------------------------------------------------------------------------
+// minimal TCP socket handling
 // -----------------------------------------------------------------------------------------------------------
 fn handle_tcp_connection(connection_id: u64, mut stream: std::net::TcpStream) {
     let buf_reader = std::io::BufReader::new(&stream);
@@ -186,26 +202,16 @@ fn handle_tcp_connection(connection_id: u64, mut stream: std::net::TcpStream) {
     let coord  = parsed.get("c").unwrap_or(&nothing);
     let phext  = parsed.get("p").unwrap_or(&nothing).to_owned() + ".phext";
     let mut phext_map = fetch_source(phext.clone());
-    //let mut title = "UNKNOWN";
     let mut output = String::new();
     let mut command = String::new();
-    //let mut action = String::new();
     if request.starts_with("GET /api/v2/select") {
         command = "select".to_string();
-        //title = "SELECT";
-        //action = format!("Selected...{coord} from {phext}.");
     } else if request.starts_with("GET /api/v2/insert") {
         command = "insert".to_string();
-        //title = "INSERT";
-        //action = format!("Inserted {scroll} at {coord} into {phext}.");
     } else if request.starts_with("GET /api/v2/update") {
         command = "update".to_string();
-        //title = "UPDATE";
-        //action = format!("Updated {phext}::{coord} = {scroll}.");
     } else if request.starts_with("GET /api/v2/delete") {
         command = "delete".to_string();
-        //title = "DELETE";
-        //action = format!("Removed scroll content at {coord} from {phext}.");
     } else if request.starts_with("GET /api/v2/status") {
         command = "status".to_string();
     } else if request.starts_with("GET /api/v2/checksum") {
@@ -223,6 +229,8 @@ fn handle_tcp_connection(connection_id: u64, mut stream: std::net::TcpStream) {
     stream.write_all(response.as_bytes()).unwrap();
 }
 
+// -----------------------------------------------------------------------------------------------------------
+// daemon mode server processing loop
 // -----------------------------------------------------------------------------------------------------------
 fn server(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> {
     let mut connection_id: u64 = 0;
@@ -280,6 +288,8 @@ fn server(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
 }
 
 // -----------------------------------------------------------------------------------------------------------
+// short-circuit media file types
+// -----------------------------------------------------------------------------------------------------------
 fn is_media_resource(filename: &str) -> bool {
     filename.ends_with(".jpg") ||
     filename.ends_with(".mp4") ||
@@ -288,6 +298,8 @@ fn is_media_resource(filename: &str) -> bool {
     filename.ends_with(".webp")
 }
 
+// -----------------------------------------------------------------------------------------------------------
+// daemon mode client processing loop
 // -----------------------------------------------------------------------------------------------------------
 fn client(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> {
 
@@ -374,7 +386,9 @@ fn client(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
     Ok(())
 }
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------------
+// daemon mode client submission process using a simple phext structure
+// -----------------------------------------------------------------------------------------------------------
 fn client_submit(command: &str, coordinate: &str, message: &str, shmem: *mut u8, length_offset: usize)
 {
     let mut encoded = String::new();
@@ -388,7 +402,9 @@ fn client_submit(command: &str, coordinate: &str, message: &str, shmem: *mut u8,
     send_message(shmem, length_offset, encoded);
 }
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------------
+// show progress on daemon mode requests
+// -----------------------------------------------------------------------------------------------------------
 fn client_response(shmem: *mut u8, length_offset: usize, command: &str, message: &str, coordinate: &str)
 {
     let mut response = fetch_message(shmem, length_offset);
