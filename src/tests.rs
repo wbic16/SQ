@@ -87,6 +87,23 @@ fn test_save() {
 }
 
 #[test]
+fn test_toc() {
+  let scroll = "hello\x17from\x18beyond\x19the\x1astars\x1cnot\x1dan\x1eevil\x1ffuzzle\x01just a warm fuzzy.";
+  let toc = phext::textmap(scroll);
+  assert_eq!(toc, "* 1.1.1/1.1.1/1.1.1: hello
+* 1.1.1/1.1.1/1.1.2: from
+* 1.1.1/1.1.1/1.2.1: beyond
+* 1.1.1/1.1.1/2.1.1: the
+* 1.1.1/1.1.2/1.1.1: stars
+* 1.1.1/1.2.1/1.1.1: not
+* 1.1.1/2.1.1/1.1.1: an
+* 1.1.2/1.1.1/1.1.1: evil
+* 1.2.1/1.1.1/1.1.1: fuzzle
+* 2.1.1/1.1.1/1.1.1: just a warm fuzzy.
+");
+}
+
+#[test]
 fn test_exit() {
   let mut scroll = String::new();
   let command = "shutdown".to_string();
