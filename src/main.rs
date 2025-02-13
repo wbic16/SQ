@@ -275,7 +275,8 @@ fn server(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
 
         send_message(shmem.as_ptr(), length_offset, scroll);
         work.set(EventState::Signaled)?;
-        println!("Sending {}/{} bytes to client #{}.", scroll_length, phext_buffer.len(), connection_id);
+        let scroll_count = phext_buffer.len();
+        println!("Sending {scroll_length} bytes to client #{connection_id} ({filename} contains {scroll_count} scrolls).");
 
         if done {
             println!("Returning to the shell...");
