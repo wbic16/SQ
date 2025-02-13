@@ -295,7 +295,8 @@ fn is_media_resource(filename: &str) -> bool {
     filename.ends_with(".mp4") ||
     filename.ends_with(".mp3") ||
     filename.ends_with(".gif") ||
-    filename.ends_with(".webp")
+    filename.ends_with(".webp") ||
+    filename.ends_with(".png")
 }
 
 // -----------------------------------------------------------------------------------------------------------
