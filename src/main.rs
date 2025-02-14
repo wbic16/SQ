@@ -230,6 +230,13 @@ fn handle_tcp_connection(connection_id: u64, mut stream: std::net::TcpStream) {
 }
 
 // -----------------------------------------------------------------------------------------------------------
+// keeps track of the event signaling overhead (4 bytes)
+// -----------------------------------------------------------------------------------------------------------
+fn event_byte_offset(offset: usize) -> usize {
+    offset + 4
+}
+
+// -----------------------------------------------------------------------------------------------------------
 // daemon mode server processing loop
 // -----------------------------------------------------------------------------------------------------------
 fn server(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> {
@@ -238,7 +245,7 @@ fn server(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
     let (evt, evt_used_bytes) = unsafe { Event::new(shmem.as_ptr(), true)? };
     let (work, _used_work_bytes) = unsafe { Event::new(wkmem.as_ptr(), true)? };
 
-    let length_offset  = evt_used_bytes + 4;
+    let length_offset  = event_byte_offset(evt_used_bytes);
 
     let ps1: phext::Coordinate = phext::to_coordinate("1.1.1/1.1.1/1.1.1");
     let ps2: phext::Coordinate = phext::to_coordinate("1.1.1/1.1.1/1.1.2");
@@ -307,7 +314,7 @@ fn client(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
 
     let (evt, evt_used_bytes) = unsafe { Event::from_existing(shmem.as_ptr())? };
     let (work, _work_used_bytes) = unsafe { Event::from_existing(wkmem.as_ptr())? };
-    let length_offset  = evt_used_bytes + 4;
+    let length_offset  = event_byte_offset(evt_used_bytes);
 
     let nothing: String = String::new();
     let args: Vec<String> = env::args().collect();
