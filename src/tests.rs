@@ -1,3 +1,10 @@
+//------------------------------------------------------------------------------------------------------------
+// file: tests.rs
+// purpose: Provides a battery of unit tests to improve project quality.
+//
+// note: You can run these tests with `cargo test`.
+//------------------------------------------------------------------------------------------------------------
+
 #[cfg(test)]
 use libphext::phext;
 

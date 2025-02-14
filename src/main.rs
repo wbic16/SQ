@@ -1,3 +1,8 @@
+//------------------------------------------------------------------------------------------------------------
+// file: main.rs
+// purpose: provides primary program logic for sq - determining daemon mode vs listening mode
+//------------------------------------------------------------------------------------------------------------
+
 use libphext::phext;
 use raw_sync::{events::*, Timeout};
 use shared_memory::*;

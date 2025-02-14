@@ -1,3 +1,9 @@
+//------------------------------------------------------------------------------------------------------------
+// file: sq.rs
+// purpose: defines the high-level commands available in daemon mode
+//
+// SQ leverages libphext-rs to provide a minimal hierarchical database.
+//------------------------------------------------------------------------------------------------------------
 use crate::phext;
 use std::collections::HashMap;
 
