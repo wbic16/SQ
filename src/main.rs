@@ -55,6 +55,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let exists = std::fs::exists(phext_or_port.clone()).unwrap_or(false);
     let is_port_number = phext_or_port.parse::<u16>().is_ok();
 
+    let mut loaded_phext = String::new();
+    let mut loaded_map: HashMap<phext::Coordinate, String> = Default::default();
+
     if exists == false && phext_or_port.len() > 0 && is_port_number {
         let port = phext_or_port;
         let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).unwrap();
@@ -64,7 +67,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for stream in listener.incoming() {
             let stream = stream.unwrap();
             connection_id += 1;
-            handle_tcp_connection(connection_id, stream);
+            handle_tcp_connection(&mut loaded_phext, &mut loaded_map, connection_id, stream);
         }
         return Ok(());
     }
@@ -185,7 +188,7 @@ fn request_parse(request: &str) -> HashMap<String, String> {
 // -----------------------------------------------------------------------------------------------------------
 // minimal TCP socket handling
 // -----------------------------------------------------------------------------------------------------------
-fn handle_tcp_connection(connection_id: u64, mut stream: std::net::TcpStream) {
+fn handle_tcp_connection(loaded_phext: &mut String, loaded_map: &mut HashMap<phext::Coordinate, String>, connection_id: u64, mut stream: std::net::TcpStream) {
     let buf_reader = std::io::BufReader::new(&stream);
     let http_request: Vec<_> = buf_reader
         .lines()
@@ -206,10 +209,15 @@ fn handle_tcp_connection(connection_id: u64, mut stream: std::net::TcpStream) {
     let scroll = parsed.get("s").unwrap_or(&nothing);
     let coord  = parsed.get("c").unwrap_or(&nothing);
     let phext  = parsed.get("p").unwrap_or(&nothing).to_owned() + ".phext";
-    let mut phext_map = fetch_source(phext.clone());
+    let mut reload_needed = *loaded_phext != phext;
     let mut output = String::new();
     let mut command = String::new();
-    if request.starts_with("GET /api/v2/select") {
+    if request.starts_with("GET /api/v2/load") {
+        command = "load".to_string();
+        *loaded_map = fetch_source(phext.clone());
+        *loaded_phext = phext.clone();
+        reload_needed = false;
+    } else if request.starts_with("GET /api/v2/select") {
         command = "select".to_string();
     } else if request.starts_with("GET /api/v2/insert") {
         command = "insert".to_string();
@@ -221,9 +229,17 @@ fn handle_tcp_connection(connection_id: u64, mut stream: std::net::TcpStream) {
         command = "status".to_string();
     } else if request.starts_with("GET /api/v2/checksum") {
         command = "checksum".to_string();
+    } else if request.starts_with("GET /api/v2/toc") {
+        command = "toc".to_string();
     }
 
-    let _ = sq::process(connection_id, phext.clone(), &mut output, command, &mut phext_map, phext::to_coordinate(coord.as_str()), scroll.clone(), nothing);
+    if reload_needed {
+        *loaded_map = fetch_source(phext.clone());
+        *loaded_phext = phext.clone();
+    }
+
+    let _ = sq::process(connection_id, phext.clone(), &mut output, command, &mut *loaded_map, phext::to_coordinate(coord.as_str()), scroll.clone(), phext.clone());
+    let phext_map = (*loaded_map).clone();
     let phext_buffer = phext::implode(phext_map);
     let _ = std::fs::write(phext, phext_buffer).unwrap();
 

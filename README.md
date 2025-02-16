@@ -45,8 +45,9 @@ In listening mode, SQ reads and writes phexts via REST.
 
 ## REST API Endpoint
 
-SQ offers a simple CRUD-style REST API. The API allows you to interact with multiple phexts from CURL or your web browser.
+SQ offers a simple CRUD-style REST API. The API allows you to interact with multiple phexts from CURL or your web browser. Saving is automatic - if a command changes the content of a phext, it will be saved to disk immediately. Note that if you change the loaded phext without issuing a load command, SQ will automatically reload from disk first.
 
+* /api/v2/load?p=<phext>: Loads the entire contents of `phext`.phext into the current context
 * /api/v2/select?p=<phext>&c=<coordinate>: Fetches the scroll of text found at `coordinate` in `phext`.phext
 * /api/v2/insert?p=<phext>&c=<coordinate>&s=<scroll>: Appends a scroll of text at `coordinate` in `phext`.phext
 * /api/v2/update?p=<phext>&c=<coordinate>&s=<scroll>: Overwrites the contents of the scroll at `coordinate` in `phext`.phext

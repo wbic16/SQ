@@ -106,6 +106,11 @@ Scrolls: {}", source, connection_id, buffer.len(), phext_map.iter().size_hint().
         return false;
     }
 
+    if command == "load" {
+        *scroll = format!("Loaded {filename}");
+        return false;
+    }
+
     if command == "shutdown" {
       *scroll = format!("Shutdown Initiated.");
       return true;
