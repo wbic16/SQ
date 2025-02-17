@@ -1,0 +1,390 @@
+Hello WorldMore text here!Second Scroll1.2.11.8.2 goes here1.13.3 goes here1.4.14.31.5.4 goes here1.5.31.6.31.5.6 goes here1.7.51.8.38.51.10.31.10.51.13.31.16.131.24.15<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link rel="stylesheet" href="/api/v2/select?p=index&c=2.2.2/2.2.2/2.2.3&f=style.css">
+	<script src="/api/v2/select?p=index&c=2.2.2/2.2.2/2.2.2&f=main.js" defer></script>
+</head>
+<body>
+    <div id="grid-container">
+        <div id="grid"></div>
+    </div>
+    
+    <div id="instructions-display">
+		<ul>
+			<li>Double-tap to create a scroll.</li>
+			<li>Tap on a scroll to edit or delete it.</li>
+			<li>Drag on the grid to move around.</li>
+		</ul>
+	</div>
+	<div id="coordinates-display"></div>
+
+    <div id="modal-overlay"></div>
+    <div id="scroll-modal">
+		<div id="scroll-coordinates"></div>
+        <textarea id="scroll-content" rows="20" cols="110"></textarea>
+        <div class="modal-buttons">
+            <button onclick="delete_scroll()" class="danger">Delete</button>
+            <button onclick="close_modal()">Cancel</button>
+            <button onclick="save_scroll()" class="primary">Save</button>
+        </div>
+    </div>
+</body>
+</html>
+const GRID_SIZE = 1000;
+const CELL_SIZE = 150;
+
+let grid_offset = { x: 0, y: 0 };
+let is_dragging = false;
+let start_pos = { x: 0, y: 0 };
+let scrolls = new Map();
+let current_scroll = null;
+
+function dgid(id) {
+	return document.getElementById(id);
+}
+
+const grid = dgid('grid');
+const container = dgid('grid-container');
+const modal = dgid('scroll-modal');
+const modal_overlay = dgid('modal-overlay');
+const coordinates_display = dgid('coordinates-display');
+const scroll_content = dgid('scroll-content');
+
+function initialize_grid() {
+	grid_offset.x = 0;
+	grid_offset.y = 0;
+	grid.style.transform = `translate(${grid_offset.x}px, ${grid_offset.y}px)`;
+	render_visible_cells();
+}
+
+function update_grid_position() {
+	grid.style.transform = `translate(${grid_offset.x}px, ${grid_offset.y}px)`;
+}
+
+function render_visible_cells() {
+	grid.innerHTML = '';
+
+	const start_x = Math.floor(-grid_offset.x / CELL_SIZE);
+	const start_y = Math.floor(-grid_offset.y / CELL_SIZE);
+	const end_x = start_x + Math.ceil(window.innerWidth / CELL_SIZE) + 1;
+	const end_y = start_y + Math.ceil(window.innerHeight / CELL_SIZE) + 1;
+
+	for (let x = Math.max(start_x, 0); x < Math.min(end_x, GRID_SIZE); x++) {
+		for (let y = Math.max(start_y, 0); y < Math.min(end_y, GRID_SIZE); y++) {
+			const scroll_content = scrolls.get(`${x + 1},${y + 1}`);
+			if (scroll_content) {
+				render_scroll(x, y, scroll_content);
+			}
+		}
+	}
+}
+
+function render_scroll(x, y, content) {
+	const scroll = document.createElement('div');
+	scroll.className = 'scroll';
+	scroll.style.left = `${x * CELL_SIZE}px`;
+	scroll.style.top = `${y * CELL_SIZE}px`;
+	scroll.textContent = content;
+	scroll.onclick = (e) => {
+		e.stopPropagation();
+		open_modal(x + 1, y + 1, content);
+	};
+	grid.appendChild(scroll);
+}
+
+function open_modal(x, y, content = '') {
+	current_scroll = { x, y };
+	dgid('scroll-coordinates').innerHTML = `<span style="color: #888">1.1.1/1.1.1/1.</span>${x}.${y}`;
+scroll_content.value = content;
+if (content.length == 0) {	
+	fetchScroll(x, y);
+} else {
+		modal.style.display = 'block';
+		modal_overlay.style.display = 'block';
+		scroll_content.focus();
+	}
+}
+
+async function fetchScroll(x, y) {
+  try
+  {
+    const coordinate = `1.1.1/1.1.1/1.${x}.${y}`;
+    const select_url = `http://localhost:1337/api/v2/select?p=index&c=${coordinate}`;
+    const response = await fetch(select_url);
+    const content = await response.text();
+
+		console.log(`Content: ${content}`);
+    scroll_content.value = content;
+    modal.style.display = 'block';
+    modal_overlay.style.display = 'block';
+    scroll_content.focus();
+	} catch (error) {}
+}
+
+function close_modal() {
+  modal.style.display = 'none';
+  modal_overlay.style.display = 'none';
+  current_scroll = null;
+}
+
+function save_scroll() {
+  const content = dgid('scroll-content').value.trim();
+  if (content && current_scroll) {
+	  scrolls.set(`${current_scroll.x},${current_scroll.y}`, content);
+		const coordinate = `1.1.1/1.1.1/1.${current_scroll.x}.${current_scroll.y}`;
+		const push_url = `http://localhost:1337/api/v2/update?p=index&c=${coordinate}&s=${content}`;
+		fetch(push_url);
+	  render_visible_cells();
+  }
+  close_modal();
+}
+
+function delete_scroll() {
+if (current_scroll) {
+	scrolls.delete(`${current_scroll.x},${current_scroll.y}`);
+	render_visible_cells();
+}
+close_modal();
+}
+
+container.addEventListener('mousedown', (e) => {
+if (e.target === container || e.target === grid) {
+	is_dragging = true;
+	container.classList.add('grabbing');
+	start_pos = {
+		x: e.clientX - grid_offset.x,
+		y: e.clientY - grid_offset.y
+	};
+}
+});
+
+container.addEventListener('dblclick', (e) => {
+if (e.target === container || e.target === grid) {
+	const rect = container.getBoundingClientRect();
+	const x = Math.floor((e.clientX - rect.left - grid_offset.x) / CELL_SIZE);
+	const y = Math.floor((e.clientY - rect.top - grid_offset.y) / CELL_SIZE);
+
+	if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+		open_modal(x + 1, y + 1);
+	}
+}
+});
+
+window.addEventListener('mousemove', (e) => {
+if (is_dragging) {
+	grid_offset.x = e.clientX - start_pos.x;
+	grid_offset.y = e.clientY - start_pos.y;
+
+	const min_x = -GRID_SIZE * CELL_SIZE + window.innerWidth;
+	const min_y = -GRID_SIZE * CELL_SIZE + window.innerHeight;
+
+	grid_offset.x = Math.min(0, Math.max(min_x, grid_offset.x));
+	grid_offset.y = Math.min(0, Math.max(min_y, grid_offset.y));
+
+	update_grid_position();
+	render_visible_cells();
+}
+});
+
+window.addEventListener('mouseup', () => {
+is_dragging = false;
+container.classList.remove('grabbing');
+});
+
+window.addEventListener('resize', () => {
+render_visible_cells();
+});
+
+container.addEventListener('mousemove', (e) => {
+const rect = container.getBoundingClientRect();
+const x = Math.floor((e.clientX - rect.left - grid_offset.x) / CELL_SIZE);
+const y = Math.floor((e.clientY - rect.top - grid_offset.y) / CELL_SIZE);
+
+if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+	coordinates_display.innerHTML = `<span style="color: #888">1.1.1/1.1.1/1.</span>${x + 1}.${y + 1}`;
+	} else {
+		coordinates_display.textContent = 'Out of bounds';
+	}
+});
+
+container.addEventListener('touchstart', (e) => {
+	if (e.target === container || e.target === grid) {
+		is_dragging = true;
+		container.classList.add('grabbing');
+		const touch = e.touches[0];
+		start_pos = {
+			x: touch.clientX - grid_offset.x,
+			y: touch.clientY - grid_offset.y
+		};
+	}
+});
+
+container.addEventListener('touchmove', (e) => {
+	e.preventDefault();
+	const touch = e.touches[0];
+	if (is_dragging) {
+		grid_offset.x = touch.clientX - start_pos.x;
+		grid_offset.y = touch.clientY - start_pos.y;
+
+		const min_x = -GRID_SIZE * CELL_SIZE + window.innerWidth;
+		const min_y = -GRID_SIZE * CELL_SIZE + window.innerHeight;
+
+		grid_offset.x = Math.min(0, Math.max(min_x, grid_offset.x));
+		grid_offset.y = Math.min(0, Math.max(min_y, grid_offset.y));
+	
+		update_grid_position();
+		render_visible_cells();
+	}
+});
+
+let last_tap = 0;
+container.addEventListener('touchend', (e) => {
+	const current_time = new Date().getTime();
+	const tap_length = current_time - last_tap;
+	if (tap_length < 500 && tap_length > 0) {
+		if (e.target === container || e.target === grid) {
+			const touch = e.changedTouches[0];
+			const rect = container.getBoundingClientRect();
+			const x = Math.floor((touch.clientX - rect.left - grid_offset.x) / CELL_SIZE);
+			const y = Math.floor((touch.clientY - rect.top - grid_offset.y) / CELL_SIZE);
+
+			if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+				open_modal(x + 1, y + 1);
+			}
+		}
+	}
+	last_tap = current_time;
+	is_dragging = false;
+	container.classList.remove('grabbing');
+});
+
+container.addEventListener('touchcancel', () => {
+	is_dragging = false;
+	container.classList.remove('grabbing');
+});
+
+initialize_grid();
+body {
+    margin: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+}
+
+ul {
+	margin: 0;
+	padding-left: 1rem;
+}
+
+#grid-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    cursor: grab;
+    background: #242429;
+}
+
+#grid-container.grabbing {
+    cursor: grabbing;
+}
+
+#grid {
+    position: absolute;
+    transform-origin: 0 0;
+    width: 150000px; /* GRID_SIZE * CELL_SIZE */
+    height: 150000px;
+    background-image:
+		linear-gradient(to right, #eee 1px, transparent 1px),
+		linear-gradient(to bottom, #eee 1px, transparent 1px);
+    background-size: 150px 150px;
+    background-position: -1px -1px;
+	user-select: none;
+}
+
+.scroll {
+    position: absolute;
+    width: 280px;
+    height: 280px;
+    background: #f9f3e6;
+    border: 1px solid #dcc;
+    border-radius: 5px;
+    padding: 5px;
+    cursor: pointer;
+    overflow: hidden;
+	word-break: break-all;
+    box-sizing: border-box;
+    margin: 2px;
+}
+
+#scroll-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+	box-sizing: border-box;
+}
+
+#scroll-content {
+	overflow-y: scroll;
+	resize: none;
+	padding: .5rem;
+	font-family: inherit;
+	font-size: 1.5em;
+}
+
+#modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+}
+
+.modal-buttons {
+    margin-top: 1rem;
+    display: flex;
+    gap: .5rem;
+    justify-content: flex-end;
+}
+
+button {
+    padding: .5rem 1.5rem;
+    border-radius: .2rem;
+    border: none;
+    cursor: pointer;
+}
+
+button.primary {
+    background: #4a90e2;
+    color: #fff;
+}
+
+button.danger {
+    background: #e74c3c;
+    color: #fff;
+}
+
+#instructions-display, #coordinates-display {
+	position: fixed;
+	background: rgba(255,255,255,0.8);
+    padding: .5rem 1rem;
+    border-radius: 4px;
+}
+
+#instructions-display {
+    bottom: 1rem;
+    left: 1rem;
+}
+
+#coordinates-display {
+	top: 1rem;
+    left: 1rem;
+}
