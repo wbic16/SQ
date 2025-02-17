@@ -16,6 +16,7 @@ SQ is designed to keep abstractions to a minimum. You can interact with phexts v
 * sq help: displays online help
 * sq <file>: launches a server that hosts a phext file via shared memory
 * sq status: Displays daemon statistics (loaded phext, size, connection count)
+* sq toc: Displays a textmap (list of available scrolls) of the currently-loaded phext
 * sq push <coord> <file>: Overwrites the specified scroll with the local file
 * sq pull <coord> <file>: Fetches the specified scroll to a local file
 * sq select <coord>: Fetches content from the current phext
