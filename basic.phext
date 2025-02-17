@@ -110,7 +110,7 @@ async function fetchScroll(x, y) {
   try
   {
     const coordinate = `1.1.1/1.1.1/1.${x}.${y}`;
-    const select_url = `http://localhost:1337/api/v2/select?p=basic&c=${coordinate}`;
+    const select_url = `/api/v2/select?p=basic&c=${coordinate}`;
     const response = await fetch(select_url);
     const content = await response.text();
 
@@ -133,7 +133,7 @@ function save_scroll() {
   if (content && current_scroll) {
 	  scrolls.set(`${current_scroll.x},${current_scroll.y}`, content);
 		const coordinate = `1.1.1/1.1.1/1.${current_scroll.x}.${current_scroll.y}`;
-		const push_url = `http://localhost:1337/api/v2/update?p=basic&c=${coordinate}&s=${content}`;
+		const push_url = `/api/v2/update?p=basic&c=${coordinate}&s=${content}`;
 		fetch(push_url);
 	  render_visible_cells();
   }
