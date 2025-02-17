@@ -2,8 +2,8 @@ Hello WorldMore text here!Second Scroll1.2.11.8.2 goes here
 <html>
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <link rel="stylesheet" href="/api/v2/select?p=index&c=2.2.2/2.2.2/2.2.3&f=style.css">
-	<script src="/api/v2/select?p=index&c=2.2.2/2.2.2/2.2.2&f=main.js" defer></script>
+    <link rel="stylesheet" href="/api/v2/select?p=basic&c=2.2.2/2.2.2/2.2.3&f=style.css">
+	<script src="/api/v2/select?p=basic&c=2.2.2/2.2.2/2.2.2&f=main.js" defer></script>
 </head>
 <body>
     <div id="grid-container">
