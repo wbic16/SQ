@@ -42,6 +42,32 @@ fn fetch_source(filename: String) -> HashMap::<phext::Coordinate, String> {
 }
 
 // -----------------------------------------------------------------------------------------------------------
+// attempts to remove and re-create the .sq folder
+// -----------------------------------------------------------------------------------------------------------
+fn recreate_sq_work_files() {
+    let _ = std::fs::remove_dir_all(".sq");
+    let _ = std::fs::create_dir(".sq");
+}
+
+// -----------------------------------------------------------------------------------------------------------
+// Creates a 1 GB shared memory segment available at .sq/link
+// -----------------------------------------------------------------------------------------------------------
+fn create_shared_segment() -> Result<Shmem, ShmemError> {
+    ShmemConf::new().size(SHARED_SEGMENT_SIZE).flink(SHARED_NAME).create()
+}
+
+// -----------------------------------------------------------------------------------------------------------
+// Creates a 1 KB shared memory segment available at .sq/work
+// -----------------------------------------------------------------------------------------------------------
+fn create_work_segment() -> Result<Shmem, ShmemError> {
+    ShmemConf::new().size(WORK_SEGMENT_SIZE).flink(WORK_NAME).create()
+}
+
+fn is_basic_or_share(command: String) -> bool {
+    return command == "share" || command == "basic";
+}
+
+// -----------------------------------------------------------------------------------------------------------
 // sq program loop
 // -----------------------------------------------------------------------------------------------------------
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -50,15 +76,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let _ = std::fs::create_dir(".sq");
     }
 
-    let env_args_count = env::args().len();
-    let phext_or_port = env::args().nth(1).unwrap_or("".to_string());
+    let command = env::args().nth(1).unwrap_or("".to_string());
+    let phext_or_port = env::args().nth(2).unwrap_or("".to_string());
     let exists = std::fs::exists(phext_or_port.clone()).unwrap_or(false);
     let is_port_number = phext_or_port.parse::<u16>().is_ok();
 
     let mut loaded_phext = String::new();
     let mut loaded_map: HashMap<phext::Coordinate, String> = Default::default();
 
-    if exists == false && phext_or_port.len() > 0 && is_port_number {
+    if command == "host" && exists == false && phext_or_port.len() > 0 && is_port_number {
         let port = phext_or_port;
         let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).unwrap();
         println!("Listening on port {port}...");
@@ -72,42 +98,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
-    let mut attempts = 0;
+    if is_basic_or_share(command.clone()) {
+        recreate_sq_work_files();
+    }
 
     let (shmem, wkmem) = loop {
-        let shmem = match ShmemConf::new().size(SHARED_SEGMENT_SIZE).flink(SHARED_NAME).create() {
-            Ok(m) => m,
-            Err(ShmemError::LinkExists) => ShmemConf::new().flink(SHARED_NAME).open()?,
-            Err(e) => return Err(Box::new(e))
+        let shmem: Shmem = match create_shared_segment() {
+            Ok(s) => { s }
+            Err(ShmemError::LinkExists) => { ShmemConf::new().flink(SHARED_NAME).open()? }
+            Err(e) => { return Err(Box::new(e)); }
         };
-        let wkmem = match ShmemConf::new().size(WORK_SEGMENT_SIZE).flink(WORK_NAME).create() {
-            Ok(m) => m,
-            Err(ShmemError::LinkExists) => ShmemConf::new().flink(WORK_NAME).open()?,
-            Err(e) => return Err(Box::new(e)),
+        let wkmem: Shmem = match create_work_segment() {
+            Ok(w) => { w }
+            Err(ShmemError::LinkExists) => { ShmemConf::new().flink(WORK_NAME).open()? }
+            Err(e) => { return Err(Box::new(e)); }
         };
-
-        let mut retry = false;
-        attempts += 1;
-        if shmem.is_owner() == false {
-            let unusable = match unsafe { Event::from_existing(shmem.as_ptr()) }
-            {
-                Ok(_) => false,
-                Err(_) => true
-            };
-
-            if unusable && exists && env_args_count == 2 && attempts == 1 {
-                let _ = std::fs::remove_dir_all(".sq");
-                let _ = std::fs::create_dir(".sq");
-                retry = true;
-            }
-        }
-
-        if retry == false {
-            break (shmem, wkmem);
-        }
+        
+        break (shmem, wkmem);
     };
 
-    if shmem.is_owner() { return server(shmem, wkmem); }
+    if shmem.is_owner() && is_basic_or_share(command) { return server(shmem, wkmem); }
     else                { return client(shmem, wkmem); }
 }
 
@@ -272,7 +282,13 @@ fn server(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
     let ps2: phext::Coordinate = phext::to_coordinate("1.1.1/1.1.1/1.1.2");
     let ps3: phext::Coordinate = phext::to_coordinate("1.1.1/1.1.1/1.1.3");
 
-    let mut filename = env::args().nth(1).expect("Usage: sq.exe <phext>|<port>");
+    let command = env::args().nth(1).unwrap_or("".to_string());    
+    let mut filename: String;
+    if command == "basic" {
+        filename = "index".to_string();
+    } else {
+        filename = env::args().nth(2).expect("Usage: sq share <phext> or sq host <port>");
+    }
 
     println!("Operating in daemon mode.");
 

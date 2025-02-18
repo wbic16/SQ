@@ -14,7 +14,7 @@ you can either clone this repo and run `cargo build`, or just install the latest
 SQ is designed to keep abstractions to a minimum. You can interact with phexts via shared memory (daemon "esque" mode) or a TCP socket ("seek" mode) with a simple REST API.
 
 * sq help: displays online help
-* sq <file>: launches a server that hosts a phext file via shared memory
+* sq share: <file>: launches a server that hosts a phext file via shared memory
 * sq status: Displays daemon statistics (loaded phext, size, connection count)
 * sq toc: Displays a textmap (list of available scrolls) of the currently-loaded phext
 * sq push <coord> <file>: Overwrites the specified scroll with the local file

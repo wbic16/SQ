@@ -24,8 +24,9 @@ pub fn process(connection_id: u64, source: String, scroll: &mut String, command:
         *scroll = "
 * help: display this online help screen
 * status: display daemon statistics
-* <file>: Hosts a new phext on startup if no daemon is running yet (creates a .sq directory)
-* <port>: Starts sq in listening mode (bypassing daemon setup) - see the REST API reference
+* basic: launch a phext4d editor running on port 1337
+* share <file>: Hosts a new phext on startup if no daemon is running yet (creates a .sq directory)
+* host <port>: Starts sq in listening mode (bypassing daemon setup) - see the REST API reference
 * toc: Dumps the current navigation table for the loaded phext
 * slurp <coord> <directory>: Creates a TOC for files in the given directory, and imports any plain-text files found
 * push <coord> <file>: Imports a file into your phext at the given coordinate
