@@ -118,7 +118,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     if shmem.is_owner() && is_basic_or_share(command) { return server(shmem, wkmem); }
-    else                { return client(shmem, wkmem); }
+    else { return client(shmem, wkmem); }
 }
 
 // -----------------------------------------------------------------------------------------------------------
