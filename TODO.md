@@ -10,3 +10,6 @@
   * 3.x.x/*/*: spouse
   * 4.x.x/*/*: howto
   * 5.x.x/*/*: work
+* mind meld API
+  * request-response cycles
+  * dopamine training hacks
