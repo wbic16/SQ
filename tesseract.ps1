@@ -1,16 +1,16 @@
 param(
   [int] $N = 10
 )
-function bg() {Start-Process -NoNewWindow @args}
+function bg() {Start-Process -NoNewWindow -PassThru @args}
 
 $sc = 1
 $sn = 1
 $ch = 1
 $bk = 1
-Stop-Process -Name "sq.exe"
+Stop-Process -Name "sq.exe" |Out-Null 2>&1 6>&1
 Remove-Item -Recurse -Force ".sq"
 cargo build --release
-bg .\target\release\sq.exe tesseract.phext >tesseract.stdout 2>tesseract.stderr 6>&1
+(bg "`".\target\release\sq.exe`" `"share`" `"tesseract.phext`"" >tesseract.stdout 2>tesseract.stderr 6>&1)
 while ($bk -lt $N) {
   while ($ch -lt $N) {
     while ($sn -lt $N) {
