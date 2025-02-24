@@ -1,3 +1,8 @@
+* Radical Wisdom Demos
+  * HTTP/1.1 content streams
+  * Broken JSON/XML Documents
+  * Scaling Your Tools with Phext and SQ
+  * Exocortical Vision
 * integrate hierarchical content hashing (see libphext)
 * concurrent benchmarks
 * rebase hello-phext upon sq
