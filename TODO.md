@@ -3,6 +3,11 @@
   * Broken JSON/XML Documents
   * Scaling Your Tools with Phext and SQ
   * Exocortical Vision
+  * phext vs tar
+  * phext vs text
+  * phext vs JSON
+  * phext vs XML
+  * phext vs YAML
 * integrate hierarchical content hashing (see libphext)
 * concurrent benchmarks
 * rebase hello-phext upon sq
