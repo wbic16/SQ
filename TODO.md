@@ -1,6 +1,13 @@
 * Radical Wisdom Demos
   * HTTP/1.1 content streams
   * Broken JSON/XML Documents
+  * DNA Analysis
+  * Phext Widgets
+  * Disk Bandwidth Scaling
+    * 2000: 100 MB/sec
+    * 2015: 150 MB/sec
+    * 2025: 2 GB/sec
+    * 2035: 2 TB/sec
   * Scaling Your Tools with Phext and SQ
   * Exocortical Vision
   * phext vs tar
