@@ -1,6 +1,9 @@
 * Radical Wisdom Demos
   * HTTP/1.1 content streams
   * Broken JSON/XML Documents
+  * REST throughput fetching database records
+  * daemon throughput streaming thoughts to disk
+  * consolidating agent thoughtstreams
   * DNA Analysis
   * Phext Widgets
   * Disk Bandwidth Scaling
