@@ -6,6 +6,7 @@
   * consolidating agent thoughtstreams
   * DNA Analysis
   * Phext Widgets
+  * Merging content at scale
   * Disk Bandwidth Scaling
     * 2000: 100 MB/sec
     * 2015: 150 MB/sec
@@ -30,6 +31,8 @@
   * 3.x.x/*/*: spouse
   * 4.x.x/*/*: howto
   * 5.x.x/*/*: work
+  * 6.x.x/*/*: knowledge
+  * 7.x.x/*/*: science
 * mind meld API
   * request-response cycles
   * dopamine training hacks
