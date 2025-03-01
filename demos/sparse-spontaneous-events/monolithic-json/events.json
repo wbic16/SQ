@@ -1,0 +1,64 @@
+{
+  "events": [
+    {
+      "user": "will@phext.io",
+      "timestamp": "March 1, 2025 9:14 AM",
+      "message": "I dropped my dogs off at the kennel for the weekend."
+    },
+    {
+      "user": "will@phext.io",
+      "timestamp": "March 1, 2025 9:15 AM",
+      "message": "I had two donuts for breakfast today."
+    },
+    {
+      "user": "will@phext.io",
+      "timestamp": "March 1, 2025 9:16 AM",
+      "message": "I took one dose of Nyquil last night."
+    },
+    {
+      "user": "libby@phext.io",
+      "timestamp": "March 1, 2025 9:17 AM",
+      "message": "I think I'll play Stardew Valley for a bit."
+    },
+    {
+      "user": "will@phext.io",
+      "timestamp": "March 1, 2025 9:18 AM",
+      "message": "I'm working on a phext demo."
+    },
+    {
+      "user": "will@phext.io",
+      "timestamp": "March 1, 2025 9:19 AM",
+      "message": "Worked examples really are best."
+    },
+    {
+      "user": "libby@phext.io",
+      "timestamp": "March 1, 2025 9:20 AM",
+      "message": "We need to prepare for our trip."
+    },
+    {
+      "user": "will@phext.io",
+      "timestamp": "March 1, 2025 9:21 AM",
+      "message": "Complexity is the root of all evil."
+    },
+    {
+      "user": "will@phext.io",
+      "timestamp": "March 1, 2025 9:22 AM",
+      "message": "Do you prefer Diet Coke or Diet Dr Pepper?"
+    },
+    {
+      "user": "will@phext.io",
+      "timestamp": "March 1, 2025 9:23 AM",
+      "message": "We should use some ice breakers for onboarding."
+    },
+    {
+      "user": "will@phext.io",
+      "timestamp": "March 1, 2025 9:24 AM",
+      "message": "What makes me so certain about phext?"
+    },
+    {
+      "user": "will@phext.io",
+      "timestamp": "March 1, 2025 9:25 AM",
+      "message": "Perhaps these demos will help others understand what I see."
+    }
+  ]
+}

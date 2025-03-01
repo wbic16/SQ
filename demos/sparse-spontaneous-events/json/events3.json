@@ -1,0 +1,24 @@
+{
+  "events": [
+    {
+      "user": "will@phext.io",
+      "timestamp": "March 1, 2025 9:22 AM",
+      "message": "Do you prefer Diet Coke or Diet Dr Pepper?"
+    },
+    {
+      "user": "will@phext.io",
+      "timestamp": "March 1, 2025 9:23 AM",
+      "message": "We should use some ice breakers for onboarding."
+    },
+    {
+      "user": "will@phext.io",
+      "timestamp": "March 1, 2025 9:24 AM",
+      "message": "What makes me so certain about phext?"
+    },
+    {
+      "user": "will@phext.io",
+      "timestamp": "March 1, 2025 9:25 AM",
+      "message": "Perhaps these demos will help others understand what I see."
+    }
+  ]
+}

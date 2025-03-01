@@ -1,0 +1,24 @@
+{
+  "events": [
+    {
+      "user": "will@phext.io",
+      "timestamp": "March 1, 2025 9:18 AM",
+      "message": "I'm working on a phext demo."
+    },
+    {
+      "user": "will@phext.io",
+      "timestamp": "March 1, 2025 9:19 AM",
+      "message": "Worked examples really are best."
+    },
+    {
+      "user": "libby@phext.io",
+      "timestamp": "March 1, 2025 9:20 AM",
+      "message": "We need to prepare for our trip."
+    },
+    {
+      "user": "will@phext.io",
+      "timestamp": "March 1, 2025 9:21 AM",
+      "message": "Complexity is the root of all evil."
+    }
+  ]
+}

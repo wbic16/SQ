@@ -1,0 +1,24 @@
+{
+  "events": [
+    {
+      "user": "will@phext.io",
+      "timestamp": "March 1, 2025 9:14 AM",
+      "message": "I dropped my dogs off at the kennel for the weekend."
+    },
+    {
+      "user": "will@phext.io",
+      "timestamp": "March 1, 2025 9:15 AM",
+      "message": "I had two donuts for breakfast today."
+    },
+    {
+      "user": "will@phext.io",
+      "timestamp": "March 1, 2025 9:16 AM",
+      "message": "I took one dose of Nyquil last night."
+    },
+    {
+      "user": "libby@phext.io",
+      "timestamp": "March 1, 2025 9:17 AM",
+      "message": "I think I'll play Stardew Valley for a bit."
+    }
+  ]
+}
