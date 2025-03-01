@@ -48,17 +48,17 @@ OK, so using the file system was a worse idea. What happens if we stuff all of o
 
 Tab-Delimited
 -------------
-The problem with monolithic-json is that it doesn't feel like information we can use directly. Maybe a tab-delimited file will work better?
+The problem with monolithic-json is that it doesn't feel like information we can use directly. Maybe a tab-delimited file will work better? We'll get some space savings on the live DB by keeping a user lookup table. It complicates the format, but seems to be worth it - we're up to 15B live messages per TB!
 
 - Messages Encoded: 12
 - Files: 1
 - Data Structure: entries are rows in a table
-- Zip Compression: 729 bytes
-- 7z Compression: 641 bytes
-- Uncompressed Size: 961 bytes
+- Zip Compression: 748 bytes
+- 7z Compression: 661 bytes
+- Uncompressed Size: 869 bytes
 - Disk Space Per Message: 80 bytes
-- Live DB: 13.7 billion messages/TB
-- Archive: 20.5 billion messages/TB
+- Live DB: 15 billion messages/TB
+- Archive: 20 billion messages/TB
 
 Phext
 -----
@@ -81,9 +81,9 @@ When inserting content into our phext dataset, we can now choose our index from 
 - Messages Encoded: 12
 - Files: 1
 - Data Structure: hierarchical plain text
-- Zip Compression: 557 bytes (larger if compressed)
-- 7z Compression: 557 bytes (larger if compressed)
-- Uncompressed Size: 557 bytes
+- Zip Compression: 575 bytes (larger if compressed)
+- 7z Compression: 566 bytes
+- Uncompressed Size: 575 bytes
 - Disk Space Per Message: 46 bytes
 - Live DB: 23.6 billion messages/TB
 - Archive: 23.6 billion messages/TB
