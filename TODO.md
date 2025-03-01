@@ -1,24 +1,18 @@
 * Radical Wisdom Demos
+  * Exocortical Minds
   * HTTP/1.1 content streams
-  * Broken JSON/XML Documents
   * REST throughput fetching database records
   * daemon throughput streaming thoughts to disk
-  * consolidating agent thoughtstreams
   * DNA Analysis
   * Phext Widgets
   * Merging content at scale
   * Disk Bandwidth Scaling
-    * 2000: 100 MB/sec
-    * 2015: 150 MB/sec
-    * 2025: 2 GB/sec
-    * 2035: 2 TB/sec
-  * Scaling Your Tools with Phext and SQ
-  * Exocortical Vision
-  * phext vs tar
-  * phext vs text
-  * phext vs JSON
-  * phext vs XML
-  * phext vs YAML
+  * phext arena
+    * phext vs text (EZ Mode)
+    * phext vs tar (readable archives!?)
+    * phext vs JSON (scalability and error-handling)
+    * phext vs XML (markup is slow)
+    * phext vs YAML (finish it!)
 * integrate hierarchical content hashing (see libphext)
 * concurrent benchmarks
 * rebase hello-phext upon sq
