@@ -8,7 +8,7 @@ File System
 Using the file system, we run into massive inefficiency - every file consumes 4 KB, so we've consumed 100x the disk space required by our dataset.
 
 - Messages Encoded: 12
-- Files: 12
+- Files: 13
 - Data Structure: each file encodes the user and timestamp in the filename, and the message as file content
 - Zip Compression: 3,116 bytes
 - 7z Compression: 760 bytes
