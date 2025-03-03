@@ -1,0 +1,284 @@
+body {
+  background: #101419;
+  color: white;
+  font-family: sans-serif;
+  font-size: 1.4em;
+}
+#root {
+  margin: 0 auto;
+  width: 80%;
+}
+a, a:visited {
+  color: white;
+  font-size: 1.6em;
+}
+a.small, a.small:visited {
+  font-size: 1em;
+}
+.number {
+  font-weight: bold;
+  color: #8f8fd7;
+}
+.coordinates {
+  font-style: italic;
+  color: #8fef62;
+}
+input {
+  border: 2px solid white;
+  border-radius: 1px;
+  padding: 4px;
+  margin: 1px;
+  margin-bottom: 4px;
+}
+#copyright {
+  margin-top: 20px;
+  font-size: 0.8em;
+  font-weight: bold;
+  font-family: monospace;
+}
+.commandBar {
+  min-width: 720px;
+}
+#console {
+  float: left;
+  width: 50%;
+  height: 1000px;
+  border: 1px solid grey;
+  color: #e0ffe0;
+}
+#phext {
+  width: 90%;  
+  border: 3px solid grey;
+  border-radius: 8px;
+  margin: 0;
+  padding: 0;
+  padding: 30px;
+  padding-left: 100px;
+}
+#phext ul,
+#phext ul li {
+  margin: 0;
+  padding: 0;
+}
+textarea {
+  font-family: monospace;
+}
+.coordheader {
+  text-align: right;
+  width: 120px;
+}
+th {
+  text-align: right;
+  padding: 0;
+}
+#hyperJump {
+  width: 80px;
+  height: 23px;
+}
+#coordsX,
+#coordsY,
+#coordsZ,
+#pscrollbreak,
+#psectionbreak,
+#pchapterbreak,
+#pbookbreak,
+#pvolumebreak,
+#pcollectionbreak,
+#pseriesbreak,
+#pshelfbreak,
+#plibrarybreak,
+#targetCoordinates {
+  font-family: monospace;
+  margin: 0;
+  padding: 0;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+#targetCoordinates {
+  font-size: 1.6em;
+}
+#greyPill {
+  background: grey;
+  color: black;
+}
+#redPill {
+  background: red;
+  color: white;
+}
+#bluePill {
+  background: blue;
+  color: white;
+}
+#whitePill {
+  background: white;
+  color: black;
+}
+#purplePill {
+  background: purple;
+  color: white;
+}
+#orangePill {
+  background: orange;
+  color: black;
+}
+.pill {
+  font-weight: bold;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 20px;
+  transition: transform 0.8s;
+}
+.pill:hover {
+  transform: scale(1.25);
+  cursor: pointer;
+  border-color: grey;
+}
+#subspaceTitle {
+  min-width: 200px;
+}
+#subspace {
+  position: relative;
+  z-index: 1;
+}
+#visualizer {
+  position: absolute;
+  top: 200px;
+  right: 100px;
+  width: 300px;
+}
+#qrcode {
+  border: 32px solid yellow;
+  width: 640px;
+  height: 640px;
+  background: url(v3.4-launch.webp) top left no-repeat;
+  z-index: 2;
+  display: none;
+}
+#linkArea {
+  padding: 16px;
+  clear: both;
+}
+#seed {
+  padding: 4px;
+  margin: 4px;
+}
+#seeds {
+  padding: 4px;
+  margin: 4px;
+  font-size: 1em;
+  font-weight: bold;
+  width: 250px;
+}
+#quest {
+  width: 94%;
+  min-height: 300px;
+  margin: 0 auto;
+  display: none;
+}
+.tiles {
+  width: 90%;
+  min-width: 800px;
+}
+.nodes {
+  width: 90%;
+}
+.node {
+  float: left;
+  width: 300px;
+  min-height: 100px;
+  height: 100px;
+  border: 1px solid #dcdcd0;
+  background-color: #202020;
+  border-radius: 4px;
+  margin: 4px;
+  padding: 2px;
+  margin-right: 6px;
+  position: relative;
+  font-size: 0.8em;
+  overflow: auto;
+  z-index: 100;
+  transition: transform 1.2s;
+}
+.node:hover {
+  transform: scale(1.2);
+  min-height: 300px;
+  cursor: pointer;
+  z-index: 101;
+  border-color: yellow;
+}
+.node:hover {
+  background-color: #454647;
+  color: #e0e0e0;
+  cursor: hand;
+}
+.node input {
+  display: none;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+}
+#goal {
+  border: 3px solid grey;
+  border-radius: 8px;
+  width: 80%;
+  min-height: 110px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+#goal a,
+#goal a:visited {
+  font-size: 1em;
+}
+#goal ul {
+  padding: 10px;
+}
+#goal li {
+  margin-bottom: 4px;
+}
+ul#discovery {
+  list-style-type: none;
+}
+ul#discovery li {
+  background-color: #424242;
+}
+ul#discovery li input {
+  width: 80px;
+  margin: 16px;
+  margin-right: 32px;
+}
+#tab_buttons {
+  margin-bottom: 10px;    
+}
+.tabbutton {
+  width: 120px;
+  margin: 0px;
+  padding: 4px;
+  text-align: right;
+  font-family: monospace;
+}
+#tab_editor {
+  width: 80%;
+  min-height: 400px;
+}
+#logo {
+  background: url("phext-logo.png") top left no-repeat;
+  width: 128px;
+  height: 128px;
+  position: absolute;
+  top: 10px;
+  left: 5%;
+  z-index: 2;
+  padding-top: 130px;
+  padding-left: 16px;
+}
+table,
+table tr th,
+table tr td {
+  border-collapse: collapse;
+  border: 1px solid #454647;
+  padding: 20px;
+  padding-left: 40px;
+  padding-right: 60px;
+  margin: 0px;
+}
+th { text-align: left; font-size: 1.1em; text-decoration: underline; }
