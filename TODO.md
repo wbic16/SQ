@@ -1,7 +1,5 @@
-* Radical Wisdom Demos
+* Demos
   * Exocortical Minds
-  * Sparse Spontaneous Events
-  * HTTP/1.1 content streams
   * REST throughput fetching database records
   * daemon throughput streaming thoughts to disk
   * DNA Analysis
