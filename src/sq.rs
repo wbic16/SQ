@@ -29,6 +29,7 @@ pub fn process(connection_id: u64, source: String, scroll: &mut String, command:
 * host <port>: Starts sq in listening mode (bypassing daemon setup) - see the REST API reference
 * toc: Dumps the current navigation table for the loaded phext
 * slurp <coord> <directory>: Creates a TOC for files in the given directory, and imports any plain-text files found
+* diff <other>: Creates a phext-diff of the currently-loaded phext and other
 * push <coord> <file>: Imports a file into your phext at the given coordinate
 * pull <coord> <file>: Exports a scroll to a file of your choice
 * select <coord>: fetch a scroll of text from the loaded phext
@@ -46,6 +47,14 @@ pub fn process(connection_id: u64, source: String, scroll: &mut String, command:
 Connection ID: {}
 Phext Size: {}
 Scrolls: {}", source, connection_id, buffer.len(), phext_map.iter().size_hint().0);
+        return false;
+    }
+
+    if command == "diff" {
+        
+        let compare = phext::implode(phext_map.clone());
+        let diff = phext::subtract(update.as_str(), compare.as_str());
+        *scroll = phext::textmap(diff.as_str());
         return false;
     }
 
