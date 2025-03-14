@@ -51,7 +51,7 @@ The shampoo sales dataset is too small to draw any conclusions from. The beer an
   * JSON: 169 bytes/record live, 8.4 bytes/record compressed
   * Phext: 11.7 bytes/record live, 7.1 bytes/record quined, 3.7 bytes/record compressed
 
-In the extreme, we see daily time series data is significantly more efficient in phext.
+In the extreme, we see daily time series data is significantly more efficient in phext. Note that the phext file is more useful, as it contains instructions for preparing the data - AND - it is more efficient.
 
   * CSV: 3.6 bytes/record compressed
   * JSON: 5.8 bytes/record compressed
