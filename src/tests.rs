@@ -111,6 +111,32 @@ fn test_toc() {
 }
 
 #[test]
+fn convert_from_csv() {
+  let csv = "Field 1,Field 2,Field 3\nalpha,beta,gamma\n1,2,3\na,b,c";
+  //let phext = phext::csv_convert(csv);
+  
+  // dates -> 3 coordinates
+  // numbers -> compressed coordinates
+  // lookup tables otherwise
+
+  // example
+  // 2.1.1/1.1.1/1.1.1 Field 1
+  // 2.1.1/1.1.1/1.2.1 Field 2
+  // 2.1.1/1.1.1/1.3.1 Field 3
+  // 3.1.1/1.1.1/1.1.1 alpha
+  // 3.1.1/1.1.1/1.1.2 beta
+  // 3.1.1/1.1.1/1.1.3 gamma
+  // 3.1.1/1.1.1/1.2.1 1
+  // 3.1.1/1.1.1/1.2.2 2
+  // 3.1.1/1.1.1/1.2.3 3
+  // 3.1.1/1.1.1/1.3.1 a
+  // 3.1.1/1.1.1/1.3.2 b
+  // 3.1.1/1.1.1/1.3.3 c
+  
+  // the initial pass just maps inputs to a coordinate
+}
+
+#[test]
 fn test_exit() {
   let mut scroll = String::new();
   let command = "shutdown".to_string();
