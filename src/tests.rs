@@ -137,6 +137,16 @@ fn convert_from_csv() {
 }
 
 #[test]
+fn convert_from_json() {
+
+}
+
+#[test]
+fn convert_from_xml() {
+  
+}
+
+#[test]
 fn test_exit() {
   let mut scroll = String::new();
   let command = "shutdown".to_string();
