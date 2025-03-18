@@ -54,11 +54,6 @@ SQ offers a simple CRUD-style REST API. The API allows you to interact with mult
 * /api/v2/update?p=<phext>&c=<coordinate>&s=<scroll>: Overwrites the contents of the scroll at `coordinate` in `phext`.phext
 * /api/v2/delete?p=<phext>&c=<coordinate>: Clears the contents of the scroll at `coordinate` in `phext`.phext
 
-## Linux
-- `reset.sh`: removes the .sq folder from the file system and starts an instance on `world.phext`
-
-## Windows
-- `reset.ps1`: same as reset.sh, but in PowerShell
 
 # Trivia
 
