@@ -19,6 +19,18 @@ pub fn args_required(command:&str) -> usize {
     return 3;
 }
 
+//------------------------------------------------------------------------------------------------------------
+// process: performs the command line action for a given user request
+//
+// @param connection_id
+// @param source
+// @param scroll
+// @param command
+// @param phext_map
+// @param coordinate
+// @param update
+// @param filename
+//------------------------------------------------------------------------------------------------------------
 pub fn process(connection_id: u64, source: String, scroll: &mut String, command: String, phext_map: &mut HashMap::<phext::Coordinate, String>, coordinate: phext::Coordinate, update: String, filename: String) -> bool {
     if command == "help" {
         *scroll = "
@@ -128,4 +140,23 @@ Scrolls: {}", source, connection_id, buffer.len(), phext_map.iter().size_hint().
 
     *scroll = format!("Unexpected command ignored.");
     return false;
+}
+
+//------------------------------------------------------------------------------------------------------------
+// csv_convert
+//------------------------------------------------------------------------------------------------------------
+pub fn csv_convert(csv: &str) -> HashMap::<phext::Coordinate, String>
+{
+    let parts = csv.split('\n');
+    let mut coordinate = phext::to_coordinate("1.1.1/1.1.1/1.1.1");
+    let mut result = HashMap::<phext::Coordinate, String>::new();
+    for part in parts {
+        let fields = part.split(',');
+        for field in fields {
+            result.insert(coordinate, field.to_string());
+            coordinate.scroll_break();
+        }
+        coordinate.section_break();
+    }
+    return result;
 }
