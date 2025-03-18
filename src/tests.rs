@@ -143,7 +143,11 @@ fn convert_from_json() {
 
 #[test]
 fn convert_from_xml() {
-  
+  // <tag a1="1" a2="2">value</tag>
+  // <group>
+  //   <tag a1="alpha" b1="beta" />
+  //   <tag a1="gamma" b1="delta">epsilon</tag>
+  // </group> 
 }
 
 #[test]
