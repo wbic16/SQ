@@ -138,7 +138,7 @@ fn convert_from_csv() {
 
 #[test]
 fn convert_from_json() {
-
+  // { "field": "value", "field2": "value 2" }
 }
 
 #[test]
