@@ -1,0 +1,16 @@
+{
+  "human-brain": {
+    "summary": "A human neocortex contains four lobes.",
+    "neocortex": {
+      "lobes": [
+        "frontal",
+        "parietal",
+        "occipital",
+        "temporal"
+      ]
+    }
+  },
+  "dolphin-brain": {
+    "summary": "A dolphin brain contains three hemispheres."
+  }
+}
