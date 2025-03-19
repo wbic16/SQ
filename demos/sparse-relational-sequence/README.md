@@ -7,13 +7,19 @@ A sparse relational sequence is much like DNA.
 
 # Examples
 
+In this example, we see that Phext encodes the essential relationships in about half the space required by XML. Phext is already compressed for this case, as evidenced by zip expanding the file size.
+
 ## JSON
 
-
+* 314 bytes raw
+* 308 bytes zip
 
 ## XML
 
-<brain>
-</brain>
+* 369 bytes raw
+* 306 bytes zip
 
 ## Phext
+
+* 179 bytes raw
+* 272 bytes zip

@@ -1,4 +1,4 @@
 human-brain
-A human neocortex contains four lobes.
-frontalparietaloccipitaltemporaldolphin-brain
-A dolphin brain contains three hemispheres.
+summary: A human neocortex contains four lobes.
+neocortex/lobes:frontalparietaloccipitaltemporaldolphin-brain
+summary: A dolphin brain contains three hemispheres.
