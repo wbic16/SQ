@@ -1,0 +1,14 @@
+<human-brain>
+  <summary>A human neocortex contains four lobes.</summary>
+  <neocortex>
+    <lobes>
+      <lobe id="frontal" />
+      <lobe id="parietal" />
+      <lobe id="occipital" />
+      <lobe id="temporal" />
+    </lobes>
+  </neocortex>
+</human-brain>
+<dolphin-brain>
+  <summary>A dolphin brain contains three hemispheres.</summary>
+</dolphin-brain>
