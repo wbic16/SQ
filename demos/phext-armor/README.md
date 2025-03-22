@@ -22,3 +22,9 @@ We'll use the data files from the sparse relational sequence as a baseline.
 ## Phext
 
 * 5/179 critical bytes = 2.8% of the data stream
+
+# Downstream Effects
+
+Lossy channels affect XML and JSON at 3.5x higher rates. Consider the effect on parsing failures at scale.
+
+It's also easier to patch phext documents with waypoints - the structure of an xml or json document degrades if it cannot be parsed - whereas a phext document could be restored given a known scroll coordinate.
