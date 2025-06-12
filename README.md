@@ -2,12 +2,12 @@ Esque
 -----
 SQ: The Simple Query Tool
 
-SQ is a modern database, written from the ground-up to take advantage of Phext: 11-dimensional plain hypertext. Like normal SQL databases, it has multiple pronunciations: "esque", "S-Q", and "Seek".
+SQ is a modern database, written from the ground-up to take advantage of Phext: 11-dimensional plain hypertext. Like normal SQL databases, it has multiple pronunciations: "esque", "S-Q", "Seek", "Super Quine", and "Self Query".
 
 
 ## Getting Started
 
-you can either clone this repo and run `cargo build`, or just install the latest stable build: `cargo install sq`.
+you can either clone this repo and run `cargo build`, or just install the latest stable build: `cargo install sq`. You may have also arrived here from Choose Your Own Adventure...
 
 ## Commands
 
@@ -59,3 +59,5 @@ SQ offers a simple CRUD-style REST API. The API allows you to interact with mult
 
 The name SQ was inspired by this tweet:
 https://x.com/HSVSphere/status/1849817225038840016
+
+SQ was bundled into CYOA on 6/12/2025.
