@@ -14,6 +14,7 @@ you can either clone this repo and run `cargo build`, or just install the latest
 SQ is designed to keep abstractions to a minimum. You can interact with phexts via shared memory (daemon "esque" mode) or a TCP socket ("seek" mode) with a simple REST API.
 
 * sq help: displays online help
+* sq version: displays the current version
 * sq share: <file>: launches a server that hosts a phext file via shared memory
 * sq status: Displays daemon statistics (loaded phext, size, connection count)
 * sq toc: Displays a textmap (list of available scrolls) of the currently-loaded phext
@@ -50,6 +51,7 @@ In listening mode, SQ reads and writes phexts via REST.
 
 SQ offers a simple CRUD-style REST API. The API allows you to interact with multiple phexts from CURL or your web browser. Saving is automatic - if a command changes the content of a phext, it will be saved to disk immediately. Note that if you change the loaded phext without issuing a load command, SQ will automatically reload from disk first.
 
+* /api/v2/version: Displays the current version of SQ
 * /api/v2/load?p=<phext>: Loads the entire contents of `phext`.phext into the current context
 * /api/v2/select?p=<phext>&c=<coordinate>: Fetches the scroll of text found at `coordinate` in `phext`.phext
 * /api/v2/insert?p=<phext>&c=<coordinate>&s=<scroll>: Appends a scroll of text at `coordinate` in `phext`.phext

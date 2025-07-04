@@ -54,6 +54,11 @@ pub fn process(connection_id: u64, source: String, scroll: &mut String, command:
         return false;
     }
 
+    if command == "version" {
+        *scroll = format!("{}", env!("CARGO_PKG_VERSION"));
+        return false;
+    }
+
     if command == "status" {
         let buffer = phext::implode(phext_map.clone());
         *scroll = format!("Hosting: {}
