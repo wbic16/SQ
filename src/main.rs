@@ -241,6 +241,10 @@ fn handle_tcp_connection(loaded_phext: &mut String, loaded_map: &mut HashMap<phe
         command = "checksum".to_string();
     } else if request.starts_with("GET /api/v2/toc") {
         command = "toc".to_string();
+    } else if request.starts_with("GET /api/v2/get") {
+        command = "get".to_string();
+    } else if request.starts_with("GET /api/v2/delta") {
+        command = "delta".to_string();
     }
 
     if reload_needed {

@@ -40,6 +40,7 @@ pub fn process(connection_id: u64, source: String, scroll: &mut String, command:
 * share <file>: Hosts a new phext on startup if no daemon is running yet (creates a .sq directory)
 * host <port>: Starts sq in listening mode (bypassing daemon setup) - see the REST API reference
 * toc: Dumps the current navigation table for the loaded phext
+* get <file>: Returns the contents of the given phext in one response
 * slurp <coord> <directory>: Creates a TOC for files in the given directory, and imports any plain-text files found
 * diff <other>: Creates a phext-diff of the currently-loaded phext and other
 * push <coord> <file>: Imports a file into your phext at the given coordinate
@@ -76,9 +77,22 @@ Scrolls: {}", source, connection_id, buffer.len(), phext_map.iter().size_hint().
         return false;
     }
 
+    if command == "get" {
+        let message = "Unable to open requested phext ".to_string() + filename.as_str();
+        let buffer:String = std::fs::read_to_string(filename).expect(&message);
+        *scroll = buffer;
+        return false;
+    }
+
     if command == "checksum" {
         let serialized = phext::implode(phext_map.clone());
         *scroll = phext::checksum(serialized.as_str());
+        return false;
+    }
+
+    if command == "delta" {
+        let result = phext::manifest(phext::implode(phext_map.clone()).as_str());
+        *scroll = result;
         return false;
     }
 

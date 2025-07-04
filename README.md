@@ -17,6 +17,8 @@ SQ is designed to keep abstractions to a minimum. You can interact with phexts v
 * sq share: <file>: launches a server that hosts a phext file via shared memory
 * sq status: Displays daemon statistics (loaded phext, size, connection count)
 * sq toc: Displays a textmap (list of available scrolls) of the currently-loaded phext
+* sq checksum: Displays the checksum of the current phext
+* sq delta: Displays the hierarchical network of checksums for the current phext
 * sq push <coord> <file>: Overwrites the specified scroll with the local file
 * sq pull <coord> <file>: Fetches the specified scroll to a local file
 * sq select <coord>: Fetches content from the current phext
@@ -53,7 +55,9 @@ SQ offers a simple CRUD-style REST API. The API allows you to interact with mult
 * /api/v2/insert?p=<phext>&c=<coordinate>&s=<scroll>: Appends a scroll of text at `coordinate` in `phext`.phext
 * /api/v2/update?p=<phext>&c=<coordinate>&s=<scroll>: Overwrites the contents of the scroll at `coordinate` in `phext`.phext
 * /api/v2/delete?p=<phext>&c=<coordinate>: Clears the contents of the scroll at `coordinate` in `phext`.phext
-
+* /api/v2/delta?p=<phext>: Returns the hierarchical map of checksums for the given phext
+* /api/v2/toc?p=<phext>: Returns the table of contents for the given phext
+* /api/v2/get?p=<phext>: Returns a complete copy of the given phext
 
 # Trivia
 
