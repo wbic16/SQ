@@ -96,8 +96,34 @@ Scrolls: {}", source, connection_id, buffer.len(), phext_map.iter().size_hint().
     }
 
     if command == "delta" {
-        let result = phext::manifest(phext::implode(phext_map.clone()).as_str());
-        *scroll = result;
+        let mut diff_map = phext_map.clone();
+        let mut output = String::new();
+        for line in update.lines() {
+            let parsed:Vec<&str> = line.split(": ").collect();
+            if parsed.len() == 0 { continue; }
+            let parsed_coordinate = phext::to_coordinate(parsed[0]);
+            if parsed_coordinate.validate_coordinate() && parsed.len() > 1 {
+                let parsed_hash = parsed[1];
+                diff_map.insert(parsed_coordinate, parsed_hash.to_string());
+            }
+        }
+        for key in phext_map.keys() {
+            let checksum = phext::checksum(phext_map[key].as_str());
+            let formatted_key_checksum: String = format!("{}: {}\n", key, checksum);
+            if diff_map.contains_key(key) {
+                if checksum != diff_map[key] {
+                    output += &formatted_key_checksum.clone();
+                }
+            } else {
+                output += &formatted_key_checksum.clone();
+            }
+        }
+        for key in diff_map.keys() {
+            if phext_map.contains_key(key) == false {
+                output += &format!("{}: Missing\n", key);
+            }
+        }
+        *scroll = output;
         return false;
     }
 
