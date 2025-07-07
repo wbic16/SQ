@@ -96,8 +96,8 @@ Scrolls: {}", source, connection_id, buffer.len(), phext_map.iter().size_hint().
     }
 
     if command == "delta" {
-        let mut diff_map = phext_map.clone();
-        let mut output = String::new();
+        let mut diff_map: HashMap<phext::Coordinate, String> = Default::default();
+        let mut output:HashMap<phext::Coordinate, String> = Default::default();
         for line in update.lines() {
             let parsed:Vec<&str> = line.split(": ").collect();
             if parsed.len() == 0 { continue; }
@@ -109,21 +109,16 @@ Scrolls: {}", source, connection_id, buffer.len(), phext_map.iter().size_hint().
         }
         for key in phext_map.keys() {
             let checksum = phext::checksum(phext_map[key].as_str());
-            let formatted_key_checksum: String = format!("{}: {}\n", key, checksum);
-            if diff_map.contains_key(key) {
-                if checksum != diff_map[key] {
-                    output += &formatted_key_checksum.clone();
-                }
-            } else {
-                output += &formatted_key_checksum.clone();
+            if diff_map.contains_key(key) == false || checksum != diff_map[key] {
+                output.insert(key.clone(), phext_map[key].clone());
             }
         }
         for key in diff_map.keys() {
             if phext_map.contains_key(key) == false {
-                output += &format!("{}: Missing\n", key);
+                output.insert(key.clone(), "---sq:Scroll-Missing---".to_string());
             }
         }
-        *scroll = output;
+        *scroll = phext::implode(output);
         return false;
     }
 
