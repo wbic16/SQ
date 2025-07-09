@@ -187,6 +187,12 @@ fn parse_query_string(query: &str) -> HashMap<String, String> {
 // -----------------------------------------------------------------------------------------------------------
 fn request_parse(request: &str) -> HashMap<String, String> {
     let mut result = HashMap::new();
+    let mut posts = request.splitn(2, " HTTP/1.1.\r\n");
+    let header = posts.next().unwrap_or("");
+    let content = posts.next().unwrap_or("");
+    result.insert("http_post_header".to_string(), header.to_string());
+    result.insert("content".to_string(), content.to_string());
+    println!("Received POST with {} data bytes.", content.len());
     let mut parts = request.splitn(2, '?');
     if let (Some(_key), Some(value)) = (parts.next(), parts.next()) {
         result = parse_query_string(value.strip_suffix(" HTTP/1.1").unwrap_or(value));
@@ -206,7 +212,8 @@ fn handle_tcp_connection(loaded_phext: &mut String, loaded_map: &mut HashMap<phe
         .take_while(|line| !line.is_empty())
         .collect();
     let request = &http_request[0];
-    if request.starts_with("GET ") == false {
+    if request.starts_with("GET ") == false &&
+       request.starts_with("POST") == false {
         stream.write_all("HTTP/1.1 400 Bad Request\r\n".as_bytes()).unwrap();
         println!("Ignoring {}", request);
         return;
@@ -216,7 +223,7 @@ fn handle_tcp_connection(loaded_phext: &mut String, loaded_map: &mut HashMap<phe
     let headers = "HTTP/1.1 200 OK";
     let parsed = request_parse(request);
     let nothing = String::new();
-    let scroll = parsed.get("s").unwrap_or(&nothing);
+    let mut scroll = parsed.get("s").unwrap_or(&nothing);
     let coord  = parsed.get("c").unwrap_or(&nothing);
     let phext  = parsed.get("p").unwrap_or(&nothing).to_owned() + ".phext";
     let mut reload_needed = *loaded_phext != phext;
@@ -231,8 +238,14 @@ fn handle_tcp_connection(loaded_phext: &mut String, loaded_map: &mut HashMap<phe
         command = "select".to_string();
     } else if request.starts_with("GET /api/v2/insert") {
         command = "insert".to_string();
+    } else if request.starts_with("POST /api/v2/insert") {
+        command = "insert".to_string();
+        scroll = &parsed["content"];
     } else if request.starts_with("GET /api/v2/update") {
         command = "update".to_string();
+    } else if request.starts_with("POST /api/v2/update") {
+        command = "update".to_string();
+        scroll = &parsed["content"];
     } else if request.starts_with("GET /api/v2/delete") {
         command = "delete".to_string();
     } else if request.starts_with("GET /api/v2/status") {
