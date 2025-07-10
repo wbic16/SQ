@@ -10,7 +10,8 @@ use std::env;
 use std::fs;
 use std::path::Path;
 use std::net::TcpListener;
-use std::io::BufRead;
+use std::net::TcpStream;
+use std::io::Read;
 use std::io::Write;
 use std::collections::HashMap;
 
@@ -185,33 +186,82 @@ fn parse_query_string(query: &str) -> HashMap<String, String> {
 // -----------------------------------------------------------------------------------------------------------
 // minimal HTTP parsing
 // -----------------------------------------------------------------------------------------------------------
-fn request_parse(request: &str) -> HashMap<String, String> {
+fn request_parse(request: &HttpRequest) -> HashMap<String, String> {
     let mut result = HashMap::new();
-    let mut posts = request.splitn(2, " HTTP/1.1.\r\n");
-    let header = posts.next().unwrap_or("");
-    let content = posts.next().unwrap_or("");
-    result.insert("http_post_header".to_string(), header.to_string());
-    result.insert("content".to_string(), content.to_string());
-    println!("Received POST with {} data bytes.", content.len());
-    let mut parts = request.splitn(2, '?');
-    if let (Some(_key), Some(value)) = (parts.next(), parts.next()) {
-        result = parse_query_string(value.strip_suffix(" HTTP/1.1").unwrap_or(value));
+    let content = String::from_utf8_lossy(&request.content).to_string();
+    let lines = request.header.split("\r\n");
+    for line in lines {
+        let mut parts = line.splitn(2, '?');
+        if let (Some(_key), Some(value)) = (parts.next(), parts.next()) {
+            result = parse_query_string(value.strip_suffix(" HTTP/1.1").unwrap_or(value));
+        }
+        break; // ignore the rest of the headers
+    }
+    if content.len() > 0 {
+        result.insert("content".to_string(), content);
     }
 
     return result;
+}
+
+pub struct HttpRequest {
+    pub header: String,
+    pub content: Vec<u8>,
+}
+
+pub fn read_http_request(stream: &mut TcpStream) -> std::io::Result<HttpRequest> {
+    let mut buffer = Vec::new();
+    let mut temp = [0u8; 1024];
+    let header_end;
+    loop {
+        let n = stream.read(&mut temp)?;
+        if n == 0 {
+            return Err(std::io::Error::new(std::io::ErrorKind::UnexpectedEof, "connection closed"));
+        }
+        buffer.extend_from_slice(&temp[..n]);
+
+        if let Some(pos) = buffer.windows(4).position(|w| w == b"\r\n\r\n") {
+            header_end = pos + 4;
+            break;
+        }
+    }
+
+    // Split header and content
+    let header_bytes = &buffer[..header_end];
+    let header_str = String::from_utf8_lossy(header_bytes).to_string();
+
+    // Check Content-Length
+    let content_length = header_str
+        .lines()
+        .find(|line| line.to_ascii_lowercase().starts_with("content-length:"))
+        .and_then(|line| line.split(':').nth(1))
+        .and_then(|val| val.trim().parse::<usize>().ok())
+        .unwrap_or(0);
+
+    // Read remaining content (if any)
+    let mut content = buffer[header_end..].to_vec(); // Already-read part of content
+    while content.len() < content_length {
+        let remaining = content_length - content.len();
+        let mut chunk = vec![0u8; remaining.min(1024)];
+        let n = stream.read(&mut chunk)?;
+        if n == 0 {
+            break;
+        }
+        content.extend_from_slice(&chunk[..n]);
+    }
+
+    Ok(HttpRequest {
+        header: header_str,
+        content,
+    })
 }
 
 // -----------------------------------------------------------------------------------------------------------
 // minimal TCP socket handling
 // -----------------------------------------------------------------------------------------------------------
 fn handle_tcp_connection(loaded_phext: &mut String, loaded_map: &mut HashMap<phext::Coordinate, String>, connection_id: u64, mut stream: std::net::TcpStream) {
-    let buf_reader = std::io::BufReader::new(&stream);
-    let http_request: Vec<_> = buf_reader
-        .lines()
-        .map(|result| result.unwrap())
-        .take_while(|line| !line.is_empty())
-        .collect();
-    let request = &http_request[0];
+    let http_request: HttpRequest = read_http_request(&mut stream).expect("unexpected socket failure");
+    let request = &http_request.header;
     if request.starts_with("GET ") == false &&
        request.starts_with("POST") == false {
         stream.write_all("HTTP/1.1 400 Bad Request\r\n".as_bytes()).unwrap();
@@ -221,7 +271,7 @@ fn handle_tcp_connection(loaded_phext: &mut String, loaded_map: &mut HashMap<phe
     println!("Request: {}", request);
 
     let headers = "HTTP/1.1 200 OK";
-    let parsed = request_parse(request);
+    let parsed = request_parse(&http_request);
     let nothing = String::new();
     let mut scroll = parsed.get("s").unwrap_or(&nothing);
     let coord  = parsed.get("c").unwrap_or(&nothing);
@@ -240,12 +290,16 @@ fn handle_tcp_connection(loaded_phext: &mut String, loaded_map: &mut HashMap<phe
         command = "insert".to_string();
     } else if request.starts_with("POST /api/v2/insert") {
         command = "insert".to_string();
-        scroll = &parsed["content"];
+        if parsed.contains_key("content") {
+            scroll = &parsed["content"];
+        } else { scroll = &nothing; }
     } else if request.starts_with("GET /api/v2/update") {
         command = "update".to_string();
     } else if request.starts_with("POST /api/v2/update") {
         command = "update".to_string();
-        scroll = &parsed["content"];
+        if parsed.contains_key("content") {
+            scroll = &parsed["content"];
+        } else { scroll = &nothing; }
     } else if request.starts_with("GET /api/v2/delete") {
         command = "delete".to_string();
     } else if request.starts_with("GET /api/v2/status") {
