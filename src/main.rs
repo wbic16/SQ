@@ -312,6 +312,11 @@ fn handle_tcp_connection(loaded_phext: &mut String, loaded_map: &mut HashMap<phe
         command = "get".to_string();
     } else if request.starts_with("GET /api/v2/delta") {
         command = "delta".to_string();
+    } else if request.starts_with("POST /api/v2/delta") {
+        command = "delta".to_string();
+        if parsed.contains_key("content") {
+            scroll = &parsed["content"];
+        } else { scroll = &nothing; }
     } else if request.starts_with("GET /api/v2/version") {
         command = "version".to_string();
     }
