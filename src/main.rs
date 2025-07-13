@@ -281,9 +281,7 @@ fn handle_tcp_connection(loaded_phext: &mut String, loaded_map: &mut HashMap<phe
     let mut command = String::new();
     if request.starts_with("GET /api/v2/load") {
         command = "load".to_string();
-        *loaded_map = fetch_source(phext.clone());
-        *loaded_phext = phext.clone();
-        reload_needed = false;
+        reload_needed = true;
     } else if request.starts_with("GET /api/v2/select") {
         command = "select".to_string();
     } else if request.starts_with("GET /api/v2/insert") {
@@ -319,6 +317,9 @@ fn handle_tcp_connection(loaded_phext: &mut String, loaded_map: &mut HashMap<phe
         } else { scroll = &nothing; }
     } else if request.starts_with("GET /api/v2/version") {
         command = "version".to_string();
+    } else if request.starts_with("GET /api/v2/json-export") {
+        command = "json-export".to_string();
+        reload_needed = true;
     }
 
     if reload_needed {

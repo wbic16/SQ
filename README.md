@@ -27,6 +27,7 @@ SQ is designed to keep abstractions to a minimum. You can interact with phexts v
 * sq update <coord> "text": Overwrites text at the specified coordinate
 * sq delete <coord>: Removes all content from the specified coordinate
 * sq save <file>: Writes the current phext back to disk
+* sq json-export <file>: Dumps the contents of the current phext as json
 * sq init: Fast initialization for hosting world.phext from any state
 * sq shutdown: Instruct the daemon to terminate
 

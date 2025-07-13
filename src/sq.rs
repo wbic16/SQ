@@ -20,6 +20,16 @@ pub fn args_required(command:&str) -> usize {
 }
 
 //------------------------------------------------------------------------------------------------------------
+// json_escape: simple wrapper to avoid breaking json-export
+//------------------------------------------------------------------------------------------------------------
+fn json_escape(input: String) -> String {
+    let mut result = input;
+    result = result.replace('"', "\\\"");
+    result = result.replace('\n', "\\n");
+    return result;
+}
+
+//------------------------------------------------------------------------------------------------------------
 // process: performs the command line action for a given user request
 //
 // @param connection_id
@@ -65,6 +75,25 @@ pub fn process(connection_id: u64, source: String, scroll: &mut String, command:
 Connection ID: {}
 Phext Size: {}
 Scrolls: {}", source, connection_id, buffer.len(), phext_map.iter().size_hint().0);
+        return false;
+    }
+
+    if command == "json-export" {
+        let mut result = String::new();
+        result += "[\n";
+        let mut started = false;
+        for ith in phext_map {
+            if !started {
+                started = true;
+            } else { result += ","; }
+            result += &format!("   {{ \"coord\": \"{}\", \"scroll\": \"{}\" }}\n",
+                json_escape(ith.0.to_string()), 
+                json_escape(ith.1.to_string())).to_string();
+        }
+        result += "]\n";
+        *scroll = result.clone();
+        let json_filename = format!("{}.json", filename);
+        let _ = std::fs::write(json_filename, result);
         return false;
     }
 
