@@ -9,6 +9,8 @@ SQ is a modern database, written from the ground-up to take advantage of Phext: 
 
 you can either clone this repo and run `cargo build`, or just install the latest stable build: `cargo install sq`. You may have also arrived here from Choose Your Own Adventure...
 
+A pre-built x86_64 container is available via Docker as well: `docker pull wbic16/sq:0.4.4`.
+
 ## Commands
 
 SQ is designed to keep abstractions to a minimum. You can interact with phexts via shared memory (daemon "esque" mode) or a TCP socket ("seek" mode) with a simple REST API.
@@ -67,4 +69,4 @@ SQ offers a simple CRUD-style REST API. The API allows you to interact with mult
 The name SQ was inspired by this tweet:
 https://x.com/HSVSphere/status/1849817225038840016
 
-SQ was bundled into CYOA on 6/12/2025.
+SQ was bundled into CYOA on 6/12/2025 and 7/15/2025.
