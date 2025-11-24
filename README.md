@@ -66,7 +66,4 @@ SQ offers a simple CRUD-style REST API. The API allows you to interact with mult
 
 # Trivia
 
-The name SQ was inspired by this tweet:
-https://x.com/HSVSphere/status/1849817225038840016
-
 SQ was bundled into CYOA on 6/12/2025 and 7/15/2025.
