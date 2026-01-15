@@ -179,6 +179,12 @@ Scrolls: {}", source, connection_id, buffer.len(), phext_map.iter().size_hint().
         return false;
     }
 
+    if command == "where" {
+        let computed = crate::infer_coordinate(update.as_str(), 100);
+        *scroll = format!("Calculated coordinate {} for input.", computed);
+        return false;
+    }
+
     if command == "delete" {
         let mut old = String::new();
         if phext_map.contains_key(&coordinate) {

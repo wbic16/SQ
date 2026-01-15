@@ -4,6 +4,7 @@
 //------------------------------------------------------------------------------------------------------------
 
 use libphext::phext;
+use libphext::phext::Coordinate;
 use raw_sync::{events::*, Timeout};
 use shared_memory::*;
 use std::env;
@@ -293,6 +294,11 @@ fn handle_tcp_connection(loaded_phext: &mut String, loaded_map: &mut HashMap<phe
         } else { scroll = &nothing; }
     } else if request.starts_with("GET /api/v2/update") {
         command = "update".to_string();
+    } else if request.starts_with("POST /api/v2/where") {
+        command = "where".to_string();
+        if parsed.contains_key("content") {
+            scroll = &parsed["content"];
+        } else { scroll = &nothing; }
     } else if request.starts_with("POST /api/v2/update") {
         command = "update".to_string();
         if parsed.contains_key("content") {
@@ -543,4 +549,29 @@ fn client_response(shmem: *mut u8, length_offset: usize, command: &str, message:
     } else {
         println!("{response}");
     }
+}
+
+// -----------------------------------------------------------------------------------------------------------
+// provides a way to infer a phext coordinate from input text
+// -----------------------------------------------------------------------------------------------------------
+fn infer_coordinate(text: &str, limit: usize) -> phext::Coordinate
+{
+   let phokens = phext::phokenize(text);
+
+   let mut composite = phext::Coordinate::default();
+   for phoken in phokens {
+      if phoken.scroll.len() >= limit {
+         composite.x.scroll ^= phoken.coord.x.scroll;
+         composite.x.section ^= phoken.coord.x.section;
+         composite.x.chapter ^= phoken.coord.x.chapter;
+         composite.y.book ^= phoken.coord.y.book;
+         composite.y.volume ^= phoken.coord.y.volume;
+         composite.y.collection ^= phoken.coord.y.collection;
+         composite.z.series ^= phoken.coord.z.series;
+         composite.z.shelf ^= phoken.coord.z.shelf;
+         composite.z.library ^= phoken.coord.z.library;
+      }
+   }
+
+   return composite;
 }
