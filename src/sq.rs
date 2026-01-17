@@ -40,8 +40,10 @@ fn json_escape(input: String) -> String {
 // @param coordinate
 // @param update
 // @param filename
+// @param algorithm - hash algorithm to use for coordinate inference
+// @param limit - minimum scroll length for XOR hashing
 //------------------------------------------------------------------------------------------------------------
-pub fn process(connection_id: u64, source: String, scroll: &mut String, command: String, phext_map: &mut HashMap::<phext::Coordinate, String>, coordinate: phext::Coordinate, update: String, filename: String) -> bool {
+pub fn process(connection_id: u64, source: String, scroll: &mut String, command: String, phext_map: &mut HashMap::<phext::Coordinate, String>, coordinate: phext::Coordinate, update: String, filename: String, algorithm: crate::HashAlgorithm, limit: usize) -> bool {
     if command == "help" {
         *scroll = "
 * help: display this online help screen
@@ -180,8 +182,13 @@ Scrolls: {}", source, connection_id, buffer.len(), phext_map.iter().size_hint().
     }
 
     if command == "where" {
-        let computed = crate::infer_coordinate(update.as_str(), 100);
-        *scroll = format!("Calculated coordinate {} for input.", computed);
+        println!("Processing where");
+        let algo_name = match algorithm {
+            crate::HashAlgorithm::Xor => "xor",
+            crate::HashAlgorithm::Checksum => "checksum",
+        };
+        let computed = crate::infer_coordinate(update.as_str(), limit, algorithm);
+        *scroll = format!("Calculated coordinate {} for input (algo={}, limit={}).", computed, algo_name, limit);
         return false;
     }
 

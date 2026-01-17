@@ -26,6 +26,12 @@ const WORK_SEGMENT_SIZE: usize = 1024;
 const SHARED_NAME: &str = ".sq/link";
 const WORK_NAME: &str = ".sq/work";
 
+#[derive(Clone, Copy, PartialEq)]
+pub enum HashAlgorithm {
+    Xor,
+    Checksum,
+}
+
 // -----------------------------------------------------------------------------------------------------------
 // Loads + explodes a source phext from disk into memory
 // -----------------------------------------------------------------------------------------------------------
@@ -187,13 +193,14 @@ fn parse_query_string(query: &str) -> HashMap<String, String> {
 // -----------------------------------------------------------------------------------------------------------
 // minimal HTTP parsing
 // -----------------------------------------------------------------------------------------------------------
-fn request_parse(request: &HttpRequest) -> HashMap<String, String> {
+fn request_parse(request: &HttpRequest) -> Option<HashMap<String, String>> {
     let mut result = HashMap::new();
     let content = String::from_utf8_lossy(&request.content).to_string();
     let lines = request.header.split("\r\n");
     for line in lines {
         let mut parts = line.splitn(2, '?');
-        if let (Some(_key), Some(value)) = (parts.next(), parts.next()) {
+        if let (Some(key), Some(value)) = (parts.next(), parts.next()) {
+            if key.contains("favicon.ico") { return None; }
             result = parse_query_string(value.strip_suffix(" HTTP/1.1").unwrap_or(value));
         }
         break; // ignore the rest of the headers
@@ -202,7 +209,7 @@ fn request_parse(request: &HttpRequest) -> HashMap<String, String> {
         result.insert("content".to_string(), content);
     }
 
-    return result;
+    return Some(result);
 }
 
 pub struct HttpRequest {
@@ -273,10 +280,20 @@ fn handle_tcp_connection(loaded_phext: &mut String, loaded_map: &mut HashMap<phe
 
     let headers = "HTTP/1.1 200 OK";
     let parsed = request_parse(&http_request);
+    let parsed = match parsed {
+        None => return,
+        Some(x) => x
+    };
+
     let nothing = String::new();
     let mut scroll = parsed.get("s").unwrap_or(&nothing);
     let coord  = parsed.get("c").unwrap_or(&nothing);
     let phext  = parsed.get("p").unwrap_or(&nothing).to_owned() + ".phext";
+    let algo_str = parsed.get("algo").unwrap_or(&nothing);
+    println!("Algo: {}", parsed.len());
+    let limit_str = parsed.get("limit").unwrap_or(&nothing);
+    let algorithm = if algo_str == "checksum" { HashAlgorithm::Checksum } else { HashAlgorithm::Xor };
+    let limit: usize = limit_str.parse().unwrap_or(100);
     let mut reload_needed = *loaded_phext != phext;
     let mut output = String::new();
     let mut command = String::new();
@@ -333,7 +350,9 @@ fn handle_tcp_connection(loaded_phext: &mut String, loaded_map: &mut HashMap<phe
         *loaded_phext = phext.clone();
     }
 
-    let _ = sq::process(connection_id, phext.clone(), &mut output, command, &mut *loaded_map, phext::to_coordinate(coord.as_str()), scroll.clone(), phext.clone());
+    println!("WTF {} -> {}", algorithm as u8, limit);
+
+    let _ = sq::process(connection_id, phext.clone(), &mut output, command, &mut *loaded_map, phext::to_coordinate(coord.as_str()), scroll.clone(), phext.clone(), algorithm, limit);
     let phext_map = (*loaded_map).clone();
     let phext_buffer = phext::implode(phext_map);
     let _ = std::fs::write(phext, phext_buffer).unwrap();
@@ -399,7 +418,7 @@ fn server(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
         let update = phext::fetch(parts.as_str(), ps3);
 
         let mut scroll = String::new();
-        let done = sq::process(connection_id, filename.clone(), &mut scroll, command, &mut phext_buffer, coordinate, update, argtemp.clone());
+        let done = sq::process(connection_id, filename.clone(), &mut scroll, command, &mut phext_buffer, coordinate, update, argtemp.clone(), HashAlgorithm::Xor, 100);
         let scroll_length = scroll.len();
 
         send_message(shmem.as_ptr(), length_offset, scroll);
@@ -554,7 +573,18 @@ fn client_response(shmem: *mut u8, length_offset: usize, command: &str, message:
 // -----------------------------------------------------------------------------------------------------------
 // provides a way to infer a phext coordinate from input text
 // -----------------------------------------------------------------------------------------------------------
-fn infer_coordinate(text: &str, limit: usize) -> phext::Coordinate
+fn infer_coordinate(text: &str, limit: usize, algorithm: HashAlgorithm) -> phext::Coordinate
+{
+    match algorithm {
+        HashAlgorithm::Xor => xor_phoken_hash(text, limit),
+        HashAlgorithm::Checksum => checksum_to_coordinate(text),
+    }
+}
+
+// -----------------------------------------------------------------------------------------------------------
+// XOR-based coordinate inference from phokens
+// -----------------------------------------------------------------------------------------------------------
+fn xor_phoken_hash(text: &str, limit: usize) -> phext::Coordinate
 {
    let phokens = phext::phokenize(text);
 
@@ -574,4 +604,50 @@ fn infer_coordinate(text: &str, limit: usize) -> phext::Coordinate
    }
 
    return composite;
+}
+
+// -----------------------------------------------------------------------------------------------------------
+// Checksum-based coordinate inference - maps hash bytes to coordinate components
+// -----------------------------------------------------------------------------------------------------------
+fn checksum_to_coordinate(text: &str) -> phext::Coordinate
+{
+    let hash = phext::checksum(text);
+    let bytes: Vec<u8> = hash.bytes().collect();
+    
+    // Map hash bytes to coordinate components (mod to stay within valid range).
+    // We read PAIRS of bytes at even offsets (0, 2, 4, ..., 16) to construct
+    // each coordinate component, giving us 16-bit values for more entropy:
+    //   bytes[0..1]  → library    bytes[6..7]   → collection   bytes[12..13] → chapter
+    //   bytes[2..3]  → shelf      bytes[8..9]   → volume       bytes[14..15] → section
+    //   bytes[4..5]  → series     bytes[10..11] → book         bytes[16..17] → scroll
+    // This requires 18 bytes of hash. If the hash is shorter, fallback to 1.
+    let get_component = |start: usize| -> usize {
+        if start + 1 < bytes.len() {
+            let val = (((bytes[start] as usize) << 8) | (bytes[start + 1] as usize)) % 999;
+            if val == 0 { 1 } else { val }
+        } else if start < bytes.len() {
+            let val = (bytes[start] as usize) % 999;
+            if val == 0 { 1 } else { val }
+        } else {
+            1
+        }
+    };
+
+    phext::Coordinate {
+        z: phext::ZCoordinate {
+            library: get_component(0),
+            shelf: get_component(2),
+            series: get_component(4),
+        },
+        y: phext::YCoordinate {
+            collection: get_component(6),
+            volume: get_component(8),
+            book: get_component(10),
+        },
+        x: phext::XCoordinate {
+            chapter: get_component(12),
+            section: get_component(14),
+            scroll: get_component(16),
+        },
+    }
 }
