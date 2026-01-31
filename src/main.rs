@@ -26,6 +26,78 @@ const WORK_SEGMENT_SIZE: usize = 1024;
 const SHARED_NAME: &str = ".sq/link";
 const WORK_NAME: &str = ".sq/work";
 
+// -----------------------------------------------------------------------------------------------------------
+// Extracts a named header value from an HTTP request header block
+// -----------------------------------------------------------------------------------------------------------
+fn extract_header<'a>(header: &'a str, name: &str) -> Option<String> {
+    let lower_name = name.to_lowercase();
+    for line in header.lines() {
+        let lower_line = line.to_lowercase();
+        if lower_line.starts_with(&lower_name) {
+            if let Some(value) = line.split(':').nth(1) {
+                return Some(value.trim().to_string());
+            }
+        }
+    }
+    None
+}
+
+// -----------------------------------------------------------------------------------------------------------
+// Validates an API key against the expected key for this tenant instance
+// Returns true if auth is disabled (no key configured) or if key matches
+// -----------------------------------------------------------------------------------------------------------
+fn validate_auth(header: &str, expected_key: &Option<String>) -> bool {
+    match expected_key {
+        None => true, // no auth configured, allow all (backward compatible)
+        Some(key) => {
+            match extract_header(header, "authorization") {
+                Some(provided) => {
+                    let provided = provided.trim();
+                    // Support both "Bearer pmb-v1-..." and raw "pmb-v1-..."
+                    let token = if provided.to_lowercase().starts_with("bearer ") {
+                        provided[7..].trim()
+                    } else {
+                        provided
+                    };
+                    token == key
+                }
+                None => false, // no auth header provided
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------------------------------------
+// Sends a 401 Unauthorized response
+// -----------------------------------------------------------------------------------------------------------
+fn send_unauthorized(stream: &mut TcpStream) {
+    let body = "Unauthorized";
+    let response = format!(
+        "HTTP/1.1 401 Unauthorized\r\nContent-Length: {}\r\n\r\n{}",
+        body.len(),
+        body
+    );
+    let _ = stream.write_all(response.as_bytes());
+}
+
+// -----------------------------------------------------------------------------------------------------------
+// Validates that a phext filename stays within the tenant data directory
+// Prevents path traversal attacks (e.g., ../../etc/passwd)
+// -----------------------------------------------------------------------------------------------------------
+fn validate_tenant_path(phext_name: &str, data_dir: &Option<String>) -> Option<String> {
+    match data_dir {
+        None => Some(format!("{}.phext", phext_name)), // no restriction
+        Some(dir) => {
+            // Reject any path traversal attempts
+            if phext_name.contains("..") || phext_name.contains('/') || phext_name.contains('\\') {
+                return None;
+            }
+            let path = format!("{}/{}.phext", dir, phext_name);
+            Some(path)
+        }
+    }
+}
+
 #[derive(Clone, Copy, PartialEq)]
 pub enum HashAlgorithm {
     Xor,
@@ -94,6 +166,41 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if command == "host" && exists == false && phext_or_port.len() > 0 && is_port_number {
         let port = phext_or_port;
+
+        // Parse optional auth and data-dir arguments
+        // Usage: sq host <port> [--key <pmb-v1-...>] [--data-dir <path>]
+        let args: Vec<String> = env::args().collect();
+        let mut auth_key: Option<String> = None;
+        let mut data_dir: Option<String> = None;
+        let mut i = 3;
+        while i < args.len() {
+            match args[i].as_str() {
+                "--key" => {
+                    if i + 1 < args.len() {
+                        auth_key = Some(args[i + 1].clone());
+                        i += 2;
+                    } else { i += 1; }
+                }
+                "--data-dir" => {
+                    if i + 1 < args.len() {
+                        let dir = args[i + 1].clone();
+                        // Ensure data directory exists
+                        let _ = std::fs::create_dir_all(&dir);
+                        data_dir = Some(dir);
+                        i += 2;
+                    } else { i += 1; }
+                }
+                _ => { i += 1; }
+            }
+        }
+
+        if auth_key.is_some() {
+            println!("Auth enabled (pmb-v1 key required)");
+        }
+        if let Some(ref dir) = data_dir {
+            println!("Tenant data directory: {}", dir);
+        }
+
         let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).unwrap();
         println!("Listening on port {port}...");
 
@@ -101,7 +208,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for stream in listener.incoming() {
             let stream = stream.unwrap();
             connection_id += 1;
-            handle_tcp_connection(&mut loaded_phext, &mut loaded_map, connection_id, stream);
+            handle_tcp_connection(&mut loaded_phext, &mut loaded_map, connection_id, stream, &auth_key, &data_dir);
         }
         return Ok(());
     }
@@ -267,7 +374,7 @@ pub fn read_http_request(stream: &mut TcpStream) -> std::io::Result<HttpRequest>
 // -----------------------------------------------------------------------------------------------------------
 // minimal TCP socket handling
 // -----------------------------------------------------------------------------------------------------------
-fn handle_tcp_connection(loaded_phext: &mut String, loaded_map: &mut HashMap<phext::Coordinate, String>, connection_id: u64, mut stream: std::net::TcpStream) {
+fn handle_tcp_connection(loaded_phext: &mut String, loaded_map: &mut HashMap<phext::Coordinate, String>, connection_id: u64, mut stream: std::net::TcpStream, auth_key: &Option<String>, data_dir: &Option<String>) {
     let http_request: HttpRequest = read_http_request(&mut stream).expect("unexpected socket failure");
     let request = &http_request.header;
     if request.starts_with("GET ") == false &&
@@ -276,6 +383,14 @@ fn handle_tcp_connection(loaded_phext: &mut String, loaded_map: &mut HashMap<phe
         println!("Ignoring {}", request);
         return;
     }
+
+    // Auth check
+    if !validate_auth(request, auth_key) {
+        println!("Unauthorized request from connection #{}", connection_id);
+        send_unauthorized(&mut stream);
+        return;
+    }
+
     println!("Request: {}", request);
 
     let headers = "HTTP/1.1 200 OK";
@@ -288,7 +403,21 @@ fn handle_tcp_connection(loaded_phext: &mut String, loaded_map: &mut HashMap<phe
     let nothing = String::new();
     let mut scroll = parsed.get("s").unwrap_or(&nothing);
     let coord  = parsed.get("c").unwrap_or(&nothing);
-    let phext  = parsed.get("p").unwrap_or(&nothing).to_owned() + ".phext";
+    let phext_name = parsed.get("p").unwrap_or(&nothing);
+    let phext = match validate_tenant_path(phext_name, data_dir) {
+        Some(path) => path,
+        None => {
+            let body = "Forbidden: invalid phext path";
+            let response = format!(
+                "HTTP/1.1 403 Forbidden\r\nContent-Length: {}\r\n\r\n{}",
+                body.len(),
+                body
+            );
+            let _ = stream.write_all(response.as_bytes());
+            println!("Path traversal attempt blocked: {}", phext_name);
+            return;
+        }
+    };
     let algo_str = parsed.get("algo").unwrap_or(&nothing);
     println!("Algo: {}", parsed.len());
     let limit_str = parsed.get("limit").unwrap_or(&nothing);
