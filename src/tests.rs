@@ -17,7 +17,7 @@ fn test_insert() {
   let update = "Hello World!".to_string();
   let filename = "insert.phext".to_string();
   let mut map = phext::explode(&buffer);
-  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut map, coordinate, update, filename);
+  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut map, coordinate, update, filename, crate::HashAlgorithm::Xor, 100);
   let buffer = phext::implode(map);
 
   assert_eq!(buffer, "\x17Hello World!");
@@ -33,7 +33,7 @@ fn test_select() {
   let update = "ignored text".to_string();
   let filename = "select.phext".to_string();
   let mut map = phext::explode(&buffer);
-  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut map, coordinate, update, filename);
+  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut map, coordinate, update, filename, crate::HashAlgorithm::Xor, 100);
 
   assert_eq!(buffer, "\x17\x17Third Scroll Content");
   assert_eq!(scroll, "Third Scroll Content");
@@ -49,7 +49,7 @@ fn test_update() {
   let update = "Full Rewrite at 1.2.2".to_string();
   let filename = "update.phext".to_string();
   let mut map = phext::explode(&buffer);
-  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut map, coordinate, update, filename);
+  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut map, coordinate, update, filename, crate::HashAlgorithm::Xor, 100);
   let buffer = phext::implode(map);
 
   assert_eq!(buffer, "\x18\x17Full Rewrite at 1.2.2");
@@ -66,7 +66,7 @@ fn test_delete() {
   let update = "".to_string();
   let filename = "delete.phext".to_string();
   let mut map = phext::explode(&buffer);
-  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut map, coordinate, update, filename);
+  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut map, coordinate, update, filename, crate::HashAlgorithm::Xor, 100);
   let buffer = phext::implode(map);
 
   assert_eq!(buffer, "");
@@ -83,7 +83,7 @@ fn test_save() {
   let update = "Save Test at 1.2.2".to_string();
   let filename = "save.phext".to_string();
   let mut map = phext::explode(&buffer);
-  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut map, coordinate, update, filename);
+  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut map, coordinate, update, filename, crate::HashAlgorithm::Xor, 100);
   let buffer = phext::implode(map);
 
   assert_eq!(buffer, "\x18\x17Save Test");
@@ -168,6 +168,56 @@ fn convert_from_csv() {
 }
 
 #[test]
+fn test_auth_valid_bearer() {
+  let key = Some("pmb-v1-abc123".to_string());
+  let header = "GET /api/v2/version HTTP/1.1\r\nHost: localhost\r\nAuthorization: Bearer pmb-v1-abc123\r\n\r\n";
+  assert_eq!(crate::validate_auth(header, &key), true);
+}
+
+#[test]
+fn test_auth_invalid_key() {
+  let key = Some("pmb-v1-abc123".to_string());
+  let header = "GET /api/v2/version HTTP/1.1\r\nHost: localhost\r\nAuthorization: Bearer pmb-v1-wrong\r\n\r\n";
+  assert_eq!(crate::validate_auth(header, &key), false);
+}
+
+#[test]
+fn test_auth_missing_header() {
+  let key = Some("pmb-v1-abc123".to_string());
+  let header = "GET /api/v2/version HTTP/1.1\r\nHost: localhost\r\n\r\n";
+  assert_eq!(crate::validate_auth(header, &key), false);
+}
+
+#[test]
+fn test_auth_disabled() {
+  let key: Option<String> = None;
+  let header = "GET /api/v2/version HTTP/1.1\r\nHost: localhost\r\n\r\n";
+  assert_eq!(crate::validate_auth(header, &key), true);
+}
+
+#[test]
+fn test_tenant_path_valid() {
+  let dir = Some("/tmp/tenant".to_string());
+  let result = crate::validate_tenant_path("mydata", &dir);
+  assert_eq!(result, Some("/tmp/tenant/mydata.phext".to_string()));
+}
+
+#[test]
+fn test_tenant_path_traversal_blocked() {
+  let dir = Some("/tmp/tenant".to_string());
+  assert_eq!(crate::validate_tenant_path("../../etc/passwd", &dir), None);
+  assert_eq!(crate::validate_tenant_path("sub/path", &dir), None);
+  assert_eq!(crate::validate_tenant_path("back\\slash", &dir), None);
+}
+
+#[test]
+fn test_tenant_path_no_restriction() {
+  let dir: Option<String> = None;
+  let result = crate::validate_tenant_path("mydata", &dir);
+  assert_eq!(result, Some("mydata.phext".to_string()));
+}
+
+#[test]
 fn convert_from_json() {
   // { "field": "value", "field2": "value 2" }
 }
@@ -190,7 +240,7 @@ fn test_exit() {
   let update = "Shutdown Test".to_string();
   let filename = "shutdown.phext".to_string();
 
-  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut buffer, coordinate, update, filename);
+  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut buffer, coordinate, update, filename, crate::HashAlgorithm::Xor, 100);
 
   assert_eq!(done, true);
 }

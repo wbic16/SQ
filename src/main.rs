@@ -4,7 +4,7 @@
 //------------------------------------------------------------------------------------------------------------
 
 use libphext::phext;
-use libphext::phext::Coordinate;
+// Coordinate is used indirectly via phext module
 use raw_sync::{events::*, Timeout};
 use shared_memory::*;
 use std::env;
