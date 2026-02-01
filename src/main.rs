@@ -109,7 +109,7 @@ pub enum HashAlgorithm {
 // -----------------------------------------------------------------------------------------------------------
 fn fetch_source(filename: String) -> HashMap::<phext::Coordinate, String> {
     let message = format!("Unable to open {}", filename);
-    let exists = std::fs::exists(filename.clone()).unwrap_or(false);
+    let exists = std::path::Path::new(&filename).exists();
     if exists == false {
         let _ = std::fs::write(filename.clone(), "");
     }
@@ -151,14 +151,14 @@ fn is_basic_or_share(command: String) -> bool {
 // sq program loop
 // -----------------------------------------------------------------------------------------------------------
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let sq_exists = std::fs::exists(".sq").unwrap_or(false);
+    let sq_exists = std::path::Path::new(".sq").exists();
     if sq_exists == false {
         let _ = std::fs::create_dir(".sq");
     }
 
     let command = env::args().nth(1).unwrap_or("".to_string());
     let phext_or_port = env::args().nth(2).unwrap_or("".to_string());
-    let exists = std::fs::exists(phext_or_port.clone()).unwrap_or(false);
+    let exists = std::path::Path::new(&phext_or_port).exists();
     let is_port_number = phext_or_port.parse::<u16>().is_ok();
 
     let mut loaded_phext = String::new();
@@ -594,10 +594,10 @@ fn client(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
 
     if args.len() < sq::args_required(command) {
         if command == "init" {
-            if std::fs::exists(SHARED_NAME).is_ok() {
+            if std::path::Path::new(SHARED_NAME).exists() {
                 _ = std::fs::remove_file(SHARED_NAME);
             }
-            if std::fs::exists(WORK_NAME).is_ok() {
+            if std::path::Path::new(WORK_NAME).exists() {
                 _ = std::fs::remove_file(WORK_NAME);
             }
             println!("Cleared working files");
