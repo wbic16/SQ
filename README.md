@@ -9,7 +9,7 @@ SQ is a modern database, written from the ground-up to take advantage of Phext: 
 
 you can either clone this repo and run `cargo build`, or just install the latest stable build: `cargo install sq`. You may have also arrived here from Choose Your Own Adventure...
 
-A pre-built x86_64 container is available via Docker as well: `docker pull wbic16/sq:0.4.4`.
+A pre-built x86_64 container is available via Docker as well: `docker pull wbic16/sq`.
 
 ## Commands
 
