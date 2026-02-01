@@ -17,7 +17,7 @@ fn test_insert() {
   let update = "Hello World!".to_string();
   let filename = "insert.phext".to_string();
   let mut map = phext::explode(&buffer);
-  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut map, coordinate, update, filename);
+  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut map, coordinate, update, filename, crate::HashAlgorithm::Xor, 100);
   let buffer = phext::implode(map);
 
   assert_eq!(buffer, "\x17Hello World!");
@@ -33,7 +33,7 @@ fn test_select() {
   let update = "ignored text".to_string();
   let filename = "select.phext".to_string();
   let mut map = phext::explode(&buffer);
-  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut map, coordinate, update, filename);
+  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut map, coordinate, update, filename, crate::HashAlgorithm::Xor, 100);
 
   assert_eq!(buffer, "\x17\x17Third Scroll Content");
   assert_eq!(scroll, "Third Scroll Content");
@@ -49,7 +49,7 @@ fn test_update() {
   let update = "Full Rewrite at 1.2.2".to_string();
   let filename = "update.phext".to_string();
   let mut map = phext::explode(&buffer);
-  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut map, coordinate, update, filename);
+  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut map, coordinate, update, filename, crate::HashAlgorithm::Xor, 100);
   let buffer = phext::implode(map);
 
   assert_eq!(buffer, "\x18\x17Full Rewrite at 1.2.2");
@@ -66,7 +66,7 @@ fn test_delete() {
   let update = "".to_string();
   let filename = "delete.phext".to_string();
   let mut map = phext::explode(&buffer);
-  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut map, coordinate, update, filename);
+  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut map, coordinate, update, filename, crate::HashAlgorithm::Xor, 100);
   let buffer = phext::implode(map);
 
   assert_eq!(buffer, "");
@@ -83,7 +83,7 @@ fn test_save() {
   let update = "Save Test at 1.2.2".to_string();
   let filename = "save.phext".to_string();
   let mut map = phext::explode(&buffer);
-  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut map, coordinate, update, filename);
+  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut map, coordinate, update, filename, crate::HashAlgorithm::Xor, 100);
   let buffer = phext::implode(map);
 
   assert_eq!(buffer, "\x18\x17Save Test");
@@ -190,7 +190,7 @@ fn test_exit() {
   let update = "Shutdown Test".to_string();
   let filename = "shutdown.phext".to_string();
 
-  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut buffer, coordinate, update, filename);
+  let done = crate::sq::process(1, "memory".to_string(), &mut scroll, command, &mut buffer, coordinate, update, filename, crate::HashAlgorithm::Xor, 100);
 
   assert_eq!(done, true);
 }
