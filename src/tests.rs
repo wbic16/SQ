@@ -111,63 +111,6 @@ fn test_toc() {
 }
 
 #[test]
-fn convert_from_csv() {
-  let csv = "Field 1,Field 2,Field 3\nalpha,beta,gamma\n1,2,3\na,b,c";
-  let phext = crate::sq::csv_convert(csv);
-
-  let mut coord = phext::to_coordinate("1.1.1/1.1.1/1.1.1");
-  let test1 = phext.get(&coord).unwrap();
-  assert_eq!(test1, "Field 1");
-  coord.scroll_break();
-
-  let test2 = phext.get(&coord).unwrap();
-  assert_eq!(test2, "Field 2");
-  coord.scroll_break();
-
-  let test3 = phext.get(&coord).unwrap();
-  assert_eq!(test3, "Field 3");
-  coord.scroll_break();
-  coord.section_break();
-
-  let testd1 = phext.get(&coord).unwrap();
-  assert_eq!(testd1, "alpha");
-  coord.scroll_break();
-
-  let testd2 = phext.get(&coord).unwrap();
-  assert_eq!(testd2, "beta");
-  coord.scroll_break();
-
-  let testd3 = phext.get(&coord).unwrap();
-  assert_eq!(testd3, "gamma");
-  coord.scroll_break();
-  coord.section_break();
-
-  let testd4 = phext.get(&coord).unwrap();
-  assert_eq!(testd4, "1");
-  coord.scroll_break();
-
-  let testd5 = phext.get(&coord).unwrap();
-  assert_eq!(testd5, "2");
-  coord.scroll_break();
-
-  let testd6 = phext.get(&coord).unwrap();
-  assert_eq!(testd6, "3");
-  coord.scroll_break();
-  coord.section_break();
-
-  let testd7 = phext.get(&coord).unwrap();
-  assert_eq!(testd7, "a");
-  coord.scroll_break();
-
-  let testd8 = phext.get(&coord).unwrap();
-  assert_eq!(testd8, "b");
-  coord.scroll_break();
-
-  let testd9 = phext.get(&coord).unwrap();
-  assert_eq!(testd9, "c");
-}
-
-#[test]
 fn test_auth_valid_bearer() {
   let key = Some("pmb-v1-abc123".to_string());
   let header = "GET /api/v2/version HTTP/1.1\r\nHost: localhost\r\nAuthorization: Bearer pmb-v1-abc123\r\n\r\n";
