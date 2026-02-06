@@ -1,6 +1,16 @@
 //------------------------------------------------------------------------------------------------------------
 // file: main.rs
 // purpose: provides primary program logic for sq - determining daemon mode vs listening mode
+//
+// v0.5.2 - Stability patch for mirrorborn.us / SQ Cloud
+//   - Fixed: server-killing panics in HTTP handler (5 unwrap sites)
+//   - Fixed: unconditional disk write on every request (now mutation-only)
+//   - Fixed: no 404 routing (unmatched URLs created ghost .phext files)
+//   - Fixed: help/version crash on Windows (bypassed shared memory for info commands)
+//   - Added: thread-per-connection for concurrent request handling
+//   - Added: CORS headers + OPTIONS preflight
+//   - Added: graceful error handling throughout HTTP path
+//   - Removed: debug printlns (WTF, Algo)
 //------------------------------------------------------------------------------------------------------------
 
 use libphext::phext;
@@ -15,6 +25,7 @@ use std::net::TcpStream;
 use std::io::Read;
 use std::io::Write;
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
 mod sq;
 mod tests;
@@ -25,6 +36,14 @@ const WORK_SEGMENT_SIZE: usize = 1024;
 
 const SHARED_NAME: &str = ".sq/link";
 const WORK_NAME: &str = ".sq/work";
+
+// -----------------------------------------------------------------------------------------------------------
+// Shared state for the HTTP listener, protected by a mutex for thread safety
+// -----------------------------------------------------------------------------------------------------------
+struct ServerState {
+    loaded_phext: String,
+    loaded_map: HashMap<phext::Coordinate, String>,
+}
 
 // -----------------------------------------------------------------------------------------------------------
 // Extracts a named header value from an HTTP request header block
@@ -48,12 +67,11 @@ fn extract_header<'a>(header: &'a str, name: &str) -> Option<String> {
 // -----------------------------------------------------------------------------------------------------------
 fn validate_auth(header: &str, expected_key: &Option<String>) -> bool {
     match expected_key {
-        None => true, // no auth configured, allow all (backward compatible)
+        None => true,
         Some(key) => {
             match extract_header(header, "authorization") {
                 Some(provided) => {
                     let provided = provided.trim();
-                    // Support both "Bearer pmb-v1-..." and raw "pmb-v1-..."
                     let token = if provided.to_lowercase().starts_with("bearer ") {
                         provided[7..].trim()
                     } else {
@@ -61,21 +79,29 @@ fn validate_auth(header: &str, expected_key: &Option<String>) -> bool {
                     };
                     token == key
                 }
-                None => false, // no auth header provided
+                None => false,
             }
         }
     }
 }
 
 // -----------------------------------------------------------------------------------------------------------
-// Sends a 401 Unauthorized response
+// Sends an HTTP response with status code, CORS headers, and body
 // -----------------------------------------------------------------------------------------------------------
-fn send_unauthorized(stream: &mut TcpStream) {
-    let body = "Unauthorized";
+fn send_response(stream: &mut TcpStream, status: u16, body: &str) {
+    let status_text = match status {
+        200 => "OK",
+        204 => "No Content",
+        400 => "Bad Request",
+        401 => "Unauthorized",
+        403 => "Forbidden",
+        404 => "Not Found",
+        500 => "Internal Server Error",
+        _ => "OK",
+    };
     let response = format!(
-        "HTTP/1.1 401 Unauthorized\r\nContent-Length: {}\r\n\r\n{}",
-        body.len(),
-        body
+        "HTTP/1.1 {} {}\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: {}\r\n\r\n{}",
+        status, status_text, body.len(), body
     );
     let _ = stream.write_all(response.as_bytes());
 }
@@ -86,9 +112,8 @@ fn send_unauthorized(stream: &mut TcpStream) {
 // -----------------------------------------------------------------------------------------------------------
 fn validate_tenant_path(phext_name: &str, data_dir: &Option<String>) -> Option<String> {
     match data_dir {
-        None => Some(format!("{}.phext", phext_name)), // no restriction
+        None => Some(format!("{}.phext", phext_name)),
         Some(dir) => {
-            // Reject any path traversal attempts
             if phext_name.contains("..") || phext_name.contains('/') || phext_name.contains('\\') {
                 return None;
             }
@@ -148,6 +173,21 @@ fn is_basic_or_share(command: String) -> bool {
 }
 
 // -----------------------------------------------------------------------------------------------------------
+// Returns true if this command is handled locally without IPC
+// -----------------------------------------------------------------------------------------------------------
+fn is_local_command(command: &str) -> bool {
+    command == "help" || command == "version"
+}
+
+// -----------------------------------------------------------------------------------------------------------
+// Returns true if this REST command mutates the phext (requires disk write)
+// -----------------------------------------------------------------------------------------------------------
+fn is_mutation(command: &str) -> bool {
+    command == "insert" || command == "update" || command == "delete" ||
+    command == "push" || command == "slurp"
+}
+
+// -----------------------------------------------------------------------------------------------------------
 // sq program loop
 // -----------------------------------------------------------------------------------------------------------
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -161,14 +201,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let exists = std::path::Path::new(&phext_or_port).exists();
     let is_port_number = phext_or_port.parse::<u16>().is_ok();
 
-    let mut loaded_phext = String::new();
-    let mut loaded_map: HashMap<phext::Coordinate, String> = Default::default();
+    // -----------------------------------------------------------------------
+    // Local commands: handle without IPC (fixes Windows "Failed to open event" crash)
+    // -----------------------------------------------------------------------
+    if is_local_command(&command) {
+        let mut scroll = String::new();
+        let mut empty_map: HashMap<phext::Coordinate, String> = Default::default();
+        let _ = sq::process(
+            0, String::new(), &mut scroll, command.clone(),
+            &mut empty_map, phext::to_coordinate("1.1.1/1.1.1/1.1.1"),
+            String::new(), String::new(), HashAlgorithm::Xor, 100,
+        );
+        println!("{}", scroll);
+        return Ok(());
+    }
 
+    // -----------------------------------------------------------------------
+    // Listening mode: REST API server with thread-per-connection
+    // -----------------------------------------------------------------------
     if command == "host" && exists == false && phext_or_port.len() > 0 && is_port_number {
         let port = phext_or_port;
 
-        // Parse optional auth and data-dir arguments
-        // Usage: sq host <port> [--key <pmb-v1-...>] [--data-dir <path>]
         let args: Vec<String> = env::args().collect();
         let mut auth_key: Option<String> = None;
         let mut data_dir: Option<String> = None;
@@ -184,7 +237,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "--data-dir" => {
                     if i + 1 < args.len() {
                         let dir = args[i + 1].clone();
-                        // Ensure data directory exists
                         let _ = std::fs::create_dir_all(&dir);
                         data_dir = Some(dir);
                         i += 2;
@@ -202,17 +254,38 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).unwrap();
-        println!("Listening on port {port}...");
+        println!("SQ v{} listening on port {}...", env!("CARGO_PKG_VERSION"), port);
+
+        let state = Arc::new(Mutex::new(ServerState {
+            loaded_phext: String::new(),
+            loaded_map: Default::default(),
+        }));
 
         let mut connection_id: u64 = 0;
         for stream in listener.incoming() {
-            let stream = stream.unwrap();
-            connection_id += 1;
-            handle_tcp_connection(&mut loaded_phext, &mut loaded_map, connection_id, stream, &auth_key, &data_dir);
+            match stream {
+                Ok(stream) => {
+                    connection_id += 1;
+                    let state = Arc::clone(&state);
+                    let auth_key = auth_key.clone();
+                    let data_dir = data_dir.clone();
+                    let cid = connection_id;
+                    std::thread::spawn(move || {
+                        handle_tcp_connection(state, cid, stream, &auth_key, &data_dir);
+                    });
+                }
+                Err(e) => {
+                    eprintln!("Accept error: {}", e);
+                    continue;
+                }
+            }
         }
         return Ok(());
     }
 
+    // -----------------------------------------------------------------------
+    // Daemon mode: shared memory IPC
+    // -----------------------------------------------------------------------
     if is_basic_or_share(command.clone()) {
         recreate_sq_work_files();
     }
@@ -228,7 +301,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             Err(ShmemError::LinkExists) => { ShmemConf::new().flink(WORK_NAME).open()? }
             Err(e) => { return Err(Box::new(e)); }
         };
-        
+
         break (shmem, wkmem);
     };
 
@@ -257,11 +330,11 @@ fn fetch_message(shmem: *mut u8, start: usize) -> String {
 // sends a scroll over shared memory
 // -----------------------------------------------------------------------------------------------------------
 fn send_message(shmem: *mut u8, start: usize, encoded: String) {
-    let zeros = vec![0 as u8; SHARED_SEGMENT_SIZE];
     let prepared = format!("{:020}{}", encoded.len(), encoded);
     unsafe {
+        // Zero only the bytes we need, not the entire 1 GB segment
         let zero_length = prepared.len() + 1;
-        std::ptr::copy_nonoverlapping(zeros.as_ptr(), shmem.add(start), zero_length);
+        std::ptr::write_bytes(shmem.add(start), 0, zero_length);
         std::ptr::copy_nonoverlapping(prepared.as_ptr(), shmem.add(start), prepared.len());
     }
 }
@@ -310,7 +383,7 @@ fn request_parse(request: &HttpRequest) -> Option<HashMap<String, String>> {
             if key.contains("favicon.ico") { return None; }
             result = parse_query_string(value.strip_suffix(" HTTP/1.1").unwrap_or(value));
         }
-        break; // ignore the rest of the headers
+        break;
     }
     if content.len() > 0 {
         result.insert("content".to_string(), content);
@@ -341,11 +414,9 @@ pub fn read_http_request(stream: &mut TcpStream) -> std::io::Result<HttpRequest>
         }
     }
 
-    // Split header and content
     let header_bytes = &buffer[..header_end];
     let header_str = String::from_utf8_lossy(header_bytes).to_string();
 
-    // Check Content-Length
     let content_length = header_str
         .lines()
         .find(|line| line.to_ascii_lowercase().starts_with("content-length:"))
@@ -353,8 +424,7 @@ pub fn read_http_request(stream: &mut TcpStream) -> std::io::Result<HttpRequest>
         .and_then(|val| val.trim().parse::<usize>().ok())
         .unwrap_or(0);
 
-    // Read remaining content (if any)
-    let mut content = buffer[header_end..].to_vec(); // Already-read part of content
+    let mut content = buffer[header_end..].to_vec();
     while content.len() < content_length {
         let remaining = content_length - content.len();
         let mut chunk = vec![0u8; remaining.min(1024)];
@@ -372,60 +442,95 @@ pub fn read_http_request(stream: &mut TcpStream) -> std::io::Result<HttpRequest>
 }
 
 // -----------------------------------------------------------------------------------------------------------
-// minimal TCP socket handling
+// TCP connection handler — catches panics so the server never dies from a bad request
 // -----------------------------------------------------------------------------------------------------------
-fn handle_tcp_connection(loaded_phext: &mut String, loaded_map: &mut HashMap<phext::Coordinate, String>, connection_id: u64, mut stream: std::net::TcpStream, auth_key: &Option<String>, data_dir: &Option<String>) {
-    let http_request: HttpRequest = read_http_request(&mut stream).expect("unexpected socket failure");
-    let request = &http_request.header;
-    if request.starts_with("GET ") == false &&
-       request.starts_with("POST") == false {
-        stream.write_all("HTTP/1.1 400 Bad Request\r\n".as_bytes()).unwrap();
-        println!("Ignoring {}", request);
-        return;
+fn handle_tcp_connection(
+    state: Arc<Mutex<ServerState>>,
+    connection_id: u64,
+    mut stream: TcpStream,
+    auth_key: &Option<String>,
+    data_dir: &Option<String>,
+) {
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        handle_tcp_connection_inner(state, connection_id, &mut stream, auth_key, data_dir)
+    }));
+    if let Err(e) = result {
+        eprintln!("[#{}] panic: {:?}", connection_id, e);
+        send_response(&mut stream, 500, "Internal Server Error");
     }
+}
 
-    // Auth check
-    if !validate_auth(request, auth_key) {
-        println!("Unauthorized request from connection #{}", connection_id);
-        send_unauthorized(&mut stream);
-        return;
-    }
-
-    println!("Request: {}", request);
-
-    let headers = "HTTP/1.1 200 OK";
-    let parsed = request_parse(&http_request);
-    let parsed = match parsed {
-        None => return,
-        Some(x) => x
-    };
-
-    let nothing = String::new();
-    let mut scroll = parsed.get("s").unwrap_or(&nothing);
-    let coord  = parsed.get("c").unwrap_or(&nothing);
-    let phext_name = parsed.get("p").unwrap_or(&nothing);
-    let phext = match validate_tenant_path(phext_name, data_dir) {
-        Some(path) => path,
-        None => {
-            let body = "Forbidden: invalid phext path";
-            let response = format!(
-                "HTTP/1.1 403 Forbidden\r\nContent-Length: {}\r\n\r\n{}",
-                body.len(),
-                body
-            );
-            let _ = stream.write_all(response.as_bytes());
-            println!("Path traversal attempt blocked: {}", phext_name);
+// -----------------------------------------------------------------------------------------------------------
+// Inner connection handler — all the actual HTTP logic
+// -----------------------------------------------------------------------------------------------------------
+fn handle_tcp_connection_inner(
+    state: Arc<Mutex<ServerState>>,
+    connection_id: u64,
+    stream: &mut TcpStream,
+    auth_key: &Option<String>,
+    data_dir: &Option<String>,
+) {
+    // Phase 1: Read request (no lock needed)
+    let http_request = match read_http_request(stream) {
+        Ok(req) => req,
+        Err(e) => {
+            eprintln!("[#{}] read error: {}", connection_id, e);
             return;
         }
     };
-    let algo_str = parsed.get("algo").unwrap_or(&nothing);
-    println!("Algo: {}", parsed.len());
-    let limit_str = parsed.get("limit").unwrap_or(&nothing);
+    let request = &http_request.header;
+
+    // Handle CORS preflight
+    if request.starts_with("OPTIONS ") {
+        let _ = stream.write_all(
+            b"HTTP/1.1 204 No Content\r\n\
+              Access-Control-Allow-Origin: *\r\n\
+              Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n\
+              Access-Control-Allow-Headers: Authorization, Content-Type\r\n\
+              Access-Control-Max-Age: 86400\r\n\r\n"
+        );
+        return;
+    }
+
+    if !request.starts_with("GET ") && !request.starts_with("POST ") {
+        send_response(stream, 400, "Bad Request");
+        return;
+    }
+
+    if !validate_auth(request, auth_key) {
+        send_response(stream, 401, "Unauthorized");
+        return;
+    }
+
+    // Phase 2: Parse request (no lock needed)
+    let parsed = match request_parse(&http_request) {
+        None => return, // favicon.ico etc
+        Some(x) => x,
+    };
+
+    let nothing = String::new();
+    let scroll_param = parsed.get("s").unwrap_or(&nothing).clone();
+    let coord = parsed.get("c").unwrap_or(&nothing).clone();
+    let phext_name = parsed.get("p").unwrap_or(&nothing).clone();
+
+    let phext = match validate_tenant_path(&phext_name, data_dir) {
+        Some(path) => path,
+        None => {
+            send_response(stream, 403, "Forbidden: invalid phext path");
+            return;
+        }
+    };
+
+    let algo_str = parsed.get("algo").unwrap_or(&nothing).clone();
+    let limit_str = parsed.get("limit").unwrap_or(&nothing).clone();
     let algorithm = if algo_str == "checksum" { HashAlgorithm::Checksum } else { HashAlgorithm::Xor };
     let limit: usize = limit_str.parse().unwrap_or(100);
-    let mut reload_needed = *loaded_phext != phext;
-    let mut output = String::new();
+
+    // Route matching
     let mut command = String::new();
+    let mut scroll = scroll_param.clone();
+    let mut reload_needed = false; // determined under lock
+
     if request.starts_with("GET /api/v2/load") {
         command = "load".to_string();
         reload_needed = true;
@@ -435,21 +540,15 @@ fn handle_tcp_connection(loaded_phext: &mut String, loaded_map: &mut HashMap<phe
         command = "insert".to_string();
     } else if request.starts_with("POST /api/v2/insert") {
         command = "insert".to_string();
-        if parsed.contains_key("content") {
-            scroll = &parsed["content"];
-        } else { scroll = &nothing; }
+        if let Some(content) = parsed.get("content") { scroll = content.clone(); }
     } else if request.starts_with("GET /api/v2/update") {
         command = "update".to_string();
-    } else if request.starts_with("POST /api/v2/where") {
-        command = "where".to_string();
-        if parsed.contains_key("content") {
-            scroll = &parsed["content"];
-        } else { scroll = &nothing; }
     } else if request.starts_with("POST /api/v2/update") {
         command = "update".to_string();
-        if parsed.contains_key("content") {
-            scroll = &parsed["content"];
-        } else { scroll = &nothing; }
+        if let Some(content) = parsed.get("content") { scroll = content.clone(); }
+    } else if request.starts_with("POST /api/v2/where") {
+        command = "where".to_string();
+        if let Some(content) = parsed.get("content") { scroll = content.clone(); }
     } else if request.starts_with("GET /api/v2/delete") {
         command = "delete".to_string();
     } else if request.starts_with("GET /api/v2/status") {
@@ -464,33 +563,52 @@ fn handle_tcp_connection(loaded_phext: &mut String, loaded_map: &mut HashMap<phe
         command = "delta".to_string();
     } else if request.starts_with("POST /api/v2/delta") {
         command = "delta".to_string();
-        if parsed.contains_key("content") {
-            scroll = &parsed["content"];
-        } else { scroll = &nothing; }
+        if let Some(content) = parsed.get("content") { scroll = content.clone(); }
     } else if request.starts_with("GET /api/v2/version") {
         command = "version".to_string();
     } else if request.starts_with("GET /api/v2/json-export") {
         command = "json-export".to_string();
         reload_needed = true;
+    } else {
+        send_response(stream, 404, "Not Found");
+        return;
     }
 
-    if reload_needed {
-        *loaded_map = fetch_source(phext.clone());
-        *loaded_phext = phext.clone();
-    }
+    // Phase 3: Acquire lock, process, optionally write to disk
+    let output = {
+        let mut state = state.lock().unwrap();
 
-    println!("WTF {} -> {}", algorithm as u8, limit);
+        // Check if we need to reload (phext changed or explicit load)
+        if reload_needed || state.loaded_phext != phext {
+            state.loaded_map = fetch_source(phext.clone());
+            state.loaded_phext = phext.clone();
+        }
 
-    let _ = sq::process(connection_id, phext.clone(), &mut output, command, &mut *loaded_map, phext::to_coordinate(coord.as_str()), scroll.clone(), phext.clone(), algorithm, limit);
-    let phext_map = (*loaded_map).clone();
-    let phext_buffer = phext::implode(phext_map);
-    let _ = std::fs::write(phext, phext_buffer).unwrap();
+        let mut output = String::new();
+        let _ = sq::process(
+            connection_id, phext.clone(), &mut output, command.clone(),
+            &mut state.loaded_map, phext::to_coordinate(coord.as_str()),
+            scroll.clone(), phext.clone(), algorithm, limit,
+        );
 
+        // Only flush to disk when the command actually changed something
+        if is_mutation(&command) {
+            let phext_buffer = phext::implode(state.loaded_map.clone());
+            if let Err(e) = std::fs::write(&phext, &phext_buffer) {
+                eprintln!("[#{}] disk write failed for {}: {}", connection_id, phext, e);
+            }
+        }
+
+        output
+        // lock released here
+    };
+
+    // Phase 4: Send response (no lock needed)
     let length = output.len();
-    let response =
-        format!("{headers}\r\nContent-Length: {length}\r\n\r\n{output}");
-
-    stream.write_all(response.as_bytes()).unwrap();
+    let response = format!(
+        "HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: {length}\r\n\r\n{output}"
+    );
+    let _ = stream.write_all(response.as_bytes());
 }
 
 // -----------------------------------------------------------------------------------------------------------
@@ -515,7 +633,7 @@ fn server(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
     let ps2: phext::Coordinate = phext::to_coordinate("1.1.1/1.1.1/1.1.2");
     let ps3: phext::Coordinate = phext::to_coordinate("1.1.1/1.1.1/1.1.3");
 
-    let command = env::args().nth(1).unwrap_or("".to_string());    
+    let command = env::args().nth(1).unwrap_or("".to_string());
     let mut filename: String;
     if command == "basic" {
         filename = "index".to_string();
@@ -533,7 +651,7 @@ fn server(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
     println!("Loading {} into memory...", filename);
 
     let mut phext_buffer = fetch_source(filename.clone());
-    println!("Serving {} bytes.", phext_buffer.len());
+    println!("Serving {} scrolls.", phext_buffer.len());
 
     loop {
         evt.wait(Timeout::Infinite)?;
@@ -553,7 +671,7 @@ fn server(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
         send_message(shmem.as_ptr(), length_offset, scroll);
         work.set(EventState::Signaled)?;
         let scroll_count = phext_buffer.len();
-        println!("Sending {scroll_length} bytes to client #{connection_id} ({filename} contains {scroll_count} scrolls).");
+        println!("[#{}] {} bytes ({} contains {} scrolls)", connection_id, scroll_length, filename, scroll_count);
 
         if done {
             println!("Returning to the shell...");
@@ -742,14 +860,7 @@ fn checksum_to_coordinate(text: &str) -> phext::Coordinate
 {
     let hash = phext::checksum(text);
     let bytes: Vec<u8> = hash.bytes().collect();
-    
-    // Map hash bytes to coordinate components (mod to stay within valid range).
-    // We read PAIRS of bytes at even offsets (0, 2, 4, ..., 16) to construct
-    // each coordinate component, giving us 16-bit values for more entropy:
-    //   bytes[0..1]  → library    bytes[6..7]   → collection   bytes[12..13] → chapter
-    //   bytes[2..3]  → shelf      bytes[8..9]   → volume       bytes[14..15] → section
-    //   bytes[4..5]  → series     bytes[10..11] → book         bytes[16..17] → scroll
-    // This requires 18 bytes of hash. If the hash is shorter, fallback to 1.
+
     let get_component = |start: usize| -> usize {
         if start + 1 < bytes.len() {
             let val = (((bytes[start] as usize) << 8) | (bytes[start + 1] as usize)) % 999;
