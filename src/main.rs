@@ -14,7 +14,6 @@
 //------------------------------------------------------------------------------------------------------------
 
 use libphext::phext;
-use libphext::phext::Coordinate;
 use raw_sync::{events::*, Timeout};
 use shared_memory::*;
 use std::env;
