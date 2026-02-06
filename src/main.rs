@@ -526,7 +526,7 @@ fn handle_tcp_connection_inner(
     let limit: usize = limit_str.parse().unwrap_or(100);
 
     // Route matching
-    let mut command = String::new();
+    let command:String;
     let mut scroll = scroll_param.clone();
     let mut reload_needed = false; // determined under lock
 

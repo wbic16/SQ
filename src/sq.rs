@@ -223,22 +223,3 @@ Scrolls: {}", source, connection_id, buffer.len(), phext_map.iter().size_hint().
     *scroll = format!("Unexpected command ignored.");
     return false;
 }
-
-//------------------------------------------------------------------------------------------------------------
-// csv_convert
-//------------------------------------------------------------------------------------------------------------
-pub fn csv_convert(csv: &str) -> HashMap::<phext::Coordinate, String>
-{
-    let parts = csv.split('\n');
-    let mut coordinate = phext::to_coordinate("1.1.1/1.1.1/1.1.1");
-    let mut result = HashMap::<phext::Coordinate, String>::new();
-    for part in parts {
-        let fields = part.split(',');
-        for field in fields {
-            result.insert(coordinate, field.to_string());
-            coordinate.scroll_break();
-        }
-        coordinate.section_break();
-    }
-    return result;
-}
