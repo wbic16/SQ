@@ -37,6 +37,7 @@ use std::time::Duration;
 
 mod sq;
 mod tests;
+mod mesh;
 
 const SHARED_SEGMENT_SIZE: usize = 1024*1024*1024; // 1 GB limit
 const MAX_BUFFER_SIZE: usize = SHARED_SEGMENT_SIZE/2;
@@ -249,9 +250,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if command == "host" && exists == false && phext_or_port.len() > 0 && is_port_number {
         let port = phext_or_port;
 
+        // Parse optional auth, data-dir, and mesh-config arguments
+        // Usage: sq host <port> [--key <pmb-v1-...>] [--data-dir <path>] [--mesh-config <path>]
         let args: Vec<String> = env::args().collect();
         let mut auth_key: Option<String> = None;
         let mut data_dir: Option<String> = None;
+        let mut mesh_config_path: Option<String> = None;
         let mut i = 3;
         while i < args.len() {
             match args[i].as_str() {
@@ -269,10 +273,48 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         i += 2;
                     } else { i += 1; }
                 }
+                "--mesh-config" => {
+                    if i + 1 < args.len() {
+                        mesh_config_path = Some(args[i + 1].clone());
+                        i += 2;
+                    } else { i += 1; }
+                }
                 _ => { i += 1; }
             }
         }
 
+        // Load mesh config if provided
+        let _mesh_config: Option<mesh::MeshConfig> = match mesh_config_path {
+            Some(path) => {
+                match mesh::load_mesh_config(&path) {
+                    Ok(config) => {
+                        println!("╔══════════════════════════════════════════════════════════╗");
+                        println!("║               SQ Mesh Mode Enabled                       ║");
+                        println!("╚══════════════════════════════════════════════════════════╝");
+                        println!();
+                        mesh::print_config_summary(&config);
+                        
+                        // Override auth_key and data_dir from mesh config if not specified
+                        if auth_key.is_none() && config.inbound.enabled {
+                            auth_key = Some(config.inbound.auth_key.clone());
+                        }
+                        if data_dir.is_none() && config.inbound.enabled {
+                            data_dir = Some(config.inbound.data_dir.clone());
+                        }
+                        
+                        Some(config)
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to load mesh config: {}", e);
+                        eprintln!("   Continuing in standalone mode...");
+                        println!();
+                        None
+                    }
+                }
+            }
+            None => None
+        };
+        
         if auth_key.is_some() {
             println!("Auth enabled (pmb-v1 key required)");
         }
