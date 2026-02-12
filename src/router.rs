@@ -79,9 +79,10 @@ fn extract_auth_token(header: &str) -> Option<String> {
 
 // -----------------------------------------------------------------------------------------------------------
 // Reads HTTP request header from stream (up to first \r\n\r\n)
-// Returns (header_string, total_bytes_read)
+// Returns (header_string, header_end_offset, buffer, total_bytes_read)
+// The buffer may contain extra bytes beyond the header (start of body)
 // -----------------------------------------------------------------------------------------------------------
-fn read_http_header(stream: &mut TcpStream) -> Result<(String, usize), Box<dyn std::error::Error>> {
+fn read_http_header(stream: &mut TcpStream) -> Result<(String, usize, Vec<u8>, usize), Box<dyn std::error::Error>> {
     let mut buffer = vec![0u8; MAX_HEADER_SIZE];
     let mut total_read = 0;
     
@@ -94,11 +95,11 @@ fn read_http_header(stream: &mut TcpStream) -> Result<(String, usize), Box<dyn s
         
         // Check for end of header (\r\n\r\n)
         if total_read >= 4 {
-            let check_start = if total_read > 4 { total_read - 4 } else { 0 };
+            let check_start = if total_read > 4 { total_read - bytes_read } else { 0 };
             for i in check_start..total_read - 3 {
                 if &buffer[i..i+4] == b"\r\n\r\n" {
                     let header = String::from_utf8_lossy(&buffer[..i+4]).to_string();
-                    return Ok((header, i + 4));
+                    return Ok((header, i + 4, buffer, total_read));
                 }
             }
         }
@@ -117,7 +118,9 @@ fn proxy_request(
     client_stream: &mut TcpStream,
     backend_port: u16,
     header: &str,
-    _header_bytes: usize,
+    header_end: usize,
+    initial_buffer: &[u8],
+    initial_bytes_read: usize,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Connect to backend
     let mut backend = TcpStream::connect(format!("127.0.0.1:{}", backend_port))?;
@@ -131,15 +134,23 @@ fn proxy_request(
     let content_length = extract_content_length(header);
     
     if content_length > 0 {
-        // Forward body in chunks
-        let mut remaining = content_length;
+        // First, forward any body bytes that were already read with the header
+        let already_read = initial_bytes_read - header_end;
+        if already_read > 0 {
+            let body_start = header_end;
+            let body_end = std::cmp::min(header_end + already_read, initial_bytes_read);
+            backend.write_all(&initial_buffer[body_start..body_end])?;
+        }
+        
+        // Now read and forward the rest of the body
+        let mut remaining = content_length - already_read;
         let mut buffer = vec![0u8; 8192];
         
         while remaining > 0 {
             let to_read = std::cmp::min(remaining, buffer.len());
             let bytes_read = client_stream.read(&mut buffer[..to_read])?;
             if bytes_read == 0 {
-                return Err("Connection closed during body transfer".into());
+                break; // Client closed connection
             }
             backend.write_all(&buffer[..bytes_read])?;
             remaining -= bytes_read;
@@ -237,7 +248,7 @@ pub fn run_router(config_path: &str, listen_port: u16) -> Result<(), Box<dyn std
                 let _ = client_stream.set_write_timeout(Some(Duration::from_millis(ROUTER_TIMEOUT_MS)));
                 
                 // Read request header
-                let (header, _header_bytes) = match read_http_header(&mut client_stream) {
+                let (header, header_end, buffer, total_bytes) = match read_http_header(&mut client_stream) {
                     Ok(h) => h,
                     Err(e) => {
                         eprintln!("[{}] Failed to read header: {}", conn_id, e);
@@ -283,7 +294,7 @@ pub fn run_router(config_path: &str, listen_port: u16) -> Result<(), Box<dyn std
                 println!("[{}] Routing to backend port {}", conn_id, backend_port);
                 
                 // Proxy request
-                if let Err(e) = proxy_request(&mut client_stream, backend_port, &header, _header_bytes) {
+                if let Err(e) = proxy_request(&mut client_stream, backend_port, &header, header_end, &buffer, total_bytes) {
                     eprintln!("[{}] Proxy error: {}", conn_id, e);
                     send_error(&mut client_stream, 502, "Bad Gateway");
                 }
