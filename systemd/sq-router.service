@@ -1,0 +1,33 @@
+[Unit]
+Description=SQ Router (Token-Based Multi-Tenant)
+Documentation=https://github.com/wbic16/SQ/blob/main/ROUTER.md
+After=network.target
+Requires=network.target
+
+[Service]
+Type=simple
+User=sq
+Group=sq
+WorkingDir=/var/lib/sq
+ExecStart=/usr/local/bin/sq route /etc/sq/router-config-founding.json 1337
+Restart=on-failure
+RestartSec=5s
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/sq
+
+# Resource limits
+LimitNOFILE=65536
+TasksMax=512
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sq-router
+
+[Install]
+WantedBy=multi-user.target

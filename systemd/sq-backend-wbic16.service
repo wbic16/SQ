@@ -1,0 +1,36 @@
+[Unit]
+Description=SQ Backend - wbic16 (Founder)
+Documentation=https://github.com/wbic16/SQ/blob/main/ROUTER.md
+After=network.target
+Requires=network.target
+
+[Service]
+Type=simple
+User=sq
+Group=sq
+WorkingDir=/var/lib/sq/tenants/wbic16
+ExecStart=/usr/local/bin/sq host 1338 \
+    --key REPLACE_WITH_ACTUAL_TOKEN \
+    --data-dir /var/lib/sq/tenants/wbic16
+Restart=on-failure
+RestartSec=5s
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/sq/tenants/wbic16
+
+# Resource limits
+LimitNOFILE=65536
+TasksMax=512
+MemoryMax=2G
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sq-backend-wbic16
+
+[Install]
+WantedBy=multi-user.target

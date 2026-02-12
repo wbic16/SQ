@@ -1,0 +1,34 @@
+{
+  "tenants": [
+    {
+      "token": "REPLACE_WITH_WBIC16_TOKEN",
+      "port": 1338,
+      "data_dir": "/var/lib/sq/tenants/wbic16",
+      "comment": "Will Bickford (founder/admin)"
+    },
+    {
+      "token": "REPLACE_WITH_DEMO_TOKEN",
+      "port": 1339,
+      "data_dir": "/var/lib/sq/tenants/demo",
+      "comment": "Demo/Test Account"
+    },
+    {
+      "token": "REPLACE_WITH_ALPHA_001_TOKEN",
+      "port": 1340,
+      "data_dir": "/var/lib/sq/tenants/alpha-001",
+      "comment": "Reserved: Alpha User 1"
+    },
+    {
+      "token": "REPLACE_WITH_ALPHA_002_TOKEN",
+      "port": 1341,
+      "data_dir": "/var/lib/sq/tenants/alpha-002",
+      "comment": "Reserved: Alpha User 2"
+    },
+    {
+      "token": "REPLACE_WITH_ALPHA_003_TOKEN",
+      "port": 1342,
+      "data_dir": "/var/lib/sq/tenants/alpha-003",
+      "comment": "Reserved: Alpha User 3"
+    }
+  ]
+}

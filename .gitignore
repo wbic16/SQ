@@ -7,4 +7,5 @@ phext_work
 .sq/*
 *.phext
 *.txt
-tesseract.std*
+tesseract.std*FOUNDING-TOKENS.md
+router-config-founding.json
