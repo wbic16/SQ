@@ -39,6 +39,7 @@ mod sq;
 mod tests;
 mod mesh;
 mod router;
+mod config;
 
 const SHARED_SEGMENT_SIZE: usize = 1024*1024*1024; // 1 GB limit
 const MAX_BUFFER_SIZE: usize = SHARED_SEGMENT_SIZE/2;
