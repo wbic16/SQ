@@ -38,6 +38,7 @@ use std::time::Duration;
 mod sq;
 mod tests;
 mod mesh;
+mod router;
 
 const SHARED_SEGMENT_SIZE: usize = 1024*1024*1024; // 1 GB limit
 const MAX_BUFFER_SIZE: usize = SHARED_SEGMENT_SIZE/2;
@@ -242,6 +243,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         );
         println!("{}", scroll);
         return Ok(());
+    }
+
+    // Route command: sq route <config.json> <listen-port>
+    if command == "route" {
+        let config_path = env::args().nth(2).unwrap_or("router-config.json".to_string());
+        let listen_port: u16 = env::args().nth(3)
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(1337);
+        
+        return router::run_router(&config_path, listen_port);
     }
 
     // -----------------------------------------------------------------------

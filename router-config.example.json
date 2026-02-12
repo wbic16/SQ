@@ -1,0 +1,19 @@
+{
+  "tenants": [
+    {
+      "token": "pmb-v1-demo-user-abc123",
+      "port": 1338,
+      "data_dir": "/var/lib/sq/tenants/user1"
+    },
+    {
+      "token": "pmb-v1-demo-user-def456",
+      "port": 1339,
+      "data_dir": "/var/lib/sq/tenants/user2"
+    },
+    {
+      "token": "pmb-v1-demo-user-ghi789",
+      "port": 1340,
+      "data_dir": "/var/lib/sq/tenants/user3"
+    }
+  ]
+}

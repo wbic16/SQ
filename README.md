@@ -37,6 +37,38 @@ SQ is designed to keep abstractions to a minimum. You can interact with phexts v
 
 * `Daemon Mode`: If you supply a filename parameter to sq, it will launch in daemon mode - communicating with local system processes via shared memory
 * `Listening Mode`: If you supply a port number to sq, it will launch in web server mode - listening on the TCP socket requested
+* `Router Mode` (**NEW in v0.5.5**): Token-based multi-tenant routing layer - see ROUTER.md for details
+
+## Router Mode (v0.5.5)
+
+The SQ Router enables multi-tenant deployments with token-based authentication and request routing. Instead of exposing each tenant's SQ instance directly, you run:
+- One router on a public port (e.g., 443 or 1337)
+- Multiple SQ instances on private ports (one per tenant)
+
+The router reads the `Authorization` header, looks up the tenant's backend port, and proxies the request transparently.
+
+**Quick Start:**
+```bash
+# Start backend SQ instances
+sq host 1338 --key pmb-v1-user1-abc123 --data-dir /data/user1
+sq host 1339 --key pmb-v1-user2-def456 --data-dir /data/user2
+
+# Start router
+sq route router-config.json 1337
+
+# Clients use Authorization header
+curl -H "Authorization: pmb-v1-user1-abc123" \
+     http://localhost:1337/select/1.1.1/1.1.1/1.1.1
+```
+
+**Features:**
+- Token-based authentication (pmb-v1 format)
+- Per-tenant data isolation
+- Path traversal prevention
+- Transparent proxy (same SQ API)
+- Production-ready (systemd services, TLS via nginx/Caddy)
+
+📖 **Full documentation:** See [ROUTER.md](ROUTER.md) for complete setup guide, security features, and production deployment.
 
 ## SQ Design Philosophy
 
