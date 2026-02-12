@@ -1,6 +1,6 @@
 [package]
 name = "sq"
-version = "0.5.3"
+version = "0.5.4"
 authors = ["Will Bickford <wbic16@gmail.com>"]
 description = "A minimal client-server for phext hosting"
 homepage = "https://phext.io/"

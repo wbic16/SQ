@@ -216,8 +216,13 @@ Scrolls: {}", source, connection_id, buffer.len(), phext_map.iter().size_hint().
     }
 
     if command == "get" {
-        let message = "Unable to open requested phext ".to_string() + filename.as_str();
-        let buffer:String = std::fs::read_to_string(filename).expect(&message);
+        let buffer: String = match std::fs::read_to_string(&filename) {
+            Ok(b) => b,
+            Err(e) => {
+                *scroll = format!("Unable to open requested phext {}: {}", filename, e);
+                return false;
+            }
+        };
         *scroll = buffer;
         return false;
     }

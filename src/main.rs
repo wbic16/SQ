@@ -154,12 +154,17 @@ pub enum HashAlgorithm {
 // Loads + explodes a source phext from disk into memory
 // -----------------------------------------------------------------------------------------------------------
 fn fetch_source(filename: String) -> HashMap::<phext::Coordinate, String> {
-    let message = format!("Unable to open {}", filename);
     let exists = std::path::Path::new(&filename).exists();
     if exists == false {
         let _ = std::fs::write(filename.clone(), "");
     }
-    let mut buffer:String = std::fs::read_to_string(filename).expect(&message);
+    let mut buffer: String = match std::fs::read_to_string(&filename) {
+        Ok(b) => b,
+        Err(e) => {
+            eprintln!("Failed to read {}: {}", filename, e);
+            String::new()
+        }
+    };
 
     if buffer.len() > MAX_BUFFER_SIZE {
         // in-place truncation: avoids allocating a second 512 MB string
@@ -639,7 +644,10 @@ fn handle_tcp_connection_inner(
 
     // Phase 3: Acquire lock, process, optionally write to disk
     let output = {
-        let mut state = state.lock().unwrap();
+        let mut state = state.lock().unwrap_or_else(|poisoned| {
+            eprintln!("[#{}] recovering from poisoned mutex", connection_id);
+            poisoned.into_inner()
+        });
 
         // Check if we need to reload (phext changed or explicit load)
         if reload_needed || state.loaded_phext != phext {
