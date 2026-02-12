@@ -246,6 +246,17 @@ pub fn run_router(config_path: &str, listen_port: u16) -> Result<(), Box<dyn std
                     }
                 };
                 
+                // Handle CORS preflight (no auth needed)
+                if header.starts_with("OPTIONS ") {
+                    let cors = "HTTP/1.1 204 No Content\r\n\
+                        Access-Control-Allow-Origin: *\r\n\
+                        Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n\
+                        Access-Control-Allow-Headers: Authorization, Content-Type\r\n\
+                        Access-Control-Max-Age: 86400\r\n\r\n";
+                    let _ = client_stream.write_all(cors.as_bytes());
+                    continue;
+                }
+
                 // Extract auth token
                 let token = match extract_auth_token(&header) {
                     Some(t) => t,
