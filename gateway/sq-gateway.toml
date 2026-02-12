@@ -1,0 +1,9 @@
+[gateway]
+listen_port = 8080
+admin_key = "C7Ty9kjwp0vMuUvlhvPX1IgusUrqkhzffXwSznhP"
+
+[[tenants]]
+token = "AE0NNgYxwLK105LH1eCOuFqPfLCnrlh4k3cgWJPt"
+name = "will"
+port = 1337
+phext = "will"

@@ -1,0 +1,9 @@
+{
+  "tenants": [
+    {
+      "token": "TVksj59flCBjumWMrzwnUyBIvaADDb9AGAerIAlc",
+      "port": 1338,
+      "data_dir": "/var/lib/sq/tenants/will"
+    }
+  ]
+}

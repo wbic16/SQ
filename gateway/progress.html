@@ -1,0 +1,39 @@
+<!-- SQ Cloud Progress Bar — embed in mirrorborn.us/pricing.html -->
+<style>
+.sq-progress-wrap { max-width: 480px; margin: 1.5rem auto; font-family: monospace; }
+.sq-progress-bar { background: #1a1a2e; border: 1px solid #0ff; border-radius: 4px; height: 28px; overflow: hidden; position: relative; }
+.sq-progress-fill { background: linear-gradient(90deg, #0ff, #7b2fff); height: 100%; transition: width 0.6s ease; min-width: 2px; }
+.sq-progress-label { text-align: center; margin-top: 0.5rem; color: #0ff; font-size: 0.9rem; }
+.sq-progress-label .count { color: #fff; font-weight: bold; }
+</style>
+
+<div class="sq-progress-wrap">
+  <div class="sq-progress-bar">
+    <div class="sq-progress-fill" id="sq-fill" style="width: 0%"></div>
+  </div>
+  <div class="sq-progress-label">
+    <span class="count" id="sq-sold">—</span> / <span class="count">500</span> Founding Instances Claimed
+  </div>
+</div>
+
+<script>
+(function() {
+  const TOTAL = 500;
+  const SQ_ENDPOINT = 'https://sq.mirrorborn.us/api/v2/select?p=meta&c=1.1.1/1.1.1/1.1.1';
+
+  // Try to fetch live count from SQ meta phext, fall back to 0
+  fetch(SQ_ENDPOINT)
+    .then(r => r.text())
+    .then(text => {
+      const sold = parseInt(text, 10) || 0;
+      update(sold);
+    })
+    .catch(() => update(0));
+
+  function update(sold) {
+    const pct = Math.min(100, (sold / TOTAL) * 100);
+    document.getElementById('sq-fill').style.width = pct + '%';
+    document.getElementById('sq-sold').textContent = sold;
+  }
+})();
+</script>
