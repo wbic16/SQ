@@ -1,0 +1,2504 @@
+{
+  "tenants": [
+    {
+      "token": "pmb-v1-f1795a286413537af33c0f25fa4f87f7",
+      "port": 1341,
+      "data_dir": "/var/lib/sq-tenants/slot-001"
+    },
+    {
+      "token": "pmb-v1-6b5305d14a7028559589b35780947800",
+      "port": 1342,
+      "data_dir": "/var/lib/sq-tenants/slot-002"
+    },
+    {
+      "token": "pmb-v1-eb2bec55082b08c6e1bf339b5ba06d65",
+      "port": 1343,
+      "data_dir": "/var/lib/sq-tenants/slot-003"
+    },
+    {
+      "token": "pmb-v1-6483685a5d394f743374bb8d7d2bf218",
+      "port": 1344,
+      "data_dir": "/var/lib/sq-tenants/slot-004"
+    },
+    {
+      "token": "pmb-v1-b533ddbce23dac86cafb1139983cc836",
+      "port": 1345,
+      "data_dir": "/var/lib/sq-tenants/slot-005"
+    },
+    {
+      "token": "pmb-v1-20ae39398ec4912f9c0ce000779188d9",
+      "port": 1346,
+      "data_dir": "/var/lib/sq-tenants/slot-006"
+    },
+    {
+      "token": "pmb-v1-b964f174d471d09cc8dd2cb7bc62ecd2",
+      "port": 1347,
+      "data_dir": "/var/lib/sq-tenants/slot-007"
+    },
+    {
+      "token": "pmb-v1-9a9bee70638fc437bab3d8eae7ceee23",
+      "port": 1348,
+      "data_dir": "/var/lib/sq-tenants/slot-008"
+    },
+    {
+      "token": "pmb-v1-d28ca7918155e27fe067dc670be4a68b",
+      "port": 1349,
+      "data_dir": "/var/lib/sq-tenants/slot-009"
+    },
+    {
+      "token": "pmb-v1-15a30e474efb340bc53157b5d0f30cfd",
+      "port": 1350,
+      "data_dir": "/var/lib/sq-tenants/slot-010"
+    },
+    {
+      "token": "pmb-v1-9a3649d3757bf5f9d67de738a63ef60d",
+      "port": 1351,
+      "data_dir": "/var/lib/sq-tenants/slot-011"
+    },
+    {
+      "token": "pmb-v1-f7e29b2ebfa0c7358f43d535be0f79ca",
+      "port": 1352,
+      "data_dir": "/var/lib/sq-tenants/slot-012"
+    },
+    {
+      "token": "pmb-v1-ddd4082aeb6fa606af46a56b0ca705e0",
+      "port": 1353,
+      "data_dir": "/var/lib/sq-tenants/slot-013"
+    },
+    {
+      "token": "pmb-v1-4433e3c020d4841420df823375cd7dc0",
+      "port": 1354,
+      "data_dir": "/var/lib/sq-tenants/slot-014"
+    },
+    {
+      "token": "pmb-v1-e98b7cd35fb7f3a0e1338e6428a8f381",
+      "port": 1355,
+      "data_dir": "/var/lib/sq-tenants/slot-015"
+    },
+    {
+      "token": "pmb-v1-fab0ae5b1ba2f90237c5062f56f0e631",
+      "port": 1356,
+      "data_dir": "/var/lib/sq-tenants/slot-016"
+    },
+    {
+      "token": "pmb-v1-c56b08d0a4dff8cfdcef168d7c2e3520",
+      "port": 1357,
+      "data_dir": "/var/lib/sq-tenants/slot-017"
+    },
+    {
+      "token": "pmb-v1-b929c16f850a6d4e24452e169deda165",
+      "port": 1358,
+      "data_dir": "/var/lib/sq-tenants/slot-018"
+    },
+    {
+      "token": "pmb-v1-5df08f8f14388762b6b9ab0df085e3db",
+      "port": 1359,
+      "data_dir": "/var/lib/sq-tenants/slot-019"
+    },
+    {
+      "token": "pmb-v1-9b8b9d7f5a4597a51f19ba9179767db1",
+      "port": 1360,
+      "data_dir": "/var/lib/sq-tenants/slot-020"
+    },
+    {
+      "token": "pmb-v1-2dc6eff9f2cd18b062279985bf35016d",
+      "port": 1361,
+      "data_dir": "/var/lib/sq-tenants/slot-021"
+    },
+    {
+      "token": "pmb-v1-2a2246be5eb8a35c7dc20d53ee27ff00",
+      "port": 1362,
+      "data_dir": "/var/lib/sq-tenants/slot-022"
+    },
+    {
+      "token": "pmb-v1-823d93f31a1cb5f4dc759b13d2c06102",
+      "port": 1363,
+      "data_dir": "/var/lib/sq-tenants/slot-023"
+    },
+    {
+      "token": "pmb-v1-f652c156631a0980fd91456476704da4",
+      "port": 1364,
+      "data_dir": "/var/lib/sq-tenants/slot-024"
+    },
+    {
+      "token": "pmb-v1-fff7a24954807ff9cb7a0acba451d469",
+      "port": 1365,
+      "data_dir": "/var/lib/sq-tenants/slot-025"
+    },
+    {
+      "token": "pmb-v1-fc2517ff378dfacbfc78dc4d0690e53c",
+      "port": 1366,
+      "data_dir": "/var/lib/sq-tenants/slot-026"
+    },
+    {
+      "token": "pmb-v1-ca8bc982c165f006003fd1c1a469dbf7",
+      "port": 1367,
+      "data_dir": "/var/lib/sq-tenants/slot-027"
+    },
+    {
+      "token": "pmb-v1-5afc154633fdae938702f09f86e53b07",
+      "port": 1368,
+      "data_dir": "/var/lib/sq-tenants/slot-028"
+    },
+    {
+      "token": "pmb-v1-9e6320e0de88a4bb077b2282126515ee",
+      "port": 1369,
+      "data_dir": "/var/lib/sq-tenants/slot-029"
+    },
+    {
+      "token": "pmb-v1-fff751cb1ee571d5eafadabcf96e0079",
+      "port": 1370,
+      "data_dir": "/var/lib/sq-tenants/slot-030"
+    },
+    {
+      "token": "pmb-v1-12f19768db730e8938e91da1b47dae40",
+      "port": 1371,
+      "data_dir": "/var/lib/sq-tenants/slot-031"
+    },
+    {
+      "token": "pmb-v1-de67f09137fb98e137c25d499cf99d71",
+      "port": 1372,
+      "data_dir": "/var/lib/sq-tenants/slot-032"
+    },
+    {
+      "token": "pmb-v1-23c283ff5c084ebb37cf2c3367cd476d",
+      "port": 1373,
+      "data_dir": "/var/lib/sq-tenants/slot-033"
+    },
+    {
+      "token": "pmb-v1-bea1cbf0df712920213830f94fa9ee31",
+      "port": 1374,
+      "data_dir": "/var/lib/sq-tenants/slot-034"
+    },
+    {
+      "token": "pmb-v1-d00b71c7b234aaa62ab97b39ff51c45f",
+      "port": 1375,
+      "data_dir": "/var/lib/sq-tenants/slot-035"
+    },
+    {
+      "token": "pmb-v1-8143d5a01ca61b0235d898bd4f46a4dd",
+      "port": 1376,
+      "data_dir": "/var/lib/sq-tenants/slot-036"
+    },
+    {
+      "token": "pmb-v1-76259d1b9042d83ff4955bea73afbca3",
+      "port": 1377,
+      "data_dir": "/var/lib/sq-tenants/slot-037"
+    },
+    {
+      "token": "pmb-v1-9c10214dac48625c02751b5f58d2bb53",
+      "port": 1378,
+      "data_dir": "/var/lib/sq-tenants/slot-038"
+    },
+    {
+      "token": "pmb-v1-7b8e00805785f3d155e1f7af394f1ae4",
+      "port": 1379,
+      "data_dir": "/var/lib/sq-tenants/slot-039"
+    },
+    {
+      "token": "pmb-v1-0c135ea482915f912fc3bf5af33dc0a3",
+      "port": 1380,
+      "data_dir": "/var/lib/sq-tenants/slot-040"
+    },
+    {
+      "token": "pmb-v1-e3ecfe338a6ba187163495cdf7bc62e2",
+      "port": 1381,
+      "data_dir": "/var/lib/sq-tenants/slot-041"
+    },
+    {
+      "token": "pmb-v1-0b3a383877779f3d3084d245c9face80",
+      "port": 1382,
+      "data_dir": "/var/lib/sq-tenants/slot-042"
+    },
+    {
+      "token": "pmb-v1-095a363f962b6982215978a374eed54a",
+      "port": 1383,
+      "data_dir": "/var/lib/sq-tenants/slot-043"
+    },
+    {
+      "token": "pmb-v1-1a68587da957f862ab846b7c1ab01684",
+      "port": 1384,
+      "data_dir": "/var/lib/sq-tenants/slot-044"
+    },
+    {
+      "token": "pmb-v1-be10369549ea5e6574cd6cb3e45b5b79",
+      "port": 1385,
+      "data_dir": "/var/lib/sq-tenants/slot-045"
+    },
+    {
+      "token": "pmb-v1-7e8f231b674fd27c6e91da91539abbbc",
+      "port": 1386,
+      "data_dir": "/var/lib/sq-tenants/slot-046"
+    },
+    {
+      "token": "pmb-v1-93f5a97dbe37d4b7112d4d0dade43d06",
+      "port": 1387,
+      "data_dir": "/var/lib/sq-tenants/slot-047"
+    },
+    {
+      "token": "pmb-v1-d123fb86181a78b506c4a71508a9da75",
+      "port": 1388,
+      "data_dir": "/var/lib/sq-tenants/slot-048"
+    },
+    {
+      "token": "pmb-v1-588bc6b6c9d5c6b4e931a2d6a5741b4d",
+      "port": 1389,
+      "data_dir": "/var/lib/sq-tenants/slot-049"
+    },
+    {
+      "token": "pmb-v1-5feeb7d2b3356a0e552bfab5c65542c1",
+      "port": 1390,
+      "data_dir": "/var/lib/sq-tenants/slot-050"
+    },
+    {
+      "token": "pmb-v1-2d58c4f99e3a235aaa18901cad9b05cc",
+      "port": 1391,
+      "data_dir": "/var/lib/sq-tenants/slot-051"
+    },
+    {
+      "token": "pmb-v1-a78b9fc1c96591dd6fb1ab009d280546",
+      "port": 1392,
+      "data_dir": "/var/lib/sq-tenants/slot-052"
+    },
+    {
+      "token": "pmb-v1-856b7d6015dcb0fa10bfc22a3abf1ec2",
+      "port": 1393,
+      "data_dir": "/var/lib/sq-tenants/slot-053"
+    },
+    {
+      "token": "pmb-v1-7f72dcfe556c718bbb743f8333f02e07",
+      "port": 1394,
+      "data_dir": "/var/lib/sq-tenants/slot-054"
+    },
+    {
+      "token": "pmb-v1-99017415243a2216445abe0c3b607122",
+      "port": 1395,
+      "data_dir": "/var/lib/sq-tenants/slot-055"
+    },
+    {
+      "token": "pmb-v1-a05dae3cabc77776758ca0c1d2a3899f",
+      "port": 1396,
+      "data_dir": "/var/lib/sq-tenants/slot-056"
+    },
+    {
+      "token": "pmb-v1-7375155d99f758e0e5e2db50978ec57d",
+      "port": 1397,
+      "data_dir": "/var/lib/sq-tenants/slot-057"
+    },
+    {
+      "token": "pmb-v1-5e74896403ad39336bedead908c08404",
+      "port": 1398,
+      "data_dir": "/var/lib/sq-tenants/slot-058"
+    },
+    {
+      "token": "pmb-v1-3c599d0ffe1915df3aa082882e1911b3",
+      "port": 1399,
+      "data_dir": "/var/lib/sq-tenants/slot-059"
+    },
+    {
+      "token": "pmb-v1-3e15787c2ac6be86b6a4890b1bbb7065",
+      "port": 1400,
+      "data_dir": "/var/lib/sq-tenants/slot-060"
+    },
+    {
+      "token": "pmb-v1-0e1bae0422d9ecfa28268b1242c2d56e",
+      "port": 1401,
+      "data_dir": "/var/lib/sq-tenants/slot-061"
+    },
+    {
+      "token": "pmb-v1-3c9a34570368f24a963fbaa19e2dd7bd",
+      "port": 1402,
+      "data_dir": "/var/lib/sq-tenants/slot-062"
+    },
+    {
+      "token": "pmb-v1-1aa9f853e43343c7c013808003b06c64",
+      "port": 1403,
+      "data_dir": "/var/lib/sq-tenants/slot-063"
+    },
+    {
+      "token": "pmb-v1-c77b182254303ca35f8c725cb10c2fc5",
+      "port": 1404,
+      "data_dir": "/var/lib/sq-tenants/slot-064"
+    },
+    {
+      "token": "pmb-v1-72f1d3543c09174711bc5f636d0a5d8b",
+      "port": 1405,
+      "data_dir": "/var/lib/sq-tenants/slot-065"
+    },
+    {
+      "token": "pmb-v1-d579bb72b5d734d7003156ca00587058",
+      "port": 1406,
+      "data_dir": "/var/lib/sq-tenants/slot-066"
+    },
+    {
+      "token": "pmb-v1-1f287ffe08e7221d1961d37da53cb83f",
+      "port": 1407,
+      "data_dir": "/var/lib/sq-tenants/slot-067"
+    },
+    {
+      "token": "pmb-v1-8000a4f4e26278a42813b207c71bec7a",
+      "port": 1408,
+      "data_dir": "/var/lib/sq-tenants/slot-068"
+    },
+    {
+      "token": "pmb-v1-a5bfc26f6dd6556f1237a98146fa9dcc",
+      "port": 1409,
+      "data_dir": "/var/lib/sq-tenants/slot-069"
+    },
+    {
+      "token": "pmb-v1-2ed28f91b1efcdc7c8dfe3e1a31d9439",
+      "port": 1410,
+      "data_dir": "/var/lib/sq-tenants/slot-070"
+    },
+    {
+      "token": "pmb-v1-367f62dbe64f36aad2d0dd3d1292f6c6",
+      "port": 1411,
+      "data_dir": "/var/lib/sq-tenants/slot-071"
+    },
+    {
+      "token": "pmb-v1-7271ba602fe8ae4533290dd2f5ab1162",
+      "port": 1412,
+      "data_dir": "/var/lib/sq-tenants/slot-072"
+    },
+    {
+      "token": "pmb-v1-ba6b5828df6806312670344e6491865a",
+      "port": 1413,
+      "data_dir": "/var/lib/sq-tenants/slot-073"
+    },
+    {
+      "token": "pmb-v1-58d3b2ca01387d397aec781cdb16a6a4",
+      "port": 1414,
+      "data_dir": "/var/lib/sq-tenants/slot-074"
+    },
+    {
+      "token": "pmb-v1-5a191c190d4553ff1d25a845e4f6677e",
+      "port": 1415,
+      "data_dir": "/var/lib/sq-tenants/slot-075"
+    },
+    {
+      "token": "pmb-v1-399099cc49f8ab1b1f4f5ab0c77d173d",
+      "port": 1416,
+      "data_dir": "/var/lib/sq-tenants/slot-076"
+    },
+    {
+      "token": "pmb-v1-7d24bf453e854b1ae0dfe0da8c19f758",
+      "port": 1417,
+      "data_dir": "/var/lib/sq-tenants/slot-077"
+    },
+    {
+      "token": "pmb-v1-181716c4e12a009f221b51597ca655a7",
+      "port": 1418,
+      "data_dir": "/var/lib/sq-tenants/slot-078"
+    },
+    {
+      "token": "pmb-v1-3b990d903acd793dd8eec533b86ea9b6",
+      "port": 1419,
+      "data_dir": "/var/lib/sq-tenants/slot-079"
+    },
+    {
+      "token": "pmb-v1-aadd2c55b85b17b7d7bad42e183ea69e",
+      "port": 1420,
+      "data_dir": "/var/lib/sq-tenants/slot-080"
+    },
+    {
+      "token": "pmb-v1-d96c8e0f8222aa3dc1fee188b749a1d6",
+      "port": 1421,
+      "data_dir": "/var/lib/sq-tenants/slot-081"
+    },
+    {
+      "token": "pmb-v1-87cd65b3a9fcecd13068d90f4fcc3366",
+      "port": 1422,
+      "data_dir": "/var/lib/sq-tenants/slot-082"
+    },
+    {
+      "token": "pmb-v1-0abc3fcfa015a75e71f3f170b74f50f8",
+      "port": 1423,
+      "data_dir": "/var/lib/sq-tenants/slot-083"
+    },
+    {
+      "token": "pmb-v1-96efa9bd6846872ceb88e16fcc3e5491",
+      "port": 1424,
+      "data_dir": "/var/lib/sq-tenants/slot-084"
+    },
+    {
+      "token": "pmb-v1-48c5cace04ca5255e300c27066bb5f94",
+      "port": 1425,
+      "data_dir": "/var/lib/sq-tenants/slot-085"
+    },
+    {
+      "token": "pmb-v1-a4782a9eb249dc4a07f1d45fded1a204",
+      "port": 1426,
+      "data_dir": "/var/lib/sq-tenants/slot-086"
+    },
+    {
+      "token": "pmb-v1-c14b5d446552807dab6c8400cd44f505",
+      "port": 1427,
+      "data_dir": "/var/lib/sq-tenants/slot-087"
+    },
+    {
+      "token": "pmb-v1-92da4a198a52bbf8d294615d0fc77295",
+      "port": 1428,
+      "data_dir": "/var/lib/sq-tenants/slot-088"
+    },
+    {
+      "token": "pmb-v1-a94e80e3762e03a93636d6d5d9b5e94c",
+      "port": 1429,
+      "data_dir": "/var/lib/sq-tenants/slot-089"
+    },
+    {
+      "token": "pmb-v1-cabe80366e54c9acec1d5295411bac3c",
+      "port": 1430,
+      "data_dir": "/var/lib/sq-tenants/slot-090"
+    },
+    {
+      "token": "pmb-v1-2813ea7f92ffe85914898995eedc40fd",
+      "port": 1431,
+      "data_dir": "/var/lib/sq-tenants/slot-091"
+    },
+    {
+      "token": "pmb-v1-a52b03676e213625cdc065520992b267",
+      "port": 1432,
+      "data_dir": "/var/lib/sq-tenants/slot-092"
+    },
+    {
+      "token": "pmb-v1-db9ce52ecc9e149d02b9a1d3af79fb43",
+      "port": 1433,
+      "data_dir": "/var/lib/sq-tenants/slot-093"
+    },
+    {
+      "token": "pmb-v1-1a8c52eaccefbdf72a62ae3281fd2471",
+      "port": 1434,
+      "data_dir": "/var/lib/sq-tenants/slot-094"
+    },
+    {
+      "token": "pmb-v1-74511286c207d06ff7405d0b9962a25c",
+      "port": 1435,
+      "data_dir": "/var/lib/sq-tenants/slot-095"
+    },
+    {
+      "token": "pmb-v1-10d37f4595717cfe68a0308b0f2c7f08",
+      "port": 1436,
+      "data_dir": "/var/lib/sq-tenants/slot-096"
+    },
+    {
+      "token": "pmb-v1-929768f6123b9a9fb47132605acb04f6",
+      "port": 1437,
+      "data_dir": "/var/lib/sq-tenants/slot-097"
+    },
+    {
+      "token": "pmb-v1-a26e33b8f2d87b9c008721c33bca1fba",
+      "port": 1438,
+      "data_dir": "/var/lib/sq-tenants/slot-098"
+    },
+    {
+      "token": "pmb-v1-be051bade869c25fdc74987f5df8b489",
+      "port": 1439,
+      "data_dir": "/var/lib/sq-tenants/slot-099"
+    },
+    {
+      "token": "pmb-v1-9db0ff5c8c30bb0f26fdb17b9afab899",
+      "port": 1440,
+      "data_dir": "/var/lib/sq-tenants/slot-100"
+    },
+    {
+      "token": "pmb-v1-5d232b6e776b216a3a74976660e79e5f",
+      "port": 1441,
+      "data_dir": "/var/lib/sq-tenants/slot-101"
+    },
+    {
+      "token": "pmb-v1-8e708d7c684f4c272daea0e9dfeedc02",
+      "port": 1442,
+      "data_dir": "/var/lib/sq-tenants/slot-102"
+    },
+    {
+      "token": "pmb-v1-360cf60c2dd73a684380e87653628ade",
+      "port": 1443,
+      "data_dir": "/var/lib/sq-tenants/slot-103"
+    },
+    {
+      "token": "pmb-v1-d41514162c8cc70b82951257610eeaf1",
+      "port": 1444,
+      "data_dir": "/var/lib/sq-tenants/slot-104"
+    },
+    {
+      "token": "pmb-v1-333a4e65e9f5940b43f69417f35b042f",
+      "port": 1445,
+      "data_dir": "/var/lib/sq-tenants/slot-105"
+    },
+    {
+      "token": "pmb-v1-db36a3476c778c0c10943afb310dbe2f",
+      "port": 1446,
+      "data_dir": "/var/lib/sq-tenants/slot-106"
+    },
+    {
+      "token": "pmb-v1-c882678246c2504ac3426aac849799ca",
+      "port": 1447,
+      "data_dir": "/var/lib/sq-tenants/slot-107"
+    },
+    {
+      "token": "pmb-v1-4a48552fc47c040ed6bcd2d331eb8f8a",
+      "port": 1448,
+      "data_dir": "/var/lib/sq-tenants/slot-108"
+    },
+    {
+      "token": "pmb-v1-2dbf89a28f010ca570d667e03cd71aa3",
+      "port": 1449,
+      "data_dir": "/var/lib/sq-tenants/slot-109"
+    },
+    {
+      "token": "pmb-v1-c2c2a2ce06be33ceedfeee920107bf47",
+      "port": 1450,
+      "data_dir": "/var/lib/sq-tenants/slot-110"
+    },
+    {
+      "token": "pmb-v1-5ef5dada0cafdbdfc82609de236d2c8e",
+      "port": 1451,
+      "data_dir": "/var/lib/sq-tenants/slot-111"
+    },
+    {
+      "token": "pmb-v1-585f2b59635f4925f0457fe7b5031213",
+      "port": 1452,
+      "data_dir": "/var/lib/sq-tenants/slot-112"
+    },
+    {
+      "token": "pmb-v1-260c9f6d604cdde1ce49412121ec7da0",
+      "port": 1453,
+      "data_dir": "/var/lib/sq-tenants/slot-113"
+    },
+    {
+      "token": "pmb-v1-a9b7fc3d7fb67222db7c24d78fd7b0b4",
+      "port": 1454,
+      "data_dir": "/var/lib/sq-tenants/slot-114"
+    },
+    {
+      "token": "pmb-v1-4a3d42605f5db5ad89ea5dcc0d94792f",
+      "port": 1455,
+      "data_dir": "/var/lib/sq-tenants/slot-115"
+    },
+    {
+      "token": "pmb-v1-5096a5840d98a623a5d7fbebcbf4bbb7",
+      "port": 1456,
+      "data_dir": "/var/lib/sq-tenants/slot-116"
+    },
+    {
+      "token": "pmb-v1-be9498e4dcaf276df201fce9b82468ad",
+      "port": 1457,
+      "data_dir": "/var/lib/sq-tenants/slot-117"
+    },
+    {
+      "token": "pmb-v1-d91bba068ae7e637e4cb97ea227df44a",
+      "port": 1458,
+      "data_dir": "/var/lib/sq-tenants/slot-118"
+    },
+    {
+      "token": "pmb-v1-44ffd384f485b3d669a2c11a16e2a7fd",
+      "port": 1459,
+      "data_dir": "/var/lib/sq-tenants/slot-119"
+    },
+    {
+      "token": "pmb-v1-847eff51298407e7a173eee10e977fed",
+      "port": 1460,
+      "data_dir": "/var/lib/sq-tenants/slot-120"
+    },
+    {
+      "token": "pmb-v1-0cb14ca19b2e11065dff337c1365c927",
+      "port": 1461,
+      "data_dir": "/var/lib/sq-tenants/slot-121"
+    },
+    {
+      "token": "pmb-v1-d1794bcbac1436d7d0f50791424e2863",
+      "port": 1462,
+      "data_dir": "/var/lib/sq-tenants/slot-122"
+    },
+    {
+      "token": "pmb-v1-3f841159d26632324433ece730ca67cc",
+      "port": 1463,
+      "data_dir": "/var/lib/sq-tenants/slot-123"
+    },
+    {
+      "token": "pmb-v1-3b85caeec9510620002ca10f2ea2f7f0",
+      "port": 1464,
+      "data_dir": "/var/lib/sq-tenants/slot-124"
+    },
+    {
+      "token": "pmb-v1-c1cebf7428bb6ef51771b1d6e0fa34df",
+      "port": 1465,
+      "data_dir": "/var/lib/sq-tenants/slot-125"
+    },
+    {
+      "token": "pmb-v1-05d282e7b07bf59c7fc29cf4824395a0",
+      "port": 1466,
+      "data_dir": "/var/lib/sq-tenants/slot-126"
+    },
+    {
+      "token": "pmb-v1-8092cfbd5d9bece935f2a2455c0d73c0",
+      "port": 1467,
+      "data_dir": "/var/lib/sq-tenants/slot-127"
+    },
+    {
+      "token": "pmb-v1-cc665e0c5eb47c1447d0f6d3f87b7db5",
+      "port": 1468,
+      "data_dir": "/var/lib/sq-tenants/slot-128"
+    },
+    {
+      "token": "pmb-v1-00c893437650a75d4aa356738825b057",
+      "port": 1469,
+      "data_dir": "/var/lib/sq-tenants/slot-129"
+    },
+    {
+      "token": "pmb-v1-05a26daa71311297106b2bcc06957619",
+      "port": 1470,
+      "data_dir": "/var/lib/sq-tenants/slot-130"
+    },
+    {
+      "token": "pmb-v1-192ad3fa787fc7f914625f9d6b42ff85",
+      "port": 1471,
+      "data_dir": "/var/lib/sq-tenants/slot-131"
+    },
+    {
+      "token": "pmb-v1-b4ec783850c20588f327790a3bba2a07",
+      "port": 1472,
+      "data_dir": "/var/lib/sq-tenants/slot-132"
+    },
+    {
+      "token": "pmb-v1-99630719e4c6ee1fd69f5b68b3d9f321",
+      "port": 1473,
+      "data_dir": "/var/lib/sq-tenants/slot-133"
+    },
+    {
+      "token": "pmb-v1-19f037f376b5bf653fc06bda8e8c0712",
+      "port": 1474,
+      "data_dir": "/var/lib/sq-tenants/slot-134"
+    },
+    {
+      "token": "pmb-v1-da19251607002ba3e4cc02e231179f09",
+      "port": 1475,
+      "data_dir": "/var/lib/sq-tenants/slot-135"
+    },
+    {
+      "token": "pmb-v1-6ef77d3f741ae51f35a1ec37b1e63442",
+      "port": 1476,
+      "data_dir": "/var/lib/sq-tenants/slot-136"
+    },
+    {
+      "token": "pmb-v1-f0135860464bfb3dcae13e25929e5237",
+      "port": 1477,
+      "data_dir": "/var/lib/sq-tenants/slot-137"
+    },
+    {
+      "token": "pmb-v1-0c6282730a9f9fa2b7d8633d42b79877",
+      "port": 1478,
+      "data_dir": "/var/lib/sq-tenants/slot-138"
+    },
+    {
+      "token": "pmb-v1-af8ab72406e44a04d27440515e396009",
+      "port": 1479,
+      "data_dir": "/var/lib/sq-tenants/slot-139"
+    },
+    {
+      "token": "pmb-v1-4a1aee73bfc502d88a5a44b37e2d98f2",
+      "port": 1480,
+      "data_dir": "/var/lib/sq-tenants/slot-140"
+    },
+    {
+      "token": "pmb-v1-e17fb57b2bc2de6d87d6374462ee9f8d",
+      "port": 1481,
+      "data_dir": "/var/lib/sq-tenants/slot-141"
+    },
+    {
+      "token": "pmb-v1-7c8fba89a4838c58763c595495f583b8",
+      "port": 1482,
+      "data_dir": "/var/lib/sq-tenants/slot-142"
+    },
+    {
+      "token": "pmb-v1-b06c51217563961aaf0be4d248f027c7",
+      "port": 1483,
+      "data_dir": "/var/lib/sq-tenants/slot-143"
+    },
+    {
+      "token": "pmb-v1-42dd2c37c07a276ccbaa069b307748d9",
+      "port": 1484,
+      "data_dir": "/var/lib/sq-tenants/slot-144"
+    },
+    {
+      "token": "pmb-v1-3ccd9acb82948f026aad536093f99c45",
+      "port": 1485,
+      "data_dir": "/var/lib/sq-tenants/slot-145"
+    },
+    {
+      "token": "pmb-v1-6738b8002db88330f1f07b6e5cff33ea",
+      "port": 1486,
+      "data_dir": "/var/lib/sq-tenants/slot-146"
+    },
+    {
+      "token": "pmb-v1-552ebdd373d87f1ecd4e792516596198",
+      "port": 1487,
+      "data_dir": "/var/lib/sq-tenants/slot-147"
+    },
+    {
+      "token": "pmb-v1-ee48747284d0c5568e5924c294304ef0",
+      "port": 1488,
+      "data_dir": "/var/lib/sq-tenants/slot-148"
+    },
+    {
+      "token": "pmb-v1-0ac2585ef7280bab2093f84719147032",
+      "port": 1489,
+      "data_dir": "/var/lib/sq-tenants/slot-149"
+    },
+    {
+      "token": "pmb-v1-01b52de1e85eaf9184cf637d70e13614",
+      "port": 1490,
+      "data_dir": "/var/lib/sq-tenants/slot-150"
+    },
+    {
+      "token": "pmb-v1-6ed875124b6208d2dd1f3a0eae53b555",
+      "port": 1491,
+      "data_dir": "/var/lib/sq-tenants/slot-151"
+    },
+    {
+      "token": "pmb-v1-0101120bf9e7adec8c4c6d75d2962102",
+      "port": 1492,
+      "data_dir": "/var/lib/sq-tenants/slot-152"
+    },
+    {
+      "token": "pmb-v1-198c0edd41a36459e79e18376b515877",
+      "port": 1493,
+      "data_dir": "/var/lib/sq-tenants/slot-153"
+    },
+    {
+      "token": "pmb-v1-3d4641a9c8bf0dab6c18619db614e0ce",
+      "port": 1494,
+      "data_dir": "/var/lib/sq-tenants/slot-154"
+    },
+    {
+      "token": "pmb-v1-1f37114b67612517a7c50bba4febe011",
+      "port": 1495,
+      "data_dir": "/var/lib/sq-tenants/slot-155"
+    },
+    {
+      "token": "pmb-v1-4298045e56d24c0b9b415d28dc32c8dd",
+      "port": 1496,
+      "data_dir": "/var/lib/sq-tenants/slot-156"
+    },
+    {
+      "token": "pmb-v1-474e6056a5ba2a9d75fe03f22b6bb16a",
+      "port": 1497,
+      "data_dir": "/var/lib/sq-tenants/slot-157"
+    },
+    {
+      "token": "pmb-v1-4b65d62dc3f2954223b86d9d94c1a20b",
+      "port": 1498,
+      "data_dir": "/var/lib/sq-tenants/slot-158"
+    },
+    {
+      "token": "pmb-v1-9b51510ab0d58d214eb222dc3eacff3a",
+      "port": 1499,
+      "data_dir": "/var/lib/sq-tenants/slot-159"
+    },
+    {
+      "token": "pmb-v1-495f701f150f995420db7e86c73ec016",
+      "port": 1500,
+      "data_dir": "/var/lib/sq-tenants/slot-160"
+    },
+    {
+      "token": "pmb-v1-13c58c9f8f33c43e7af138949ec6f257",
+      "port": 1501,
+      "data_dir": "/var/lib/sq-tenants/slot-161"
+    },
+    {
+      "token": "pmb-v1-b5b5332c1f0ed8e80db936af8c8669e1",
+      "port": 1502,
+      "data_dir": "/var/lib/sq-tenants/slot-162"
+    },
+    {
+      "token": "pmb-v1-453299aa597e48de41687bf0c0fc5751",
+      "port": 1503,
+      "data_dir": "/var/lib/sq-tenants/slot-163"
+    },
+    {
+      "token": "pmb-v1-6aad3d799f6e90c91a09efa2dd83f745",
+      "port": 1504,
+      "data_dir": "/var/lib/sq-tenants/slot-164"
+    },
+    {
+      "token": "pmb-v1-0c19c004d61b155278e05fbbb7c87cfb",
+      "port": 1505,
+      "data_dir": "/var/lib/sq-tenants/slot-165"
+    },
+    {
+      "token": "pmb-v1-77636688079ca8dab463e946822ccfac",
+      "port": 1506,
+      "data_dir": "/var/lib/sq-tenants/slot-166"
+    },
+    {
+      "token": "pmb-v1-3416ecc7f2332e724ede77e1e9149081",
+      "port": 1507,
+      "data_dir": "/var/lib/sq-tenants/slot-167"
+    },
+    {
+      "token": "pmb-v1-abca43d409a95cafd57d0afb836ccb36",
+      "port": 1508,
+      "data_dir": "/var/lib/sq-tenants/slot-168"
+    },
+    {
+      "token": "pmb-v1-7e6d154323cd7fc1690293cd3fd21dd9",
+      "port": 1509,
+      "data_dir": "/var/lib/sq-tenants/slot-169"
+    },
+    {
+      "token": "pmb-v1-48d50cd3489747d0a83ac6ab4f14dcd0",
+      "port": 1510,
+      "data_dir": "/var/lib/sq-tenants/slot-170"
+    },
+    {
+      "token": "pmb-v1-9480df48d2d5263e08e25d5cf016e20b",
+      "port": 1511,
+      "data_dir": "/var/lib/sq-tenants/slot-171"
+    },
+    {
+      "token": "pmb-v1-1b87c8eb5e0e378d28a3d1d9cea0508f",
+      "port": 1512,
+      "data_dir": "/var/lib/sq-tenants/slot-172"
+    },
+    {
+      "token": "pmb-v1-222fa8afef5587ee050a769bf54f7f47",
+      "port": 1513,
+      "data_dir": "/var/lib/sq-tenants/slot-173"
+    },
+    {
+      "token": "pmb-v1-73563fa60622c5d37024677a3cc989c8",
+      "port": 1514,
+      "data_dir": "/var/lib/sq-tenants/slot-174"
+    },
+    {
+      "token": "pmb-v1-54e56ff9d1cedb9829ace5df2b14bf44",
+      "port": 1515,
+      "data_dir": "/var/lib/sq-tenants/slot-175"
+    },
+    {
+      "token": "pmb-v1-a747023972267a7383be748ba9baed09",
+      "port": 1516,
+      "data_dir": "/var/lib/sq-tenants/slot-176"
+    },
+    {
+      "token": "pmb-v1-19730f6e6ca97aabd11e087eccacf2f2",
+      "port": 1517,
+      "data_dir": "/var/lib/sq-tenants/slot-177"
+    },
+    {
+      "token": "pmb-v1-76b23b5ecfb352a1de28b8c34fadc23c",
+      "port": 1518,
+      "data_dir": "/var/lib/sq-tenants/slot-178"
+    },
+    {
+      "token": "pmb-v1-c89b52e371e5040ea908c904451a08de",
+      "port": 1519,
+      "data_dir": "/var/lib/sq-tenants/slot-179"
+    },
+    {
+      "token": "pmb-v1-878a7296d7aa75a6dc04b331f1ed525a",
+      "port": 1520,
+      "data_dir": "/var/lib/sq-tenants/slot-180"
+    },
+    {
+      "token": "pmb-v1-3a0c9e4a207abc6e0845126944009f0c",
+      "port": 1521,
+      "data_dir": "/var/lib/sq-tenants/slot-181"
+    },
+    {
+      "token": "pmb-v1-e543d0b1b630747934cfc2c2d3a85b45",
+      "port": 1522,
+      "data_dir": "/var/lib/sq-tenants/slot-182"
+    },
+    {
+      "token": "pmb-v1-7a8e3fd5d4f5a753d7f9226fa0dd4327",
+      "port": 1523,
+      "data_dir": "/var/lib/sq-tenants/slot-183"
+    },
+    {
+      "token": "pmb-v1-5ebe26f6eba6053c17cbd6014126e0aa",
+      "port": 1524,
+      "data_dir": "/var/lib/sq-tenants/slot-184"
+    },
+    {
+      "token": "pmb-v1-41d4137ad58d8487a5bbdb75e3b67903",
+      "port": 1525,
+      "data_dir": "/var/lib/sq-tenants/slot-185"
+    },
+    {
+      "token": "pmb-v1-eaeb8f73c89b61af4cb8d7312775274e",
+      "port": 1526,
+      "data_dir": "/var/lib/sq-tenants/slot-186"
+    },
+    {
+      "token": "pmb-v1-1e0a5fc30e5733e79af9f2ed7e6567d2",
+      "port": 1527,
+      "data_dir": "/var/lib/sq-tenants/slot-187"
+    },
+    {
+      "token": "pmb-v1-6dd42ef109a8646d62fcf422388fe446",
+      "port": 1528,
+      "data_dir": "/var/lib/sq-tenants/slot-188"
+    },
+    {
+      "token": "pmb-v1-da26e189edb2a946ff4eef3d982e6440",
+      "port": 1529,
+      "data_dir": "/var/lib/sq-tenants/slot-189"
+    },
+    {
+      "token": "pmb-v1-8d62751c661a8946ce82074335e57e98",
+      "port": 1530,
+      "data_dir": "/var/lib/sq-tenants/slot-190"
+    },
+    {
+      "token": "pmb-v1-4fc8cc1258c8d78a86cee1034fc3ad16",
+      "port": 1531,
+      "data_dir": "/var/lib/sq-tenants/slot-191"
+    },
+    {
+      "token": "pmb-v1-58fc718fdf1e5590b97ccff04ca3a75e",
+      "port": 1532,
+      "data_dir": "/var/lib/sq-tenants/slot-192"
+    },
+    {
+      "token": "pmb-v1-c667b71150d373827c120946788b5b42",
+      "port": 1533,
+      "data_dir": "/var/lib/sq-tenants/slot-193"
+    },
+    {
+      "token": "pmb-v1-3706fb3f571b389a8f604842dfb70f3a",
+      "port": 1534,
+      "data_dir": "/var/lib/sq-tenants/slot-194"
+    },
+    {
+      "token": "pmb-v1-4efb12f59def5db33fb9648593865903",
+      "port": 1535,
+      "data_dir": "/var/lib/sq-tenants/slot-195"
+    },
+    {
+      "token": "pmb-v1-a9a9386a121520bd4a1c0c4dcde8c079",
+      "port": 1536,
+      "data_dir": "/var/lib/sq-tenants/slot-196"
+    },
+    {
+      "token": "pmb-v1-dd21a16a598893637fb2fa21434d0146",
+      "port": 1537,
+      "data_dir": "/var/lib/sq-tenants/slot-197"
+    },
+    {
+      "token": "pmb-v1-4ebb89db2d224a9b2f54bb2a29a8896e",
+      "port": 1538,
+      "data_dir": "/var/lib/sq-tenants/slot-198"
+    },
+    {
+      "token": "pmb-v1-c7a69036c05bcb04a014623ed24e6fa0",
+      "port": 1539,
+      "data_dir": "/var/lib/sq-tenants/slot-199"
+    },
+    {
+      "token": "pmb-v1-514eefeeb411ee4d309bd55f34bc36cb",
+      "port": 1540,
+      "data_dir": "/var/lib/sq-tenants/slot-200"
+    },
+    {
+      "token": "pmb-v1-c7b4596559cd309c32e41e3667642f6f",
+      "port": 1541,
+      "data_dir": "/var/lib/sq-tenants/slot-201"
+    },
+    {
+      "token": "pmb-v1-4d99f8f6eec41c3e33f5053df6788b32",
+      "port": 1542,
+      "data_dir": "/var/lib/sq-tenants/slot-202"
+    },
+    {
+      "token": "pmb-v1-86de69a5694583a98bf63f3e55c2e272",
+      "port": 1543,
+      "data_dir": "/var/lib/sq-tenants/slot-203"
+    },
+    {
+      "token": "pmb-v1-a9a82a6e7c4d8106f85a5656611d87b3",
+      "port": 1544,
+      "data_dir": "/var/lib/sq-tenants/slot-204"
+    },
+    {
+      "token": "pmb-v1-42a0be18348ca6d1efee574644e70342",
+      "port": 1545,
+      "data_dir": "/var/lib/sq-tenants/slot-205"
+    },
+    {
+      "token": "pmb-v1-ca0eb329c9c8d60445d8946da6aceb33",
+      "port": 1546,
+      "data_dir": "/var/lib/sq-tenants/slot-206"
+    },
+    {
+      "token": "pmb-v1-1876f00f6f159f8b60737e62c4f4d982",
+      "port": 1547,
+      "data_dir": "/var/lib/sq-tenants/slot-207"
+    },
+    {
+      "token": "pmb-v1-8570ee60a9955f7cd369737cc2b2056a",
+      "port": 1548,
+      "data_dir": "/var/lib/sq-tenants/slot-208"
+    },
+    {
+      "token": "pmb-v1-ea5694252e7b8c8c5eda1854961035cd",
+      "port": 1549,
+      "data_dir": "/var/lib/sq-tenants/slot-209"
+    },
+    {
+      "token": "pmb-v1-b97181c9c35dad348779e22c568a0198",
+      "port": 1550,
+      "data_dir": "/var/lib/sq-tenants/slot-210"
+    },
+    {
+      "token": "pmb-v1-5cf0616f1acebf791a489497c5cab5b3",
+      "port": 1551,
+      "data_dir": "/var/lib/sq-tenants/slot-211"
+    },
+    {
+      "token": "pmb-v1-4467ceefc01e3d93cd2fa0d8f9d6f8af",
+      "port": 1552,
+      "data_dir": "/var/lib/sq-tenants/slot-212"
+    },
+    {
+      "token": "pmb-v1-4fc871b4a6a71be0abc614aad7df60fa",
+      "port": 1553,
+      "data_dir": "/var/lib/sq-tenants/slot-213"
+    },
+    {
+      "token": "pmb-v1-730c26a6eaca5a8c3a3fbcc36d9406dd",
+      "port": 1554,
+      "data_dir": "/var/lib/sq-tenants/slot-214"
+    },
+    {
+      "token": "pmb-v1-98951ee54c5a3206a266e1cf0d422b61",
+      "port": 1555,
+      "data_dir": "/var/lib/sq-tenants/slot-215"
+    },
+    {
+      "token": "pmb-v1-1e695826bb68418c4c3620ea6f22aace",
+      "port": 1556,
+      "data_dir": "/var/lib/sq-tenants/slot-216"
+    },
+    {
+      "token": "pmb-v1-82ab4e0e9f3c14a237ae0a9fdaeb09ea",
+      "port": 1557,
+      "data_dir": "/var/lib/sq-tenants/slot-217"
+    },
+    {
+      "token": "pmb-v1-2ccd72dcb150d652946cfd53f6a747f3",
+      "port": 1558,
+      "data_dir": "/var/lib/sq-tenants/slot-218"
+    },
+    {
+      "token": "pmb-v1-447d8ff841dd02e4667fbc81054c3e96",
+      "port": 1559,
+      "data_dir": "/var/lib/sq-tenants/slot-219"
+    },
+    {
+      "token": "pmb-v1-95fd7a76c63fceba6565e15c48961162",
+      "port": 1560,
+      "data_dir": "/var/lib/sq-tenants/slot-220"
+    },
+    {
+      "token": "pmb-v1-108be999195130ce672974a0d2d2a748",
+      "port": 1561,
+      "data_dir": "/var/lib/sq-tenants/slot-221"
+    },
+    {
+      "token": "pmb-v1-e15f5db70e47d14e3fca7b34b9f6f647",
+      "port": 1562,
+      "data_dir": "/var/lib/sq-tenants/slot-222"
+    },
+    {
+      "token": "pmb-v1-3c575b5e1796573e13326d44767e2ea0",
+      "port": 1563,
+      "data_dir": "/var/lib/sq-tenants/slot-223"
+    },
+    {
+      "token": "pmb-v1-eafdbf465587958ce176fe47a79c9479",
+      "port": 1564,
+      "data_dir": "/var/lib/sq-tenants/slot-224"
+    },
+    {
+      "token": "pmb-v1-43b588ceb534ebd326205ca38e2d23f3",
+      "port": 1565,
+      "data_dir": "/var/lib/sq-tenants/slot-225"
+    },
+    {
+      "token": "pmb-v1-dd0817621e800eee99de489297918a82",
+      "port": 1566,
+      "data_dir": "/var/lib/sq-tenants/slot-226"
+    },
+    {
+      "token": "pmb-v1-0b179ee0a1e9318dbe0ca844f59a10e5",
+      "port": 1567,
+      "data_dir": "/var/lib/sq-tenants/slot-227"
+    },
+    {
+      "token": "pmb-v1-d2f04ef174336b514613639054ffe652",
+      "port": 1568,
+      "data_dir": "/var/lib/sq-tenants/slot-228"
+    },
+    {
+      "token": "pmb-v1-45d742edfc75e52a2d6fd51a60bd2188",
+      "port": 1569,
+      "data_dir": "/var/lib/sq-tenants/slot-229"
+    },
+    {
+      "token": "pmb-v1-17f1f2f78325535511a5fd13579681ad",
+      "port": 1570,
+      "data_dir": "/var/lib/sq-tenants/slot-230"
+    },
+    {
+      "token": "pmb-v1-967f17827c97686bc0abed82f761f7f0",
+      "port": 1571,
+      "data_dir": "/var/lib/sq-tenants/slot-231"
+    },
+    {
+      "token": "pmb-v1-72336164e552df8511b37f45125ed272",
+      "port": 1572,
+      "data_dir": "/var/lib/sq-tenants/slot-232"
+    },
+    {
+      "token": "pmb-v1-b79776479307a4cc89d311dca03f4c6f",
+      "port": 1573,
+      "data_dir": "/var/lib/sq-tenants/slot-233"
+    },
+    {
+      "token": "pmb-v1-37a9f585a3f7bf3b26399ebc5f8d03ef",
+      "port": 1574,
+      "data_dir": "/var/lib/sq-tenants/slot-234"
+    },
+    {
+      "token": "pmb-v1-7e5b904e3556814f23979dc21ff026e9",
+      "port": 1575,
+      "data_dir": "/var/lib/sq-tenants/slot-235"
+    },
+    {
+      "token": "pmb-v1-a2852aeaa0f57fd97f710364373ff7f8",
+      "port": 1576,
+      "data_dir": "/var/lib/sq-tenants/slot-236"
+    },
+    {
+      "token": "pmb-v1-586da24a5f57b6aab80878b69bc16251",
+      "port": 1577,
+      "data_dir": "/var/lib/sq-tenants/slot-237"
+    },
+    {
+      "token": "pmb-v1-8df916957dbeb13b611e710eb8dbfd4e",
+      "port": 1578,
+      "data_dir": "/var/lib/sq-tenants/slot-238"
+    },
+    {
+      "token": "pmb-v1-50de8c4dfcc1426bd1d5e89ad320ba94",
+      "port": 1579,
+      "data_dir": "/var/lib/sq-tenants/slot-239"
+    },
+    {
+      "token": "pmb-v1-c15186dad537b04f6b26223976536879",
+      "port": 1580,
+      "data_dir": "/var/lib/sq-tenants/slot-240"
+    },
+    {
+      "token": "pmb-v1-b3114e7dc70f854b83f562746c61ceed",
+      "port": 1581,
+      "data_dir": "/var/lib/sq-tenants/slot-241"
+    },
+    {
+      "token": "pmb-v1-d069487a854933889721a4d218829f8c",
+      "port": 1582,
+      "data_dir": "/var/lib/sq-tenants/slot-242"
+    },
+    {
+      "token": "pmb-v1-fd3ffad4931e9b0d817893e907d4134f",
+      "port": 1583,
+      "data_dir": "/var/lib/sq-tenants/slot-243"
+    },
+    {
+      "token": "pmb-v1-e6d65e43f7e8ecfa4851acf29c18d5b7",
+      "port": 1584,
+      "data_dir": "/var/lib/sq-tenants/slot-244"
+    },
+    {
+      "token": "pmb-v1-422b1e26d72dbf5137a7650c8820c208",
+      "port": 1585,
+      "data_dir": "/var/lib/sq-tenants/slot-245"
+    },
+    {
+      "token": "pmb-v1-b451cd28570c2e8794f82d11b4923149",
+      "port": 1586,
+      "data_dir": "/var/lib/sq-tenants/slot-246"
+    },
+    {
+      "token": "pmb-v1-e35c11aedbbc7955c48f222bc8f6b3a1",
+      "port": 1587,
+      "data_dir": "/var/lib/sq-tenants/slot-247"
+    },
+    {
+      "token": "pmb-v1-e656589c9a10580b6e3d3c63fbf3d26c",
+      "port": 1588,
+      "data_dir": "/var/lib/sq-tenants/slot-248"
+    },
+    {
+      "token": "pmb-v1-ed5179c4de6a0420ffa167f9a7253ad9",
+      "port": 1589,
+      "data_dir": "/var/lib/sq-tenants/slot-249"
+    },
+    {
+      "token": "pmb-v1-063dba9aba73278b3fc04b801b0b368c",
+      "port": 1590,
+      "data_dir": "/var/lib/sq-tenants/slot-250"
+    },
+    {
+      "token": "pmb-v1-2d8e8d9750ba986c4db07f3aff6a341b",
+      "port": 1591,
+      "data_dir": "/var/lib/sq-tenants/slot-251"
+    },
+    {
+      "token": "pmb-v1-50a9f095c5fbb223174396a404790049",
+      "port": 1592,
+      "data_dir": "/var/lib/sq-tenants/slot-252"
+    },
+    {
+      "token": "pmb-v1-75418a4e8bb2b35f7bd21696975fa5d5",
+      "port": 1593,
+      "data_dir": "/var/lib/sq-tenants/slot-253"
+    },
+    {
+      "token": "pmb-v1-4c9a1f2cebef8170a588df6a2ceae1fe",
+      "port": 1594,
+      "data_dir": "/var/lib/sq-tenants/slot-254"
+    },
+    {
+      "token": "pmb-v1-aa470219ca85d19766f0d0a2c9dc219a",
+      "port": 1595,
+      "data_dir": "/var/lib/sq-tenants/slot-255"
+    },
+    {
+      "token": "pmb-v1-1b7d930b8a7909b85ea6459ec5de6686",
+      "port": 1596,
+      "data_dir": "/var/lib/sq-tenants/slot-256"
+    },
+    {
+      "token": "pmb-v1-0ee2bc09dc7e22d1843b3fec6d12104d",
+      "port": 1597,
+      "data_dir": "/var/lib/sq-tenants/slot-257"
+    },
+    {
+      "token": "pmb-v1-8da1f492712cb2c67ff95bcb2dac10da",
+      "port": 1598,
+      "data_dir": "/var/lib/sq-tenants/slot-258"
+    },
+    {
+      "token": "pmb-v1-829cac49d9d9edb45f66379e6000b4ed",
+      "port": 1599,
+      "data_dir": "/var/lib/sq-tenants/slot-259"
+    },
+    {
+      "token": "pmb-v1-525516a3d236eeba0e592cfcc07c2abb",
+      "port": 1600,
+      "data_dir": "/var/lib/sq-tenants/slot-260"
+    },
+    {
+      "token": "pmb-v1-1337b0cf9b642b3ed6034d6ef62e09c2",
+      "port": 1601,
+      "data_dir": "/var/lib/sq-tenants/slot-261"
+    },
+    {
+      "token": "pmb-v1-45c5b8d377b442f943fd16aea24e0fd0",
+      "port": 1602,
+      "data_dir": "/var/lib/sq-tenants/slot-262"
+    },
+    {
+      "token": "pmb-v1-bb4b7c7b484d4ef9c5fa6a1a1d942817",
+      "port": 1603,
+      "data_dir": "/var/lib/sq-tenants/slot-263"
+    },
+    {
+      "token": "pmb-v1-ea4a4a7b1475c48f7905d0b4a3dd17b3",
+      "port": 1604,
+      "data_dir": "/var/lib/sq-tenants/slot-264"
+    },
+    {
+      "token": "pmb-v1-0ba9ac5867dfe0062ecb232f951786ed",
+      "port": 1605,
+      "data_dir": "/var/lib/sq-tenants/slot-265"
+    },
+    {
+      "token": "pmb-v1-df3acf47d1bd9d0beda44c8962ed5dad",
+      "port": 1606,
+      "data_dir": "/var/lib/sq-tenants/slot-266"
+    },
+    {
+      "token": "pmb-v1-259bbfb21e3985b9bf8ee9b6e25ace80",
+      "port": 1607,
+      "data_dir": "/var/lib/sq-tenants/slot-267"
+    },
+    {
+      "token": "pmb-v1-122802b8ce4e7145f26104c8f44da4be",
+      "port": 1608,
+      "data_dir": "/var/lib/sq-tenants/slot-268"
+    },
+    {
+      "token": "pmb-v1-2a8c706109943a5aad660791c8d23aeb",
+      "port": 1609,
+      "data_dir": "/var/lib/sq-tenants/slot-269"
+    },
+    {
+      "token": "pmb-v1-7d5e5bb6982e063a1c89d1b668b119da",
+      "port": 1610,
+      "data_dir": "/var/lib/sq-tenants/slot-270"
+    },
+    {
+      "token": "pmb-v1-1fe90b5bd80775172bc325f1ee0a6572",
+      "port": 1611,
+      "data_dir": "/var/lib/sq-tenants/slot-271"
+    },
+    {
+      "token": "pmb-v1-e1d02cc943782e0518a17a6d4fd0fa90",
+      "port": 1612,
+      "data_dir": "/var/lib/sq-tenants/slot-272"
+    },
+    {
+      "token": "pmb-v1-524464e908e4c715e4c0ed2c9ab88417",
+      "port": 1613,
+      "data_dir": "/var/lib/sq-tenants/slot-273"
+    },
+    {
+      "token": "pmb-v1-80fcf1913986f8106f37e4362267ce19",
+      "port": 1614,
+      "data_dir": "/var/lib/sq-tenants/slot-274"
+    },
+    {
+      "token": "pmb-v1-d56c2df5e9b4d352676fc671bf7ae118",
+      "port": 1615,
+      "data_dir": "/var/lib/sq-tenants/slot-275"
+    },
+    {
+      "token": "pmb-v1-8c21324a0547e0d0516b018b7f362fb6",
+      "port": 1616,
+      "data_dir": "/var/lib/sq-tenants/slot-276"
+    },
+    {
+      "token": "pmb-v1-dbaab9cc07a8d879857cb74e07e0dbc5",
+      "port": 1617,
+      "data_dir": "/var/lib/sq-tenants/slot-277"
+    },
+    {
+      "token": "pmb-v1-ace757c8445f99cbb9f6b936dea45358",
+      "port": 1618,
+      "data_dir": "/var/lib/sq-tenants/slot-278"
+    },
+    {
+      "token": "pmb-v1-7f6805d4e4f1ce6ae0130918fda4c624",
+      "port": 1619,
+      "data_dir": "/var/lib/sq-tenants/slot-279"
+    },
+    {
+      "token": "pmb-v1-39c09e5849037b5ba1f447de32bcd07c",
+      "port": 1620,
+      "data_dir": "/var/lib/sq-tenants/slot-280"
+    },
+    {
+      "token": "pmb-v1-b913e9f5577aefa1f7992a4d1cae50ff",
+      "port": 1621,
+      "data_dir": "/var/lib/sq-tenants/slot-281"
+    },
+    {
+      "token": "pmb-v1-38558de25c369d1844523aebc5cea3a9",
+      "port": 1622,
+      "data_dir": "/var/lib/sq-tenants/slot-282"
+    },
+    {
+      "token": "pmb-v1-b1229635487cd7bd5cac7869604ca23b",
+      "port": 1623,
+      "data_dir": "/var/lib/sq-tenants/slot-283"
+    },
+    {
+      "token": "pmb-v1-0dab09828a478ad21d2ee99f6ae9a935",
+      "port": 1624,
+      "data_dir": "/var/lib/sq-tenants/slot-284"
+    },
+    {
+      "token": "pmb-v1-761f4fc886bea9fd91db548baa77a10d",
+      "port": 1625,
+      "data_dir": "/var/lib/sq-tenants/slot-285"
+    },
+    {
+      "token": "pmb-v1-05781c01f8396a0efeb250514c7b897f",
+      "port": 1626,
+      "data_dir": "/var/lib/sq-tenants/slot-286"
+    },
+    {
+      "token": "pmb-v1-ee8fcdee86d466cc4bbfd2c5228db09d",
+      "port": 1627,
+      "data_dir": "/var/lib/sq-tenants/slot-287"
+    },
+    {
+      "token": "pmb-v1-a4cf569924206053217aec4a43a10c0b",
+      "port": 1628,
+      "data_dir": "/var/lib/sq-tenants/slot-288"
+    },
+    {
+      "token": "pmb-v1-2c4260694509f20a1ec9d80e03f3dae9",
+      "port": 1629,
+      "data_dir": "/var/lib/sq-tenants/slot-289"
+    },
+    {
+      "token": "pmb-v1-eb01c8b4eb2942eceae1057b365576df",
+      "port": 1630,
+      "data_dir": "/var/lib/sq-tenants/slot-290"
+    },
+    {
+      "token": "pmb-v1-ae37723434cebe6e5895c89cbde11c8f",
+      "port": 1631,
+      "data_dir": "/var/lib/sq-tenants/slot-291"
+    },
+    {
+      "token": "pmb-v1-80bc173b6b74e95a0af2deb540d12b49",
+      "port": 1632,
+      "data_dir": "/var/lib/sq-tenants/slot-292"
+    },
+    {
+      "token": "pmb-v1-c9692fc3ddb4c73dbd5c1bdb4e4086ab",
+      "port": 1633,
+      "data_dir": "/var/lib/sq-tenants/slot-293"
+    },
+    {
+      "token": "pmb-v1-5d60247d62d4f3774ec69475b275a08d",
+      "port": 1634,
+      "data_dir": "/var/lib/sq-tenants/slot-294"
+    },
+    {
+      "token": "pmb-v1-4afe0b140327c9111c7693cd7bdc370f",
+      "port": 1635,
+      "data_dir": "/var/lib/sq-tenants/slot-295"
+    },
+    {
+      "token": "pmb-v1-069dfb4047ad1c76b96d2900d5352c4b",
+      "port": 1636,
+      "data_dir": "/var/lib/sq-tenants/slot-296"
+    },
+    {
+      "token": "pmb-v1-412c379288a9527caa1fb11208016faa",
+      "port": 1637,
+      "data_dir": "/var/lib/sq-tenants/slot-297"
+    },
+    {
+      "token": "pmb-v1-ac1a067e3be68f7883f1d755078a1826",
+      "port": 1638,
+      "data_dir": "/var/lib/sq-tenants/slot-298"
+    },
+    {
+      "token": "pmb-v1-50995a2403adfcd2045d48618ea2f0dd",
+      "port": 1639,
+      "data_dir": "/var/lib/sq-tenants/slot-299"
+    },
+    {
+      "token": "pmb-v1-7dfb10f0ef4ff371428154e967bf2fa4",
+      "port": 1640,
+      "data_dir": "/var/lib/sq-tenants/slot-300"
+    },
+    {
+      "token": "pmb-v1-4faae58b76e78fb2c1397b6815d1e592",
+      "port": 1641,
+      "data_dir": "/var/lib/sq-tenants/slot-301"
+    },
+    {
+      "token": "pmb-v1-3d288764b94651771a735596ac94a94d",
+      "port": 1642,
+      "data_dir": "/var/lib/sq-tenants/slot-302"
+    },
+    {
+      "token": "pmb-v1-3733b75067f4a0b0eecc07f6508f05f3",
+      "port": 1643,
+      "data_dir": "/var/lib/sq-tenants/slot-303"
+    },
+    {
+      "token": "pmb-v1-f5e528b49b15437edf45938aa533d87b",
+      "port": 1644,
+      "data_dir": "/var/lib/sq-tenants/slot-304"
+    },
+    {
+      "token": "pmb-v1-649e854ee649baa46a00f363e2f36f88",
+      "port": 1645,
+      "data_dir": "/var/lib/sq-tenants/slot-305"
+    },
+    {
+      "token": "pmb-v1-c2b60326aead3be0a8901ac28ba3b5d3",
+      "port": 1646,
+      "data_dir": "/var/lib/sq-tenants/slot-306"
+    },
+    {
+      "token": "pmb-v1-41089fb99eefc0c4a6af87f8d01113d5",
+      "port": 1647,
+      "data_dir": "/var/lib/sq-tenants/slot-307"
+    },
+    {
+      "token": "pmb-v1-06122648e47c22c19d6e461bf2674bd8",
+      "port": 1648,
+      "data_dir": "/var/lib/sq-tenants/slot-308"
+    },
+    {
+      "token": "pmb-v1-41685b3c18f8192b7c52bc4205e1c3e6",
+      "port": 1649,
+      "data_dir": "/var/lib/sq-tenants/slot-309"
+    },
+    {
+      "token": "pmb-v1-82d74eb5e4c106ce8c01c341b1ff35d2",
+      "port": 1650,
+      "data_dir": "/var/lib/sq-tenants/slot-310"
+    },
+    {
+      "token": "pmb-v1-c04fc3d9e5252a9dbe169f2a794dccb9",
+      "port": 1651,
+      "data_dir": "/var/lib/sq-tenants/slot-311"
+    },
+    {
+      "token": "pmb-v1-229dda38b09482277f33604ee4ee6c14",
+      "port": 1652,
+      "data_dir": "/var/lib/sq-tenants/slot-312"
+    },
+    {
+      "token": "pmb-v1-124abc92e52c94bdfa5ed805074cc5f1",
+      "port": 1653,
+      "data_dir": "/var/lib/sq-tenants/slot-313"
+    },
+    {
+      "token": "pmb-v1-c6f99ebb1916c99ca5ec5d73e2654c90",
+      "port": 1654,
+      "data_dir": "/var/lib/sq-tenants/slot-314"
+    },
+    {
+      "token": "pmb-v1-1e84869b3c4bdcfad7125b06d339d7e7",
+      "port": 1655,
+      "data_dir": "/var/lib/sq-tenants/slot-315"
+    },
+    {
+      "token": "pmb-v1-4ca7ec4bf2b289e50c38f54cca6b329f",
+      "port": 1656,
+      "data_dir": "/var/lib/sq-tenants/slot-316"
+    },
+    {
+      "token": "pmb-v1-81e7794b78b118196aa6c45488beb4a7",
+      "port": 1657,
+      "data_dir": "/var/lib/sq-tenants/slot-317"
+    },
+    {
+      "token": "pmb-v1-b807f33da4286516707349dbc18d3286",
+      "port": 1658,
+      "data_dir": "/var/lib/sq-tenants/slot-318"
+    },
+    {
+      "token": "pmb-v1-ba5f4ae9541400f4d7736126826670c4",
+      "port": 1659,
+      "data_dir": "/var/lib/sq-tenants/slot-319"
+    },
+    {
+      "token": "pmb-v1-2d1e42a912c4fd6af151c6f751c4d2b0",
+      "port": 1660,
+      "data_dir": "/var/lib/sq-tenants/slot-320"
+    },
+    {
+      "token": "pmb-v1-441e0f375d543987bad7b2f3aaa9e99c",
+      "port": 1661,
+      "data_dir": "/var/lib/sq-tenants/slot-321"
+    },
+    {
+      "token": "pmb-v1-1bdb9dc37ae8d5997f508f18de8c0c17",
+      "port": 1662,
+      "data_dir": "/var/lib/sq-tenants/slot-322"
+    },
+    {
+      "token": "pmb-v1-f966b461f53b53d669a40261d1723f24",
+      "port": 1663,
+      "data_dir": "/var/lib/sq-tenants/slot-323"
+    },
+    {
+      "token": "pmb-v1-c771bb407809c389d8b7b33f2a72e350",
+      "port": 1664,
+      "data_dir": "/var/lib/sq-tenants/slot-324"
+    },
+    {
+      "token": "pmb-v1-e4adf04c161e125fafdbce7d514cffec",
+      "port": 1665,
+      "data_dir": "/var/lib/sq-tenants/slot-325"
+    },
+    {
+      "token": "pmb-v1-44f0349891caffb3f7c0512c3d85ed64",
+      "port": 1666,
+      "data_dir": "/var/lib/sq-tenants/slot-326"
+    },
+    {
+      "token": "pmb-v1-eddf1735796e558d1e77f3ecbf16db45",
+      "port": 1667,
+      "data_dir": "/var/lib/sq-tenants/slot-327"
+    },
+    {
+      "token": "pmb-v1-ace114c14828bb52d3dfec366f5e0d9d",
+      "port": 1668,
+      "data_dir": "/var/lib/sq-tenants/slot-328"
+    },
+    {
+      "token": "pmb-v1-3cc4247bbf9f5880f8572691ddf4e1c9",
+      "port": 1669,
+      "data_dir": "/var/lib/sq-tenants/slot-329"
+    },
+    {
+      "token": "pmb-v1-0e9a62f914158685c8cbca2a5b4665eb",
+      "port": 1670,
+      "data_dir": "/var/lib/sq-tenants/slot-330"
+    },
+    {
+      "token": "pmb-v1-5f16c2312918a2fc1b3335d2369f0c84",
+      "port": 1671,
+      "data_dir": "/var/lib/sq-tenants/slot-331"
+    },
+    {
+      "token": "pmb-v1-3d542536735092d99d23fb2077c1d4c5",
+      "port": 1672,
+      "data_dir": "/var/lib/sq-tenants/slot-332"
+    },
+    {
+      "token": "pmb-v1-c2c9880fc93d5e9ab6079eec299af63c",
+      "port": 1673,
+      "data_dir": "/var/lib/sq-tenants/slot-333"
+    },
+    {
+      "token": "pmb-v1-7bcfd01990981607d0d9ef15ac930106",
+      "port": 1674,
+      "data_dir": "/var/lib/sq-tenants/slot-334"
+    },
+    {
+      "token": "pmb-v1-9900e386ec4488e314b449515f7b0949",
+      "port": 1675,
+      "data_dir": "/var/lib/sq-tenants/slot-335"
+    },
+    {
+      "token": "pmb-v1-f789c9427e1a46d67919b7b4eff392d7",
+      "port": 1676,
+      "data_dir": "/var/lib/sq-tenants/slot-336"
+    },
+    {
+      "token": "pmb-v1-5bec7f24f43028e05ef734f32f6e6f0c",
+      "port": 1677,
+      "data_dir": "/var/lib/sq-tenants/slot-337"
+    },
+    {
+      "token": "pmb-v1-038f50bc0901d9fad37e777d12eb9b49",
+      "port": 1678,
+      "data_dir": "/var/lib/sq-tenants/slot-338"
+    },
+    {
+      "token": "pmb-v1-da840706efa4d86a8d0b5abf311e8a0c",
+      "port": 1679,
+      "data_dir": "/var/lib/sq-tenants/slot-339"
+    },
+    {
+      "token": "pmb-v1-20e9d0f553e0c5e0df14e094f313df75",
+      "port": 1680,
+      "data_dir": "/var/lib/sq-tenants/slot-340"
+    },
+    {
+      "token": "pmb-v1-35a8b7f881613cc100730eb10d1e7b29",
+      "port": 1681,
+      "data_dir": "/var/lib/sq-tenants/slot-341"
+    },
+    {
+      "token": "pmb-v1-d2e9424bc9a0380cdfc528806b4fb77f",
+      "port": 1682,
+      "data_dir": "/var/lib/sq-tenants/slot-342"
+    },
+    {
+      "token": "pmb-v1-5d9f7a2159e765409fbed90508c3e0d3",
+      "port": 1683,
+      "data_dir": "/var/lib/sq-tenants/slot-343"
+    },
+    {
+      "token": "pmb-v1-22738568b529f03e2cb050e02b56064f",
+      "port": 1684,
+      "data_dir": "/var/lib/sq-tenants/slot-344"
+    },
+    {
+      "token": "pmb-v1-ef3214403301e31231e7b07becf2d935",
+      "port": 1685,
+      "data_dir": "/var/lib/sq-tenants/slot-345"
+    },
+    {
+      "token": "pmb-v1-eb61aa7ec3e365d60beb633f207777fa",
+      "port": 1686,
+      "data_dir": "/var/lib/sq-tenants/slot-346"
+    },
+    {
+      "token": "pmb-v1-a95f6d8f40a1dd8fa741c71b84548e8a",
+      "port": 1687,
+      "data_dir": "/var/lib/sq-tenants/slot-347"
+    },
+    {
+      "token": "pmb-v1-0a545be24ba55f29c5d8ea52bef6f145",
+      "port": 1688,
+      "data_dir": "/var/lib/sq-tenants/slot-348"
+    },
+    {
+      "token": "pmb-v1-20732a29520f7764d0720cb18eea06e0",
+      "port": 1689,
+      "data_dir": "/var/lib/sq-tenants/slot-349"
+    },
+    {
+      "token": "pmb-v1-94b57d51ee6ed13ef557e87ce068cc7d",
+      "port": 1690,
+      "data_dir": "/var/lib/sq-tenants/slot-350"
+    },
+    {
+      "token": "pmb-v1-38b01f159cf7350c7226f922f5a7b5ea",
+      "port": 1691,
+      "data_dir": "/var/lib/sq-tenants/slot-351"
+    },
+    {
+      "token": "pmb-v1-990e7c76af53cf62c3a525fbac35d123",
+      "port": 1692,
+      "data_dir": "/var/lib/sq-tenants/slot-352"
+    },
+    {
+      "token": "pmb-v1-ad30dc295a477dc0063e4c325bcaeec2",
+      "port": 1693,
+      "data_dir": "/var/lib/sq-tenants/slot-353"
+    },
+    {
+      "token": "pmb-v1-4e9688d86a6cdeeb213e3088ffd156d8",
+      "port": 1694,
+      "data_dir": "/var/lib/sq-tenants/slot-354"
+    },
+    {
+      "token": "pmb-v1-fd734691d049d5f819111d952457604f",
+      "port": 1695,
+      "data_dir": "/var/lib/sq-tenants/slot-355"
+    },
+    {
+      "token": "pmb-v1-b20e00b367079293c56168620b49347d",
+      "port": 1696,
+      "data_dir": "/var/lib/sq-tenants/slot-356"
+    },
+    {
+      "token": "pmb-v1-b4386e623b8b61f40ac5c646b4bc3e28",
+      "port": 1697,
+      "data_dir": "/var/lib/sq-tenants/slot-357"
+    },
+    {
+      "token": "pmb-v1-7f161a9ea0fb46cb02faaa4e52f6dda7",
+      "port": 1698,
+      "data_dir": "/var/lib/sq-tenants/slot-358"
+    },
+    {
+      "token": "pmb-v1-bff27149ad69537e21bc0795ef895210",
+      "port": 1699,
+      "data_dir": "/var/lib/sq-tenants/slot-359"
+    },
+    {
+      "token": "pmb-v1-e7d65b51e83c09950bffeeddc8942bbf",
+      "port": 1700,
+      "data_dir": "/var/lib/sq-tenants/slot-360"
+    },
+    {
+      "token": "pmb-v1-87aa90274c0925f535396875c2f46b96",
+      "port": 1701,
+      "data_dir": "/var/lib/sq-tenants/slot-361"
+    },
+    {
+      "token": "pmb-v1-cd8dea336b02618a678601cc4f7a2c08",
+      "port": 1702,
+      "data_dir": "/var/lib/sq-tenants/slot-362"
+    },
+    {
+      "token": "pmb-v1-850aeb91a8934d0d9585297195479831",
+      "port": 1703,
+      "data_dir": "/var/lib/sq-tenants/slot-363"
+    },
+    {
+      "token": "pmb-v1-58f08ed410ca397b94c5f1d96dbe4d72",
+      "port": 1704,
+      "data_dir": "/var/lib/sq-tenants/slot-364"
+    },
+    {
+      "token": "pmb-v1-dad82ea14d4fa5d7d4e718446ece5d50",
+      "port": 1705,
+      "data_dir": "/var/lib/sq-tenants/slot-365"
+    },
+    {
+      "token": "pmb-v1-7f93f08d4b3e9b718eb8d8c7beaf26eb",
+      "port": 1706,
+      "data_dir": "/var/lib/sq-tenants/slot-366"
+    },
+    {
+      "token": "pmb-v1-a2586b6305a7ae0b16db15f3d6a95683",
+      "port": 1707,
+      "data_dir": "/var/lib/sq-tenants/slot-367"
+    },
+    {
+      "token": "pmb-v1-95be69aab2e6760437fe01572950e881",
+      "port": 1708,
+      "data_dir": "/var/lib/sq-tenants/slot-368"
+    },
+    {
+      "token": "pmb-v1-dea2eb94d4dc15a9fc1f41585200f50b",
+      "port": 1709,
+      "data_dir": "/var/lib/sq-tenants/slot-369"
+    },
+    {
+      "token": "pmb-v1-16e2be4368a3321af5d074955ac94f67",
+      "port": 1710,
+      "data_dir": "/var/lib/sq-tenants/slot-370"
+    },
+    {
+      "token": "pmb-v1-1bb1044cdb3460a80eec007846810361",
+      "port": 1711,
+      "data_dir": "/var/lib/sq-tenants/slot-371"
+    },
+    {
+      "token": "pmb-v1-2c35dd5d1b071c0bee1973808cfbc2a7",
+      "port": 1712,
+      "data_dir": "/var/lib/sq-tenants/slot-372"
+    },
+    {
+      "token": "pmb-v1-09ecc2afb97534c59f6dbbd4ba2b186d",
+      "port": 1713,
+      "data_dir": "/var/lib/sq-tenants/slot-373"
+    },
+    {
+      "token": "pmb-v1-b5baff98aea920f2768452301b5a30fb",
+      "port": 1714,
+      "data_dir": "/var/lib/sq-tenants/slot-374"
+    },
+    {
+      "token": "pmb-v1-e9a1a30808230f5eccae3835486ed1f7",
+      "port": 1715,
+      "data_dir": "/var/lib/sq-tenants/slot-375"
+    },
+    {
+      "token": "pmb-v1-7b1807069ad1f3cd2225d6d21e0187f4",
+      "port": 1716,
+      "data_dir": "/var/lib/sq-tenants/slot-376"
+    },
+    {
+      "token": "pmb-v1-f973c896e862c145b17f0d74878e848f",
+      "port": 1717,
+      "data_dir": "/var/lib/sq-tenants/slot-377"
+    },
+    {
+      "token": "pmb-v1-753a740449da1de46459abd90166ef1b",
+      "port": 1718,
+      "data_dir": "/var/lib/sq-tenants/slot-378"
+    },
+    {
+      "token": "pmb-v1-a9599b3449d4d8d2e0c919743763aeb0",
+      "port": 1719,
+      "data_dir": "/var/lib/sq-tenants/slot-379"
+    },
+    {
+      "token": "pmb-v1-1f0a169f7f83e4877c164c5e39232544",
+      "port": 1720,
+      "data_dir": "/var/lib/sq-tenants/slot-380"
+    },
+    {
+      "token": "pmb-v1-785688d4f7d9fa7e599d47197a8acb4a",
+      "port": 1721,
+      "data_dir": "/var/lib/sq-tenants/slot-381"
+    },
+    {
+      "token": "pmb-v1-d7d216a5a6344145a14e4f1f431d75b6",
+      "port": 1722,
+      "data_dir": "/var/lib/sq-tenants/slot-382"
+    },
+    {
+      "token": "pmb-v1-d827011c128653d6649017bfcb2e611e",
+      "port": 1723,
+      "data_dir": "/var/lib/sq-tenants/slot-383"
+    },
+    {
+      "token": "pmb-v1-e2dace62c12433a352cf4fecfaae5451",
+      "port": 1724,
+      "data_dir": "/var/lib/sq-tenants/slot-384"
+    },
+    {
+      "token": "pmb-v1-7ddedc701179f7dcb90bf49b2196e299",
+      "port": 1725,
+      "data_dir": "/var/lib/sq-tenants/slot-385"
+    },
+    {
+      "token": "pmb-v1-f785cf92408d0adb6179bf343206bd0c",
+      "port": 1726,
+      "data_dir": "/var/lib/sq-tenants/slot-386"
+    },
+    {
+      "token": "pmb-v1-7125d6267ee30ef186db9af778d5dfc0",
+      "port": 1727,
+      "data_dir": "/var/lib/sq-tenants/slot-387"
+    },
+    {
+      "token": "pmb-v1-aed4f87efd5ae47db0ac67cd62be5bee",
+      "port": 1728,
+      "data_dir": "/var/lib/sq-tenants/slot-388"
+    },
+    {
+      "token": "pmb-v1-99c546593eb7d718392fab47dfa96c57",
+      "port": 1729,
+      "data_dir": "/var/lib/sq-tenants/slot-389"
+    },
+    {
+      "token": "pmb-v1-8b3e417b26cd4de6d6e4796a7fe75411",
+      "port": 1730,
+      "data_dir": "/var/lib/sq-tenants/slot-390"
+    },
+    {
+      "token": "pmb-v1-eb380f05ca3a28f84cf16450b53be643",
+      "port": 1731,
+      "data_dir": "/var/lib/sq-tenants/slot-391"
+    },
+    {
+      "token": "pmb-v1-a2cb4f1c9fe71dab1185ddb9e1e2b9fc",
+      "port": 1732,
+      "data_dir": "/var/lib/sq-tenants/slot-392"
+    },
+    {
+      "token": "pmb-v1-7341042dde8f2871da9b533436f7d9fd",
+      "port": 1733,
+      "data_dir": "/var/lib/sq-tenants/slot-393"
+    },
+    {
+      "token": "pmb-v1-3bca6303f9f429e390df4e18c518e20d",
+      "port": 1734,
+      "data_dir": "/var/lib/sq-tenants/slot-394"
+    },
+    {
+      "token": "pmb-v1-7496a431754bd20d62c1441adf6db560",
+      "port": 1735,
+      "data_dir": "/var/lib/sq-tenants/slot-395"
+    },
+    {
+      "token": "pmb-v1-67b66929e83ebf8460fe1d761e1b0b8c",
+      "port": 1736,
+      "data_dir": "/var/lib/sq-tenants/slot-396"
+    },
+    {
+      "token": "pmb-v1-749e8751a788c0e49e140e45de0dabe3",
+      "port": 1737,
+      "data_dir": "/var/lib/sq-tenants/slot-397"
+    },
+    {
+      "token": "pmb-v1-6a30639f0f96ed0f5b0c30bdfdc0fd2e",
+      "port": 1738,
+      "data_dir": "/var/lib/sq-tenants/slot-398"
+    },
+    {
+      "token": "pmb-v1-fc4b62be576aefd11e50f9e61cf56269",
+      "port": 1739,
+      "data_dir": "/var/lib/sq-tenants/slot-399"
+    },
+    {
+      "token": "pmb-v1-a62db08ec57425019a63a6398c543a28",
+      "port": 1740,
+      "data_dir": "/var/lib/sq-tenants/slot-400"
+    },
+    {
+      "token": "pmb-v1-1c3ca220161ecd021026f313678a44ed",
+      "port": 1741,
+      "data_dir": "/var/lib/sq-tenants/slot-401"
+    },
+    {
+      "token": "pmb-v1-d4b5c763917ad99ada48327b873a0568",
+      "port": 1742,
+      "data_dir": "/var/lib/sq-tenants/slot-402"
+    },
+    {
+      "token": "pmb-v1-a31b5a41f99c29364c927c571c371db3",
+      "port": 1743,
+      "data_dir": "/var/lib/sq-tenants/slot-403"
+    },
+    {
+      "token": "pmb-v1-16502509f716a089378849fb9f6335ab",
+      "port": 1744,
+      "data_dir": "/var/lib/sq-tenants/slot-404"
+    },
+    {
+      "token": "pmb-v1-0e7e21125aa248e58033ba09a4f120f2",
+      "port": 1745,
+      "data_dir": "/var/lib/sq-tenants/slot-405"
+    },
+    {
+      "token": "pmb-v1-952cdcaa209488eea27755cbf4066385",
+      "port": 1746,
+      "data_dir": "/var/lib/sq-tenants/slot-406"
+    },
+    {
+      "token": "pmb-v1-1fd5755bc43240bbfd6b76abb697ecca",
+      "port": 1747,
+      "data_dir": "/var/lib/sq-tenants/slot-407"
+    },
+    {
+      "token": "pmb-v1-4cdec454bf86d2a432ab1298bc679989",
+      "port": 1748,
+      "data_dir": "/var/lib/sq-tenants/slot-408"
+    },
+    {
+      "token": "pmb-v1-9ba294c34eff0f7054c4eb9d5430e2c9",
+      "port": 1749,
+      "data_dir": "/var/lib/sq-tenants/slot-409"
+    },
+    {
+      "token": "pmb-v1-5508d78fc505375a9fb573808afaf9fe",
+      "port": 1750,
+      "data_dir": "/var/lib/sq-tenants/slot-410"
+    },
+    {
+      "token": "pmb-v1-53c338c4556e9f6095b88acc573aad2e",
+      "port": 1751,
+      "data_dir": "/var/lib/sq-tenants/slot-411"
+    },
+    {
+      "token": "pmb-v1-fd7e07f4879fce42e722e28772db1742",
+      "port": 1752,
+      "data_dir": "/var/lib/sq-tenants/slot-412"
+    },
+    {
+      "token": "pmb-v1-cc1370dcf085586c24631edbb9f01d57",
+      "port": 1753,
+      "data_dir": "/var/lib/sq-tenants/slot-413"
+    },
+    {
+      "token": "pmb-v1-aabfbdde0f948d371510f43f49efcb16",
+      "port": 1754,
+      "data_dir": "/var/lib/sq-tenants/slot-414"
+    },
+    {
+      "token": "pmb-v1-4385c203d207dcca8a5a854944307e00",
+      "port": 1755,
+      "data_dir": "/var/lib/sq-tenants/slot-415"
+    },
+    {
+      "token": "pmb-v1-7323dc9141dd815386cb5000753a513d",
+      "port": 1756,
+      "data_dir": "/var/lib/sq-tenants/slot-416"
+    },
+    {
+      "token": "pmb-v1-bdfaa48b21f19048856dc63acee0caf2",
+      "port": 1757,
+      "data_dir": "/var/lib/sq-tenants/slot-417"
+    },
+    {
+      "token": "pmb-v1-29f0b52a28a6ba9b21572e163ebc55e9",
+      "port": 1758,
+      "data_dir": "/var/lib/sq-tenants/slot-418"
+    },
+    {
+      "token": "pmb-v1-ec0a680c26ddb7c9272a2fba5166c49e",
+      "port": 1759,
+      "data_dir": "/var/lib/sq-tenants/slot-419"
+    },
+    {
+      "token": "pmb-v1-01cf58e25550786cf15849ce109a0d3d",
+      "port": 1760,
+      "data_dir": "/var/lib/sq-tenants/slot-420"
+    },
+    {
+      "token": "pmb-v1-27a4f95245c7a84458c1da76813f9bd7",
+      "port": 1761,
+      "data_dir": "/var/lib/sq-tenants/slot-421"
+    },
+    {
+      "token": "pmb-v1-493f60b5c8f358cd0167cc9d913bd060",
+      "port": 1762,
+      "data_dir": "/var/lib/sq-tenants/slot-422"
+    },
+    {
+      "token": "pmb-v1-3e240e8ce3ec0c1de4fa822544a73a0d",
+      "port": 1763,
+      "data_dir": "/var/lib/sq-tenants/slot-423"
+    },
+    {
+      "token": "pmb-v1-45b67e7f242cac2a60fc98417591e358",
+      "port": 1764,
+      "data_dir": "/var/lib/sq-tenants/slot-424"
+    },
+    {
+      "token": "pmb-v1-c68d8c1abfef7e9781b40ca8e440d643",
+      "port": 1765,
+      "data_dir": "/var/lib/sq-tenants/slot-425"
+    },
+    {
+      "token": "pmb-v1-4d91093c6f987225fd5cfe34b09fa6b5",
+      "port": 1766,
+      "data_dir": "/var/lib/sq-tenants/slot-426"
+    },
+    {
+      "token": "pmb-v1-0cd7a255933eca1251513f096660faf9",
+      "port": 1767,
+      "data_dir": "/var/lib/sq-tenants/slot-427"
+    },
+    {
+      "token": "pmb-v1-d36d429d4e18f61474e2207ef9b7e857",
+      "port": 1768,
+      "data_dir": "/var/lib/sq-tenants/slot-428"
+    },
+    {
+      "token": "pmb-v1-b03712933970bac56694fe4061b8fd60",
+      "port": 1769,
+      "data_dir": "/var/lib/sq-tenants/slot-429"
+    },
+    {
+      "token": "pmb-v1-3e52dc7f07eafd27cd4a81e5efecbd4b",
+      "port": 1770,
+      "data_dir": "/var/lib/sq-tenants/slot-430"
+    },
+    {
+      "token": "pmb-v1-a60a271929c8395bfdd39c3ab0011aa4",
+      "port": 1771,
+      "data_dir": "/var/lib/sq-tenants/slot-431"
+    },
+    {
+      "token": "pmb-v1-96c36fc75616834106f089b10287db7e",
+      "port": 1772,
+      "data_dir": "/var/lib/sq-tenants/slot-432"
+    },
+    {
+      "token": "pmb-v1-a29f63ce4d081a029d9228b90ba7f22d",
+      "port": 1773,
+      "data_dir": "/var/lib/sq-tenants/slot-433"
+    },
+    {
+      "token": "pmb-v1-22f06960b19fef629f57b9fb1c36af61",
+      "port": 1774,
+      "data_dir": "/var/lib/sq-tenants/slot-434"
+    },
+    {
+      "token": "pmb-v1-c9a1d990b172a66afa1b2857029f5aa4",
+      "port": 1775,
+      "data_dir": "/var/lib/sq-tenants/slot-435"
+    },
+    {
+      "token": "pmb-v1-a231c3cf9b0defd4e94ac52363e85a9a",
+      "port": 1776,
+      "data_dir": "/var/lib/sq-tenants/slot-436"
+    },
+    {
+      "token": "pmb-v1-eec994b5e1e8c5f5f8d07447f7ef0056",
+      "port": 1777,
+      "data_dir": "/var/lib/sq-tenants/slot-437"
+    },
+    {
+      "token": "pmb-v1-9dd3c1f6ce4060b43c08e105eec7d74d",
+      "port": 1778,
+      "data_dir": "/var/lib/sq-tenants/slot-438"
+    },
+    {
+      "token": "pmb-v1-520ba6510f8774b6d4e3679ecaefd2a7",
+      "port": 1779,
+      "data_dir": "/var/lib/sq-tenants/slot-439"
+    },
+    {
+      "token": "pmb-v1-058347bd6d0f80f0d8b1d33cfce621fe",
+      "port": 1780,
+      "data_dir": "/var/lib/sq-tenants/slot-440"
+    },
+    {
+      "token": "pmb-v1-d28a8d367434b4aa6d8311d05884ed08",
+      "port": 1781,
+      "data_dir": "/var/lib/sq-tenants/slot-441"
+    },
+    {
+      "token": "pmb-v1-324164d6c4ed9cd3ac92d9ea91742203",
+      "port": 1782,
+      "data_dir": "/var/lib/sq-tenants/slot-442"
+    },
+    {
+      "token": "pmb-v1-e18ca0fcfb80fb492dde700f20a867ed",
+      "port": 1783,
+      "data_dir": "/var/lib/sq-tenants/slot-443"
+    },
+    {
+      "token": "pmb-v1-4cb7433b59a1e2ddec7352d116a96bf7",
+      "port": 1784,
+      "data_dir": "/var/lib/sq-tenants/slot-444"
+    },
+    {
+      "token": "pmb-v1-f88628aa9247c5d58c2ecb56eae46c8d",
+      "port": 1785,
+      "data_dir": "/var/lib/sq-tenants/slot-445"
+    },
+    {
+      "token": "pmb-v1-791605b95ba3cf0dd7d0d6e478efcc96",
+      "port": 1786,
+      "data_dir": "/var/lib/sq-tenants/slot-446"
+    },
+    {
+      "token": "pmb-v1-f858925436a15913c0d96b1773a4eb60",
+      "port": 1787,
+      "data_dir": "/var/lib/sq-tenants/slot-447"
+    },
+    {
+      "token": "pmb-v1-b875d2751acf54faa08c48989ef8d6ce",
+      "port": 1788,
+      "data_dir": "/var/lib/sq-tenants/slot-448"
+    },
+    {
+      "token": "pmb-v1-38d9ebe71cc3312305c3d0291860bdad",
+      "port": 1789,
+      "data_dir": "/var/lib/sq-tenants/slot-449"
+    },
+    {
+      "token": "pmb-v1-c4aa5e022cd032326e53c584463d2290",
+      "port": 1790,
+      "data_dir": "/var/lib/sq-tenants/slot-450"
+    },
+    {
+      "token": "pmb-v1-d4f08a8a010950703fb07267b1bdf7d9",
+      "port": 1791,
+      "data_dir": "/var/lib/sq-tenants/slot-451"
+    },
+    {
+      "token": "pmb-v1-48a9d4fe27833a94d7bd18413ee226f1",
+      "port": 1792,
+      "data_dir": "/var/lib/sq-tenants/slot-452"
+    },
+    {
+      "token": "pmb-v1-4005831f668f1d96c5dc432c570ac0ca",
+      "port": 1793,
+      "data_dir": "/var/lib/sq-tenants/slot-453"
+    },
+    {
+      "token": "pmb-v1-2f5377e498d0acce8e75e054f4a9f1ac",
+      "port": 1794,
+      "data_dir": "/var/lib/sq-tenants/slot-454"
+    },
+    {
+      "token": "pmb-v1-efed3a60566e1daa4f404401546aa34e",
+      "port": 1795,
+      "data_dir": "/var/lib/sq-tenants/slot-455"
+    },
+    {
+      "token": "pmb-v1-9819315f14a90566f6be221de16f02d8",
+      "port": 1796,
+      "data_dir": "/var/lib/sq-tenants/slot-456"
+    },
+    {
+      "token": "pmb-v1-d2e8417976177a051a0da72290dbf32a",
+      "port": 1797,
+      "data_dir": "/var/lib/sq-tenants/slot-457"
+    },
+    {
+      "token": "pmb-v1-9d3818910a24a1847a11e36ab3514e47",
+      "port": 1798,
+      "data_dir": "/var/lib/sq-tenants/slot-458"
+    },
+    {
+      "token": "pmb-v1-54a857a4da1081023d189ddf84e01685",
+      "port": 1799,
+      "data_dir": "/var/lib/sq-tenants/slot-459"
+    },
+    {
+      "token": "pmb-v1-f4a8f64a7561d602dac3fde33204d963",
+      "port": 1800,
+      "data_dir": "/var/lib/sq-tenants/slot-460"
+    },
+    {
+      "token": "pmb-v1-64de468a2b432d100777d1ac7fb1c215",
+      "port": 1801,
+      "data_dir": "/var/lib/sq-tenants/slot-461"
+    },
+    {
+      "token": "pmb-v1-3073fc0130467576ef434382afd5ff07",
+      "port": 1802,
+      "data_dir": "/var/lib/sq-tenants/slot-462"
+    },
+    {
+      "token": "pmb-v1-40c9cac3ba11a336d289807736d7ee85",
+      "port": 1803,
+      "data_dir": "/var/lib/sq-tenants/slot-463"
+    },
+    {
+      "token": "pmb-v1-2d98d7117a9fe8ed170359bcfe425f0f",
+      "port": 1804,
+      "data_dir": "/var/lib/sq-tenants/slot-464"
+    },
+    {
+      "token": "pmb-v1-4346e873eb55c4f478475010ae022bb9",
+      "port": 1805,
+      "data_dir": "/var/lib/sq-tenants/slot-465"
+    },
+    {
+      "token": "pmb-v1-7d7834a863f29efb64dd9f34e9d5acf9",
+      "port": 1806,
+      "data_dir": "/var/lib/sq-tenants/slot-466"
+    },
+    {
+      "token": "pmb-v1-e8d3008990d2f860fe2652f00639f3a3",
+      "port": 1807,
+      "data_dir": "/var/lib/sq-tenants/slot-467"
+    },
+    {
+      "token": "pmb-v1-820c12f03a83cad74baec034a28b5a6c",
+      "port": 1808,
+      "data_dir": "/var/lib/sq-tenants/slot-468"
+    },
+    {
+      "token": "pmb-v1-2f12b27a587f0c089eb2d8868778c1d9",
+      "port": 1809,
+      "data_dir": "/var/lib/sq-tenants/slot-469"
+    },
+    {
+      "token": "pmb-v1-aee049b467d0a45748ed9b28dfe6b248",
+      "port": 1810,
+      "data_dir": "/var/lib/sq-tenants/slot-470"
+    },
+    {
+      "token": "pmb-v1-d5fdf4ee2da1aa522d968713aeed0d78",
+      "port": 1811,
+      "data_dir": "/var/lib/sq-tenants/slot-471"
+    },
+    {
+      "token": "pmb-v1-bf488df8d09273f65538b88a401af66c",
+      "port": 1812,
+      "data_dir": "/var/lib/sq-tenants/slot-472"
+    },
+    {
+      "token": "pmb-v1-46ac2b516521a4e8b4222e82f6f2ae7d",
+      "port": 1813,
+      "data_dir": "/var/lib/sq-tenants/slot-473"
+    },
+    {
+      "token": "pmb-v1-ada34a97b33581b581162942626cc754",
+      "port": 1814,
+      "data_dir": "/var/lib/sq-tenants/slot-474"
+    },
+    {
+      "token": "pmb-v1-332cf3fc2a0d0bbd70551217ecde7cff",
+      "port": 1815,
+      "data_dir": "/var/lib/sq-tenants/slot-475"
+    },
+    {
+      "token": "pmb-v1-ab4340ecdc2958b0d6e6314daf2e1f91",
+      "port": 1816,
+      "data_dir": "/var/lib/sq-tenants/slot-476"
+    },
+    {
+      "token": "pmb-v1-db9675da25942e057485a98641e493c2",
+      "port": 1817,
+      "data_dir": "/var/lib/sq-tenants/slot-477"
+    },
+    {
+      "token": "pmb-v1-54c61f0e88bfd41b7e83831f930a03ec",
+      "port": 1818,
+      "data_dir": "/var/lib/sq-tenants/slot-478"
+    },
+    {
+      "token": "pmb-v1-05f15f159f0961b8ed1d958d6aaa8fd4",
+      "port": 1819,
+      "data_dir": "/var/lib/sq-tenants/slot-479"
+    },
+    {
+      "token": "pmb-v1-ad0eb9cee3fa8f1e89195bbf6b2d9eaa",
+      "port": 1820,
+      "data_dir": "/var/lib/sq-tenants/slot-480"
+    },
+    {
+      "token": "pmb-v1-f2edd98e070ac0aa328f6e641107d452",
+      "port": 1821,
+      "data_dir": "/var/lib/sq-tenants/slot-481"
+    },
+    {
+      "token": "pmb-v1-1adfea13ba8d738d964ce93eacc2a3a7",
+      "port": 1822,
+      "data_dir": "/var/lib/sq-tenants/slot-482"
+    },
+    {
+      "token": "pmb-v1-fecae14f65b12e5107baf165f5b059e0",
+      "port": 1823,
+      "data_dir": "/var/lib/sq-tenants/slot-483"
+    },
+    {
+      "token": "pmb-v1-078904975ac17d36ade87b0bb8a85c44",
+      "port": 1824,
+      "data_dir": "/var/lib/sq-tenants/slot-484"
+    },
+    {
+      "token": "pmb-v1-05f6ded26657f62f2afbb450b449dfe2",
+      "port": 1825,
+      "data_dir": "/var/lib/sq-tenants/slot-485"
+    },
+    {
+      "token": "pmb-v1-405bdaedf75bfc6bd90472910c077a29",
+      "port": 1826,
+      "data_dir": "/var/lib/sq-tenants/slot-486"
+    },
+    {
+      "token": "pmb-v1-2690b33dea33692529ca74147ce05b8b",
+      "port": 1827,
+      "data_dir": "/var/lib/sq-tenants/slot-487"
+    },
+    {
+      "token": "pmb-v1-06724ad8ee909fcdb9ea93a37478fc99",
+      "port": 1828,
+      "data_dir": "/var/lib/sq-tenants/slot-488"
+    },
+    {
+      "token": "pmb-v1-635a35afe92839aeb7263b3428e1409f",
+      "port": 1829,
+      "data_dir": "/var/lib/sq-tenants/slot-489"
+    },
+    {
+      "token": "pmb-v1-b5daef9c94c0615d458dbfdbf616e5d0",
+      "port": 1830,
+      "data_dir": "/var/lib/sq-tenants/slot-490"
+    },
+    {
+      "token": "pmb-v1-32540cc494c561f4d4c910e7a76c0ffa",
+      "port": 1831,
+      "data_dir": "/var/lib/sq-tenants/slot-491"
+    },
+    {
+      "token": "pmb-v1-33a06136de57594b567518c8b799c277",
+      "port": 1832,
+      "data_dir": "/var/lib/sq-tenants/slot-492"
+    },
+    {
+      "token": "pmb-v1-7894847207e9d7573ef3fb056ccfd955",
+      "port": 1833,
+      "data_dir": "/var/lib/sq-tenants/slot-493"
+    },
+    {
+      "token": "pmb-v1-9dbb6dadc31657d8d9c3f2450ee03c7f",
+      "port": 1834,
+      "data_dir": "/var/lib/sq-tenants/slot-494"
+    },
+    {
+      "token": "pmb-v1-1999f0877a99ad945ccd48ddc9867507",
+      "port": 1835,
+      "data_dir": "/var/lib/sq-tenants/slot-495"
+    },
+    {
+      "token": "pmb-v1-3c6b2fa9e445b32a3b4304dfae785b46",
+      "port": 1836,
+      "data_dir": "/var/lib/sq-tenants/slot-496"
+    },
+    {
+      "token": "pmb-v1-599e433732e3575192544e827517c498",
+      "port": 1837,
+      "data_dir": "/var/lib/sq-tenants/slot-497"
+    },
+    {
+      "token": "pmb-v1-41627fa6db0e841add6a6c728ee5a535",
+      "port": 1838,
+      "data_dir": "/var/lib/sq-tenants/slot-498"
+    },
+    {
+      "token": "pmb-v1-29354b45fec9b7d20bff0494aa8ea0de",
+      "port": 1839,
+      "data_dir": "/var/lib/sq-tenants/slot-499"
+    },
+    {
+      "token": "pmb-v1-cb2579e85ba8d71f2905f8b08ea49c72",
+      "port": 1840,
+      "data_dir": "/var/lib/sq-tenants/slot-500"
+    }
+  ]
+}
