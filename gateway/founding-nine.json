@@ -1,0 +1,13 @@
+{
+  "tenants": [
+    { "token": "pmb-v1-c24c8490b0e5ab79945427e75f7b6d9a", "port": 1341, "data_dir": "/var/lib/sq-tenants/founder-1" },
+    { "token": "pmb-v1-ec8df6d58dcd3cb8239c4a18de573063", "port": 1342, "data_dir": "/var/lib/sq-tenants/founder-2" },
+    { "token": "pmb-v1-14c7c504e73d9bfd2e2e75acbef2a613", "port": 1343, "data_dir": "/var/lib/sq-tenants/founder-3" },
+    { "token": "pmb-v1-849333fb599f7103432993d63d7deecd", "port": 1344, "data_dir": "/var/lib/sq-tenants/founder-4" },
+    { "token": "pmb-v1-5ed6a53fad911ab0d1b61086a646c8db", "port": 1345, "data_dir": "/var/lib/sq-tenants/founder-5" },
+    { "token": "pmb-v1-f9b2426b14ab4b4dcde62015a3980f48", "port": 1346, "data_dir": "/var/lib/sq-tenants/founder-6" },
+    { "token": "pmb-v1-c76191a16bbdfe2ee4dc333eb4c94ff7", "port": 1347, "data_dir": "/var/lib/sq-tenants/founder-7" },
+    { "token": "pmb-v1-5d0c5c029fe3c150014e10bd197fcf8e", "port": 1348, "data_dir": "/var/lib/sq-tenants/founder-8" },
+    { "token": "pmb-v1-7f287a74e44ebfa3a31818b07b3378e4", "port": 1349, "data_dir": "/var/lib/sq-tenants/founder-9" }
+  ]
+}

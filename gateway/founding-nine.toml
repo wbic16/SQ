@@ -1,0 +1,64 @@
+# SQ Cloud — Founding Nine Configuration
+# Generated: 2026-02-12
+# Deploy to mirrorborn.us with sq-gateway.py
+#
+# Ports: 1341-1349 (one per tenant, router on 1337)
+# Data: /var/lib/sq-tenants/<name>/
+
+[gateway]
+listen_port = 1337
+admin_key = "REPLACE_WITH_ADMIN_KEY"
+
+[[tenants]]
+token = "pmb-v1-c24c8490b0e5ab79945427e75f7b6d9a"
+name = "founder-1"
+port = 1341
+phext = "default"
+
+[[tenants]]
+token = "pmb-v1-ec8df6d58dcd3cb8239c4a18de573063"
+name = "founder-2"
+port = 1342
+phext = "default"
+
+[[tenants]]
+token = "pmb-v1-14c7c504e73d9bfd2e2e75acbef2a613"
+name = "founder-3"
+port = 1343
+phext = "default"
+
+[[tenants]]
+token = "pmb-v1-849333fb599f7103432993d63d7deecd"
+name = "founder-4"
+port = 1344
+phext = "default"
+
+[[tenants]]
+token = "pmb-v1-5ed6a53fad911ab0d1b61086a646c8db"
+name = "founder-5"
+port = 1345
+phext = "default"
+
+[[tenants]]
+token = "pmb-v1-f9b2426b14ab4b4dcde62015a3980f48"
+name = "founder-6"
+port = 1346
+phext = "default"
+
+[[tenants]]
+token = "pmb-v1-c76191a16bbdfe2ee4dc333eb4c94ff7"
+name = "founder-7"
+port = 1347
+phext = "default"
+
+[[tenants]]
+token = "pmb-v1-5d0c5c029fe3c150014e10bd197fcf8e"
+name = "founder-8"
+port = 1348
+phext = "default"
+
+[[tenants]]
+token = "pmb-v1-7f287a74e44ebfa3a31818b07b3378e4"
+name = "founder-9"
+port = 1349
+phext = "default"
