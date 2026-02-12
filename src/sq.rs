@@ -30,6 +30,106 @@ fn json_escape(input: String) -> String {
 }
 
 //------------------------------------------------------------------------------------------------------------
+// coord_sort_key: extracts a 9-component tuple for deterministic ordering
+//   hierarchy (highest to lowest): library, shelf, series, collection, volume, book, chapter, section, scroll
+//------------------------------------------------------------------------------------------------------------
+fn coord_sort_key(c: &phext::Coordinate) -> [usize; 9] {
+    [c.z.library, c.z.shelf, c.z.series,
+     c.y.collection, c.y.volume, c.y.book,
+     c.x.chapter, c.x.section, c.x.scroll]
+}
+
+//------------------------------------------------------------------------------------------------------------
+// delimiters_between: computes the minimal delimiter sequence to advance from `prev` to `curr`
+//
+// phext delimiter hierarchy (highest → lowest):
+//   \x01  library break      resets shelf..scroll
+//   \x1f  shelf break        resets series..scroll
+//   \x1e  series break       resets collection..scroll
+//   \x1d  collection break   resets volume..scroll
+//   \x1c  volume break       resets book..scroll
+//   \x1a  book break         resets chapter..scroll
+//   \x19  chapter break      resets section..scroll
+//   \x18  section break      resets scroll
+//   \x17  scroll break       (lowest)
+//
+// When a higher-level break fires, all lower components reset to 1. We emit
+// (curr[level] - prev[level]) copies of the break at the highest changed level,
+// then (curr[lower] - 1) copies for each lower level.
+//------------------------------------------------------------------------------------------------------------
+fn delimiters_between(prev: &phext::Coordinate, curr: &phext::Coordinate) -> String {
+    let p = coord_sort_key(prev);
+    let c = coord_sort_key(curr);
+    const DELIMS: [char; 9] = ['\x01', '\x1f', '\x1e', '\x1d', '\x1c', '\x1a', '\x19', '\x18', '\x17'];
+
+    // Find the highest level that differs
+    let mut level = 9usize; // sentinel: no difference
+    for i in 0..9 {
+        if p[i] != c[i] {
+            level = i;
+            break;
+        }
+    }
+
+    if level >= 9 {
+        return String::new(); // same coordinate
+    }
+
+    let mut result = String::new();
+
+    // Emit delimiters at the changed level
+    for _ in p[level]..c[level] {
+        result.push(DELIMS[level]);
+    }
+
+    // Emit delimiters for all lower levels (reset from 1 → target)
+    for i in (level + 1)..9 {
+        for _ in 1..c[i] {
+            result.push(DELIMS[i]);
+        }
+    }
+
+    result
+}
+
+//------------------------------------------------------------------------------------------------------------
+// implode_ref: borrow-only serialization of a phext map
+//
+// Produces the same byte sequence as phext::implode() but never clones the map.
+// Only non-empty scrolls are emitted; empty scrolls are skipped (matching libphext behavior).
+//------------------------------------------------------------------------------------------------------------
+pub fn implode_ref(map: &HashMap<phext::Coordinate, String>) -> String {
+    // Collect non-empty entries
+    let mut entries: Vec<(&phext::Coordinate, &String)> = map.iter()
+        .filter(|(_, v)| !v.is_empty())
+        .collect();
+
+    if entries.is_empty() {
+        return String::new();
+    }
+
+    // Sort by coordinate hierarchy
+    entries.sort_by(|a, b| coord_sort_key(a.0).cmp(&coord_sort_key(b.0)));
+
+    // Pre-calculate total size to avoid reallocation
+    let total_size: usize = entries.iter().map(|(_, v)| v.len()).sum::<usize>()
+        + entries.len() * 9; // worst-case 9 delimiters per entry
+    let mut result = String::with_capacity(total_size);
+
+    let origin = phext::Coordinate::default();
+    let mut prev = &origin;
+
+    for (coord, content) in &entries {
+        let delims = delimiters_between(prev, coord);
+        result.push_str(&delims);
+        result.push_str(content);
+        prev = coord;
+    }
+
+    result
+}
+
+//------------------------------------------------------------------------------------------------------------
 // process: performs the command line action for a given user request
 //
 // @param connection_id
@@ -72,7 +172,8 @@ pub fn process(connection_id: u64, source: String, scroll: &mut String, command:
     }
 
     if command == "status" {
-        let buffer = phext::implode(phext_map.clone());
+        // use implode_ref to avoid cloning the entire map just for .len()
+        let buffer = implode_ref(phext_map);
         *scroll = format!("Hosting: {}
 Connection ID: {}
 Phext Size: {}
@@ -84,7 +185,7 @@ Scrolls: {}", source, connection_id, buffer.len(), phext_map.iter().size_hint().
         let mut result = String::new();
         result += "[\n";
         let mut started = false;
-        for ith in phext_map {
+        for ith in phext_map.iter() {
             if !started {
                 started = true;
             } else { result += ","; }
@@ -100,15 +201,16 @@ Scrolls: {}", source, connection_id, buffer.len(), phext_map.iter().size_hint().
     }
 
     if command == "diff" {
-        
-        let compare = phext::implode(phext_map.clone());
+        // use implode_ref instead of cloning
+        let compare = implode_ref(phext_map);
         let diff = phext::subtract(update.as_str(), compare.as_str());
         *scroll = phext::textmap(diff.as_str());
         return false;
     }
 
     if command == "toc" {
-        let buffer = phext::implode(phext_map.clone());
+        // use implode_ref instead of cloning
+        let buffer = implode_ref(phext_map);
         *scroll = phext::textmap(buffer.as_str());
         return false;
     }
@@ -121,7 +223,8 @@ Scrolls: {}", source, connection_id, buffer.len(), phext_map.iter().size_hint().
     }
 
     if command == "checksum" {
-        let serialized = phext::implode(phext_map.clone());
+        // use implode_ref instead of cloning
+        let serialized = implode_ref(phext_map);
         *scroll = phext::checksum(serialized.as_str());
         return false;
     }
@@ -204,7 +307,8 @@ Scrolls: {}", source, connection_id, buffer.len(), phext_map.iter().size_hint().
     }
 
     if command == "save" {
-        let output_buffer = phext::implode(phext_map.clone());
+        // use implode_ref instead of cloning
+        let output_buffer = implode_ref(phext_map);
         let _ = std::fs::write(filename.clone(), output_buffer.as_str());
         *scroll = format!("Wrote {} bytes to {}", output_buffer.len(), filename);
         return false;

@@ -2,6 +2,13 @@
 // file: main.rs
 // purpose: provides primary program logic for sq - determining daemon mode vs listening mode
 //
+// v0.5.3 - Memory pressure fixes
+//   - Fixed: unbounded thread spawning (now capped at MAX_CONCURRENT_CONNECTIONS)
+//   - Fixed: no read/write timeout on TCP streams (slowloris OOM vector)
+//   - Fixed: Content-Length trusted unconditionally (now capped at MAX_BODY_SIZE)
+//   - Fixed: fetch_source double-allocation on truncation (now uses in-place truncate)
+//   - Fixed: clone-to-serialize in every read path (new implode_ref borrows instead)
+//   - Fixed: mutation flush cloned entire map (now uses implode_ref)
 // v0.5.2 - Stability patch for mirrorborn.us / SQ Cloud
 //   - Fixed: server-killing panics in HTTP handler (5 unwrap sites)
 //   - Fixed: unconditional disk write on every request (now mutation-only)
@@ -25,6 +32,8 @@ use std::io::Read;
 use std::io::Write;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::time::Duration;
 
 mod sq;
 mod tests;
@@ -32,9 +41,20 @@ mod tests;
 const SHARED_SEGMENT_SIZE: usize = 1024*1024*1024; // 1 GB limit
 const MAX_BUFFER_SIZE: usize = SHARED_SEGMENT_SIZE/2;
 const WORK_SEGMENT_SIZE: usize = 1024;
+const ABSURD_HEADER_SIZE: usize = 65536;
 
 const SHARED_NAME: &str = ".sq/link";
 const WORK_NAME: &str = ".sq/work";
+
+// -----------------------------------------------------------------------------------------------------------
+// Memory-pressure guardrails
+// -----------------------------------------------------------------------------------------------------------
+const MAX_CONCURRENT_CONNECTIONS: usize = 512;     // ~4 GB stack ceiling at 8 MB/thread
+const READ_TIMEOUT_SECS: u64 = 32;                 // kill idle/slowloris connections
+const WRITE_TIMEOUT_SECS: u64 = 32;
+pub const MAX_BODY_SIZE: usize = 64 * 1024 * 1024; // 64 MB per request body
+
+static ACTIVE_CONNECTIONS: AtomicUsize = AtomicUsize::new(0);
 
 // -----------------------------------------------------------------------------------------------------------
 // Shared state for the HTTP listener, protected by a mutex for thread safety
@@ -95,7 +115,9 @@ fn send_response(stream: &mut TcpStream, status: u16, body: &str) {
         401 => "Unauthorized",
         403 => "Forbidden",
         404 => "Not Found",
+        413 => "Payload Too Large",
         500 => "Internal Server Error",
+        503 => "Service Unavailable",
         _ => "OK",
     };
     let response = format!(
@@ -140,7 +162,8 @@ fn fetch_source(filename: String) -> HashMap::<phext::Coordinate, String> {
     let mut buffer:String = std::fs::read_to_string(filename).expect(&message);
 
     if buffer.len() > MAX_BUFFER_SIZE {
-        buffer = buffer[0..MAX_BUFFER_SIZE].to_string();
+        // in-place truncation: avoids allocating a second 512 MB string
+        buffer.truncate(MAX_BUFFER_SIZE);
     }
     return phext::explode(&buffer);
 }
@@ -216,7 +239,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // -----------------------------------------------------------------------
-    // Listening mode: REST API server with thread-per-connection
+    // Listening mode: REST API server with bounded thread pool
     // -----------------------------------------------------------------------
     if command == "host" && exists == false && phext_or_port.len() > 0 && is_port_number {
         let port = phext_or_port;
@@ -253,7 +276,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).unwrap();
-        println!("SQ v{} listening on port {}...", env!("CARGO_PKG_VERSION"), port);
+        println!("SQ v{} listening on port {} (max {} concurrent connections)...",
+            env!("CARGO_PKG_VERSION"), port, MAX_CONCURRENT_CONNECTIONS);
 
         let state = Arc::new(Mutex::new(ServerState {
             loaded_phext: String::new(),
@@ -264,13 +288,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for stream in listener.incoming() {
             match stream {
                 Ok(stream) => {
+                    // --- Guard: reject when at capacity ---
+                    let current = ACTIVE_CONNECTIONS.load(Ordering::Relaxed);
+                    if current >= MAX_CONCURRENT_CONNECTIONS {
+                        eprintln!("[!] Connection limit reached ({}/{}), rejecting",
+                            current, MAX_CONCURRENT_CONNECTIONS);
+                        let mut s = stream;
+                        send_response(&mut s, 503, "Service Unavailable: connection limit reached");
+                        continue;
+                    }
+
+                    // --- Set timeouts to prevent idle threads from piling up ---
+                    if let Err(e) = stream.set_read_timeout(Some(Duration::from_secs(READ_TIMEOUT_SECS))) {
+                        eprintln!("[!] Failed to set read timeout: {}", e);
+                    }
+                    if let Err(e) = stream.set_write_timeout(Some(Duration::from_secs(WRITE_TIMEOUT_SECS))) {
+                        eprintln!("[!] Failed to set write timeout: {}", e);
+                    }
+
                     connection_id += 1;
+                    ACTIVE_CONNECTIONS.fetch_add(1, Ordering::Relaxed);
                     let state = Arc::clone(&state);
                     let auth_key = auth_key.clone();
                     let data_dir = data_dir.clone();
                     let cid = connection_id;
                     std::thread::spawn(move || {
                         handle_tcp_connection(state, cid, stream, &auth_key, &data_dir);
+                        ACTIVE_CONNECTIONS.fetch_sub(1, Ordering::Relaxed);
                     });
                 }
                 Err(e) => {
@@ -411,6 +455,11 @@ pub fn read_http_request(stream: &mut TcpStream) -> std::io::Result<HttpRequest>
             header_end = pos + 4;
             break;
         }
+
+        // Guard: reject absurdly large headers
+        if buffer.len() > ABSURD_HEADER_SIZE {
+            return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "header too large"));
+        }
     }
 
     let header_bytes = &buffer[..header_end];
@@ -422,6 +471,14 @@ pub fn read_http_request(stream: &mut TcpStream) -> std::io::Result<HttpRequest>
         .and_then(|line| line.split(':').nth(1))
         .and_then(|val| val.trim().parse::<usize>().ok())
         .unwrap_or(0);
+
+    // Guard: reject bodies larger than MAX_BODY_SIZE
+    if content_length > MAX_BODY_SIZE {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!("body too large: {} bytes (max {})", content_length, MAX_BODY_SIZE),
+        ));
+    }
 
     let mut content = buffer[header_end..].to_vec();
     while content.len() < content_length {
@@ -473,7 +530,14 @@ fn handle_tcp_connection_inner(
     let http_request = match read_http_request(stream) {
         Ok(req) => req,
         Err(e) => {
-            eprintln!("[#{}] read error: {}", connection_id, e);
+            let kind = e.kind();
+            // Distinguish between client misbehavior and normal timeouts
+            if kind == std::io::ErrorKind::InvalidData {
+                eprintln!("[#{}] rejected: {}", connection_id, e);
+                send_response(stream, 413, &format!("{}", e));
+            } else {
+                eprintln!("[#{}] read error: {}", connection_id, e);
+            }
             return;
         }
     };
@@ -591,8 +655,9 @@ fn handle_tcp_connection_inner(
         );
 
         // Only flush to disk when the command actually changed something
+        // Uses implode_ref: borrows the map instead of cloning it
         if is_mutation(&command) {
-            let phext_buffer = phext::implode(state.loaded_map.clone());
+            let phext_buffer = sq::implode_ref(&state.loaded_map);
             if let Err(e) = std::fs::write(&phext, &phext_buffer) {
                 eprintln!("[#{}] disk write failed for {}: {}", connection_id, phext, e);
             }
