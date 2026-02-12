@@ -1,0 +1,15 @@
+[gateway]
+listen_port = 8080
+admin_key = "change-me-to-a-random-key"
+
+[[tenants]]
+token = "user-api-key-1"
+name = "alice"
+port = 1337
+phext = "alice"
+
+[[tenants]]
+token = "user-api-key-2"
+name = "bob"
+port = 1338
+phext = "bob"
