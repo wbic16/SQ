@@ -1193,6 +1193,11 @@ fn handle_multi_tenant_connection(mut stream: TcpStream, config: &config::Server
         return;
     }
     
+    // Ensure tenant data directory exists before loading phext
+    if let Some(parent) = std::path::Path::new(&phext_path).parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    
     // Load phext source
     let mut loaded_map = fetch_source(phext_path.clone());
     
