@@ -685,7 +685,9 @@ fn handle_tcp_connection_inner(
             });
         match token {
             Some(ref t) if tenants.contains_key(t) => {
-                resolved_data_dir = Some(tenants[t].data_dir.clone());
+                let dir = tenants[t].data_dir.clone();
+                let _ = std::fs::create_dir_all(&dir);
+                resolved_data_dir = Some(dir);
             }
             _ => {
                 send_response(stream, 401, "Unauthorized");
