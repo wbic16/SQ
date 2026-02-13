@@ -1,0 +1,40 @@
+{
+  "tenants": {
+    "pmb-v1-2d32de577a1763f80e30a1a0e2ee05e3": {
+      "name": "founding-001",
+      "data_dir": "/var/lib/sq-tenants/founding-001"
+    },
+    "pmb-v1-71d4aff7941dd29316735add9754907a": {
+      "name": "founding-002",
+      "data_dir": "/var/lib/sq-tenants/founding-002"
+    },
+    "pmb-v1-73b2baa2b6c07cf49b19676ab3751c00": {
+      "name": "founding-003",
+      "data_dir": "/var/lib/sq-tenants/founding-003"
+    },
+    "pmb-v1-1f3424b9717f230b5b7e605b5f63dccc": {
+      "name": "founding-004",
+      "data_dir": "/var/lib/sq-tenants/founding-004"
+    },
+    "pmb-v1-745a2cbf8f7f3634579f1046ebae6126": {
+      "name": "founding-005",
+      "data_dir": "/var/lib/sq-tenants/founding-005"
+    },
+    "pmb-v1-1fd389f740bd1c3195bda30b32fd58f8": {
+      "name": "founding-006",
+      "data_dir": "/var/lib/sq-tenants/founding-006"
+    },
+    "pmb-v1-e768954179e9ddddb910814a3d8ce550": {
+      "name": "founding-007",
+      "data_dir": "/var/lib/sq-tenants/founding-007"
+    },
+    "pmb-v1-e1f8052e658a23ac81300fa43df793f9": {
+      "name": "founding-008",
+      "data_dir": "/var/lib/sq-tenants/founding-008"
+    },
+    "pmb-v1-1c1282990f4be987e10b5fd72aca4bf6": {
+      "name": "founding-009",
+      "data_dir": "/var/lib/sq-tenants/founding-009"
+    }
+  }
+}
