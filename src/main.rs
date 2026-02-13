@@ -161,14 +161,18 @@ fn fetch_source(filename: String) -> HashMap::<phext::Coordinate, String> {
     if exists == false {
         // Ensure parent directory exists before creating the file
         if let Some(parent) = std::path::Path::new(&filename).parent() {
-            let _ = std::fs::create_dir_all(parent);
+            if let Err(e) = std::fs::create_dir_all(parent) {
+                eprintln!("Warning: Failed to create directory {}: {}", parent.display(), e);
+            }
         }
-        let _ = std::fs::write(filename.clone(), "");
+        if let Err(e) = std::fs::write(&filename, "") {
+            eprintln!("Warning: Failed to create empty phext {}: {}", filename, e);
+        }
     }
     let mut buffer: String = match std::fs::read_to_string(&filename) {
         Ok(b) => b,
         Err(e) => {
-            eprintln!("Failed to read {}: {}", filename, e);
+            eprintln!("Warning: Failed to read {} (creating empty): {}", filename, e);
             String::new()
         }
     };
