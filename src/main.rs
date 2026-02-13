@@ -1049,6 +1049,10 @@ fn run_multi_tenant_server(port: &str, config_path: &str) -> Result<(), Box<dyn 
     let active_connections = Arc::new(AtomicUsize::new(0));
     let tenant_config = Arc::new(RwLock::new(tenant_config));
     
+    // Per-tenant in-memory state: phext_path → ServerState
+    let tenant_states: Arc<Mutex<HashMap<String, Arc<Mutex<ServerState>>>>> =
+        Arc::new(Mutex::new(HashMap::new()));
+    
     // Create reload channel
     let (reload_tx, reload_rx) = mpsc::channel();
     
@@ -1099,10 +1103,11 @@ fn run_multi_tenant_server(port: &str, config_path: &str) -> Result<(), Box<dyn 
         let tenant_config_clone = Arc::clone(&tenant_config);
         let active_connections = Arc::clone(&active_connections);
         let reload_tx_clone = reload_tx.clone();
+        let tenant_states_clone = Arc::clone(&tenant_states);
         
         std::thread::spawn(move || {
             let config = tenant_config_clone.read().unwrap();
-            handle_multi_tenant_connection_with_reload(stream, &config, Some(reload_tx_clone));
+            handle_multi_tenant_connection_with_reload(stream, &config, Some(reload_tx_clone), &tenant_states_clone);
             active_connections.fetch_sub(1, Ordering::SeqCst);
         });
     }
@@ -1113,14 +1118,11 @@ fn run_multi_tenant_server(port: &str, config_path: &str) -> Result<(), Box<dyn 
 // -----------------------------------------------------------------------------------------------------------
 // Multi-tenant connection handler
 // -----------------------------------------------------------------------------------------------------------
-fn handle_multi_tenant_connection(mut stream: TcpStream, config: &config::ServerConfig) {
-    handle_multi_tenant_connection_with_reload(stream, config, None);
-}
-
 fn handle_multi_tenant_connection_with_reload(
     mut stream: TcpStream, 
     config: &config::ServerConfig,
-    reload_trigger: Option<mpsc::Sender<()>>
+    reload_trigger: Option<mpsc::Sender<()>>,
+    tenant_states: &Arc<Mutex<HashMap<String, Arc<Mutex<ServerState>>>>>,
 ) {
     // Set timeouts
     let timeout = Duration::from_secs(30);
@@ -1267,41 +1269,57 @@ fn handle_multi_tenant_connection_with_reload(
         return;
     }
     
-    // Ensure tenant data directory exists before loading phext
+    // Ensure tenant data directory exists
     if let Some(parent) = std::path::Path::new(&phext_path).parent() {
         let _ = std::fs::create_dir_all(parent);
     }
     
-    // Load phext source
-    let mut loaded_map = fetch_source(phext_path.clone());
+    // Get or create per-tenant state (keyed by phext_path for isolation)
+    let state = {
+        let mut states = tenant_states.lock().unwrap();
+        states.entry(phext_path.clone()).or_insert_with(|| {
+            Arc::new(Mutex::new(ServerState {
+                loaded_phext: String::new(),
+                loaded_map: Default::default(),
+            }))
+        }).clone()
+    };
     
-    // Process command
-    let mut output = String::new();
-    let _ = sq::process(
-        0,
-        phext_path.clone(),
-        &mut output,
-        command.clone(),
-        &mut loaded_map,
-        phext::to_coordinate(coord.as_str()),
-        scroll.clone(),
-        phext_path.clone(),
-        algorithm,
-        limit
-    );
-    
-    // Save if mutation
-    if is_mutation(&command) {
-        // Ensure tenant directory exists before writing
-        if let Some(parent) = std::path::Path::new(&phext_path).parent() {
-            let _ = std::fs::create_dir_all(parent);
+    // Process under per-tenant lock (serializes access to this phext)
+    let output = {
+        let mut state = state.lock().unwrap();
+        
+        // Reload from disk if phext changed or first access
+        let reload_needed = command == "load" || command == "json-export";
+        if reload_needed || state.loaded_phext != phext_path {
+            state.loaded_map = fetch_source(phext_path.clone());
+            state.loaded_phext = phext_path.clone();
         }
         
-        let phext_buffer = phext::implode(loaded_map);
-        if let Err(e) = std::fs::write(&phext_path, phext_buffer) {
-            eprintln!("Failed to write {}: {}", phext_path, e);
+        let mut output = String::new();
+        let _ = sq::process(
+            0,
+            phext_path.clone(),
+            &mut output,
+            command.clone(),
+            &mut state.loaded_map,
+            phext::to_coordinate(coord.as_str()),
+            scroll.clone(),
+            phext_path.clone(),
+            algorithm,
+            limit
+        );
+        
+        // Flush to disk on mutation
+        if is_mutation(&command) {
+            let phext_buffer = phext::implode(state.loaded_map.clone());
+            if let Err(e) = std::fs::write(&phext_path, &phext_buffer) {
+                eprintln!("Failed to write {}: {}", phext_path, e);
+            }
         }
-    }
+        
+        output
+    };
     
     // Send response
     send_response(&mut stream, 200, &output);
