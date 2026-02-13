@@ -32,7 +32,8 @@ use std::io::Read;
 use std::io::Write;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, RwLock};
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicUsize, AtomicBool, Ordering};
+use std::sync::mpsc;
 use std::time::Duration;
 
 mod sq;
@@ -1037,9 +1038,10 @@ fn client_response(shmem: *mut u8, length_offset: usize, command: &str, message:
 fn run_multi_tenant_server(port: &str, config_path: &str) -> Result<(), Box<dyn std::error::Error>> {
     // Load initial tenant configuration
     let tenant_config = config::load_config(config_path)?;
-    println!("SQ v{} - Multi-tenant mode (hot-reload enabled)", env!("CARGO_PKG_VERSION"));
+    println!("SQ v{} - Multi-tenant mode (on-demand reload)", env!("CARGO_PKG_VERSION"));
     println!("Loaded {} tenants from {}", tenant_config.tenants.len(), config_path);
-    println!("Config file: {} (auto-reloads every 10 seconds)", config_path);
+    println!("Config file: {}", config_path);
+    println!("Reload: POST http://localhost:{}/api/v2/reload", port);
     
     let listener = TcpListener::bind(format!("0.0.0.0:{}", port))?;
     println!("Listening on port {}...", port);
@@ -1047,22 +1049,27 @@ fn run_multi_tenant_server(port: &str, config_path: &str) -> Result<(), Box<dyn 
     let active_connections = Arc::new(AtomicUsize::new(0));
     let tenant_config = Arc::new(RwLock::new(tenant_config));
     
-    // Spawn config reload thread
+    // Create reload channel
+    let (reload_tx, reload_rx) = mpsc::channel();
+    
+    // Spawn config reload thread (triggered by channel)
     {
         let tenant_config_clone = Arc::clone(&tenant_config);
         let config_path = config_path.to_string();
         std::thread::spawn(move || {
             loop {
-                std::thread::sleep(Duration::from_secs(10));
+                // Wait for reload signal
+                if reload_rx.recv().is_err() {
+                    break; // Channel closed
+                }
+                
                 match config::load_config(&config_path) {
                     Ok(new_config) => {
                         let mut config = tenant_config_clone.write().unwrap();
                         let old_count = config.tenants.len();
                         let new_count = new_config.tenants.len();
                         *config = new_config;
-                        if old_count != new_count {
-                            println!("Config reloaded: {} tenants (was {})", new_count, old_count);
-                        }
+                        println!("Config reloaded: {} tenants (was {})", new_count, old_count);
                     }
                     Err(e) => {
                         eprintln!("Failed to reload config: {}", e);
@@ -1091,10 +1098,11 @@ fn run_multi_tenant_server(port: &str, config_path: &str) -> Result<(), Box<dyn 
         
         let tenant_config_clone = Arc::clone(&tenant_config);
         let active_connections = Arc::clone(&active_connections);
+        let reload_tx_clone = reload_tx.clone();
         
         std::thread::spawn(move || {
             let config = tenant_config_clone.read().unwrap();
-            handle_multi_tenant_connection(stream, &config);
+            handle_multi_tenant_connection_with_reload(stream, &config, Some(reload_tx_clone));
             active_connections.fetch_sub(1, Ordering::SeqCst);
         });
     }
@@ -1106,10 +1114,22 @@ fn run_multi_tenant_server(port: &str, config_path: &str) -> Result<(), Box<dyn 
 // Multi-tenant connection handler
 // -----------------------------------------------------------------------------------------------------------
 fn handle_multi_tenant_connection(mut stream: TcpStream, config: &config::ServerConfig) {
+    handle_multi_tenant_connection_with_reload(stream, config, None);
+}
+
+fn handle_multi_tenant_connection_with_reload(
+    mut stream: TcpStream, 
+    config: &config::ServerConfig,
+    reload_trigger: Option<mpsc::Sender<()>>
+) {
     // Set timeouts
     let timeout = Duration::from_secs(30);
     let _ = stream.set_read_timeout(Some(timeout));
     let _ = stream.set_write_timeout(Some(timeout));
+    
+    // Get peer address for localhost-only endpoints
+    let peer_addr = stream.peer_addr().ok();
+    let is_localhost = peer_addr.map(|addr| addr.ip().is_loopback()).unwrap_or(false);
     
     let http_request = match read_http_request(&mut stream) {
         Ok(req) => req,
@@ -1125,6 +1145,29 @@ fn handle_multi_tenant_connection(mut stream: TcpStream, config: &config::Server
     // Handle OPTIONS (CORS preflight) without auth
     if request.starts_with("OPTIONS ") {
         send_response(&mut stream, 204, "");
+        return;
+    }
+    
+    // Handle /api/v2/reload (localhost only, no auth required)
+    if request.starts_with("POST /api/v2/reload") {
+        if !is_localhost {
+            send_response(&mut stream, 403, "Forbidden: Reload endpoint only accessible from localhost");
+            return;
+        }
+        
+        // Trigger config reload
+        if let Some(trigger) = reload_trigger {
+            match trigger.send(()) {
+                Ok(_) => {
+                    send_response(&mut stream, 200, "Config reload triggered");
+                }
+                Err(_) => {
+                    send_response(&mut stream, 500, "Failed to trigger reload");
+                }
+            }
+        } else {
+            send_response(&mut stream, 503, "Reload not available in this mode");
+        }
         return;
     }
     
