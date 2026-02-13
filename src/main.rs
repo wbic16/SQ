@@ -31,7 +31,7 @@ use std::net::TcpStream;
 use std::io::Read;
 use std::io::Write;
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, RwLock};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 
@@ -1035,26 +1035,42 @@ fn client_response(shmem: *mut u8, length_offset: usize, command: &str, message:
 // Loads tenant config and serves requests from single process
 // -----------------------------------------------------------------------------------------------------------
 fn run_multi_tenant_server(port: &str, config_path: &str) -> Result<(), Box<dyn std::error::Error>> {
-    // Load tenant configuration
+    // Load initial tenant configuration
     let tenant_config = config::load_config(config_path)?;
-    println!("SQ v{} - Multi-tenant mode", env!("CARGO_PKG_VERSION"));
+    println!("SQ v{} - Multi-tenant mode (hot-reload enabled)", env!("CARGO_PKG_VERSION"));
     println!("Loaded {} tenants from {}", tenant_config.tenants.len(), config_path);
-    
-    // Ensure all tenant data directories exist
-    for (_token, tenant) in &tenant_config.tenants {
-        match std::fs::create_dir_all(&tenant.data_dir) {
-            Ok(_) => println!("  - {} ({})", tenant.name, tenant.data_dir),
-            Err(e) => {
-                eprintln!("  - {} ({}) - WARNING: {}", tenant.name, tenant.data_dir, e);
-            }
-        }
-    }
+    println!("Config file: {} (auto-reloads every 10 seconds)", config_path);
     
     let listener = TcpListener::bind(format!("0.0.0.0:{}", port))?;
     println!("Listening on port {}...", port);
     
     let active_connections = Arc::new(AtomicUsize::new(0));
-    let tenant_config = Arc::new(tenant_config);
+    let tenant_config = Arc::new(RwLock::new(tenant_config));
+    
+    // Spawn config reload thread
+    {
+        let tenant_config_clone = Arc::clone(&tenant_config);
+        let config_path = config_path.to_string();
+        std::thread::spawn(move || {
+            loop {
+                std::thread::sleep(Duration::from_secs(10));
+                match config::load_config(&config_path) {
+                    Ok(new_config) => {
+                        let mut config = tenant_config_clone.write().unwrap();
+                        let old_count = config.tenants.len();
+                        let new_count = new_config.tenants.len();
+                        *config = new_config;
+                        if old_count != new_count {
+                            println!("Config reloaded: {} tenants (was {})", new_count, old_count);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to reload config: {}", e);
+                    }
+                }
+            }
+        });
+    }
     
     for stream in listener.incoming() {
         let stream = match stream {
@@ -1073,11 +1089,12 @@ fn run_multi_tenant_server(port: &str, config_path: &str) -> Result<(), Box<dyn 
             continue;
         }
         
-        let tenant_config = Arc::clone(&tenant_config);
+        let tenant_config_clone = Arc::clone(&tenant_config);
         let active_connections = Arc::clone(&active_connections);
         
         std::thread::spawn(move || {
-            handle_multi_tenant_connection(stream, &tenant_config);
+            let config = tenant_config_clone.read().unwrap();
+            handle_multi_tenant_connection(stream, &config);
             active_connections.fetch_sub(1, Ordering::SeqCst);
         });
     }
