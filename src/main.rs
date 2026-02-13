@@ -262,9 +262,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if command == "host" && exists == false && phext_or_port.len() > 0 && is_port_number {
         let port = phext_or_port;
 
-        // Parse optional auth, data-dir, and mesh-config arguments
-        // Usage: sq host <port> [--key <pmb-v1-...>] [--data-dir <path>] [--mesh-config <path>]
+        // Parse optional auth, data-dir, mesh-config, and config arguments
+        // Usage: sq host <port> [--config <tenants.json>] OR [--key <pmb-v1-...>] [--data-dir <path>] [--mesh-config <path>]
         let args: Vec<String> = env::args().collect();
+        
+        // Check for --config (multi-tenant mode)
+        let config_idx = args.iter().position(|s| s == "--config");
+        if let Some(idx) = config_idx {
+            if idx + 1 < args.len() {
+                let config_path = &args[idx + 1];
+                return run_multi_tenant_server(&port, config_path);
+            } else {
+                eprintln!("Error: --config requires a path argument");
+                eprintln!("Usage: sq host <port> --config <tenants.json>");
+                std::process::exit(1);
+            }
+        }
+        
+        // Single-tenant mode (backward compatible)
         let mut auth_key: Option<String> = None;
         let mut data_dir: Option<String> = None;
         let mut mesh_config_path: Option<String> = None;
@@ -1003,6 +1018,242 @@ fn client_response(shmem: *mut u8, length_offset: usize, command: &str, message:
     } else {
         println!("{response}");
     }
+}
+
+// -----------------------------------------------------------------------------------------------------------
+// Multi-tenant REST API server (SQ v0.5.5)
+// Loads tenant config and serves requests from single process
+// -----------------------------------------------------------------------------------------------------------
+fn run_multi_tenant_server(port: &str, config_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+    // Load tenant configuration
+    let tenant_config = config::load_config(config_path)?;
+    println!("SQ v{} - Multi-tenant mode", env!("CARGO_PKG_VERSION"));
+    println!("Loaded {} tenants from {}", tenant_config.tenants.len(), config_path);
+    
+    // Ensure all tenant data directories exist
+    for (_token, tenant) in &tenant_config.tenants {
+        let _ = std::fs::create_dir_all(&tenant.data_dir);
+        println!("  - {} ({})", tenant.name, tenant.data_dir);
+    }
+    
+    let listener = TcpListener::bind(format!("0.0.0.0:{}", port))?;
+    println!("Listening on port {}...", port);
+    
+    let active_connections = Arc::new(AtomicUsize::new(0));
+    let tenant_config = Arc::new(tenant_config);
+    
+    for stream in listener.incoming() {
+        let stream = match stream {
+            Ok(s) => s,
+            Err(e) => {
+                eprintln!("Failed to accept connection: {}", e);
+                continue;
+            }
+        };
+        
+        let count = active_connections.fetch_add(1, Ordering::SeqCst) + 1;
+        if count > MAX_CONCURRENT_CONNECTIONS {
+            active_connections.fetch_sub(1, Ordering::SeqCst);
+            eprintln!("Rejecting connection (at capacity: {} concurrent)", MAX_CONCURRENT_CONNECTIONS);
+            let _ = stream.shutdown(std::net::Shutdown::Both);
+            continue;
+        }
+        
+        let tenant_config = Arc::clone(&tenant_config);
+        let active_connections = Arc::clone(&active_connections);
+        
+        std::thread::spawn(move || {
+            handle_multi_tenant_connection(stream, &tenant_config);
+            active_connections.fetch_sub(1, Ordering::SeqCst);
+        });
+    }
+    
+    Ok(())
+}
+
+// -----------------------------------------------------------------------------------------------------------
+// Multi-tenant connection handler
+// -----------------------------------------------------------------------------------------------------------
+fn handle_multi_tenant_connection(mut stream: TcpStream, config: &config::ServerConfig) {
+    // Set timeouts
+    let timeout = Duration::from_secs(30);
+    let _ = stream.set_read_timeout(Some(timeout));
+    let _ = stream.set_write_timeout(Some(timeout));
+    
+    let http_request = match read_http_request(&mut stream) {
+        Ok(req) => req,
+        Err(e) => {
+            eprintln!("Failed to read request: {}", e);
+            send_response(&mut stream, 400, "Bad Request");
+            return;
+        }
+    };
+    
+    let request = &http_request.header;
+    
+    // Handle OPTIONS (CORS preflight) without auth
+    if request.starts_with("OPTIONS ") {
+        send_response(&mut stream, 204, "");
+        return;
+    }
+    
+    // Validate HTTP method
+    if !request.starts_with("GET ") && !request.starts_with("POST") {
+        send_response(&mut stream, 400, "Bad Request");
+        return;
+    }
+    
+    // Multi-tenant auth: extract token and lookup tenant
+    let tenant = match extract_auth_token_multi(request, config) {
+        Some(t) => t,
+        None => {
+            send_response(&mut stream, 401, "Unauthorized");
+            return;
+        }
+    };
+    
+    // Parse request
+    let parsed = match request_parse(&http_request) {
+        Some(p) => p,
+        None => {
+            send_response(&mut stream, 400, "Bad Request");
+            return;
+        }
+    };
+    
+    let nothing = String::new();
+    let mut scroll = parsed.get("s").unwrap_or(&nothing);
+    let coord = parsed.get("c").unwrap_or(&nothing);
+    let phext_name = parsed.get("p").unwrap_or(&nothing);
+    
+    // Validate tenant path
+    let phext_path = match validate_tenant_path_multi(phext_name, &tenant.data_dir) {
+        Some(path) => path,
+        None => {
+            send_response(&mut stream, 403, "Forbidden: Invalid phext path");
+            return;
+        }
+    };
+    
+    // Parse algorithm and limit
+    let algo_str = parsed.get("algo").unwrap_or(&nothing);
+    let limit_str = parsed.get("limit").unwrap_or(&nothing);
+    let algorithm = if algo_str == "checksum" { HashAlgorithm::Checksum } else { HashAlgorithm::Xor };
+    let limit: usize = limit_str.parse().unwrap_or(100);
+    
+    // Determine command and reload flag
+    let mut command = String::new();
+    
+    if request.starts_with("GET /api/v2/load") {
+        command = "load".to_string();
+    } else if request.starts_with("GET /api/v2/select") {
+        command = "select".to_string();
+    } else if request.starts_with("GET /api/v2/insert") {
+        command = "insert".to_string();
+    } else if request.starts_with("POST /api/v2/insert") {
+        command = "insert".to_string();
+        if parsed.contains_key("content") {
+            scroll = &parsed["content"];
+        }
+    } else if request.starts_with("GET /api/v2/update") {
+        command = "update".to_string();
+    } else if request.starts_with("POST /api/v2/update") {
+        command = "update".to_string();
+        if parsed.contains_key("content") {
+            scroll = &parsed["content"];
+        }
+    } else if request.starts_with("POST /api/v2/where") {
+        command = "where".to_string();
+        if parsed.contains_key("content") {
+            scroll = &parsed["content"];
+        }
+    } else if request.starts_with("GET /api/v2/delete") {
+        command = "delete".to_string();
+    } else if request.starts_with("GET /api/v2/status") {
+        command = "status".to_string();
+    } else if request.starts_with("GET /api/v2/checksum") {
+        command = "checksum".to_string();
+    } else if request.starts_with("GET /api/v2/toc") {
+        command = "toc".to_string();
+    } else if request.starts_with("GET /api/v2/get") {
+        command = "get".to_string();
+    } else if request.starts_with("GET /api/v2/delta") {
+        command = "delta".to_string();
+    } else if request.starts_with("POST /api/v2/delta") {
+        command = "delta".to_string();
+        if parsed.contains_key("content") {
+            scroll = &parsed["content"];
+        }
+    } else if request.starts_with("GET /api/v2/version") {
+        command = "version".to_string();
+    } else if request.starts_with("GET /api/v2/json-export") {
+        command = "json-export".to_string();
+    } else {
+        send_response(&mut stream, 404, "Not Found");
+        return;
+    }
+    
+    // Load phext source
+    let mut loaded_map = fetch_source(phext_path.clone());
+    
+    // Process command
+    let mut output = String::new();
+    let _ = sq::process(
+        0,
+        phext_path.clone(),
+        &mut output,
+        command.clone(),
+        &mut loaded_map,
+        phext::to_coordinate(coord.as_str()),
+        scroll.clone(),
+        phext_path.clone(),
+        algorithm,
+        limit
+    );
+    
+    // Save if mutation
+    if is_mutation(&command) {
+        let phext_buffer = phext::implode(loaded_map);
+        let _ = std::fs::write(&phext_path, phext_buffer);
+    }
+    
+    // Send response
+    send_response(&mut stream, 200, &output);
+}
+
+// -----------------------------------------------------------------------------------------------------------
+// Extract auth token and lookup tenant config
+// -----------------------------------------------------------------------------------------------------------
+fn extract_auth_token_multi<'a>(header: &str, config: &'a config::ServerConfig) -> Option<&'a config::TenantConfig> {
+    // Extract Authorization header
+    for line in header.lines() {
+        let lower_line = line.to_lowercase();
+        if lower_line.starts_with("authorization:") {
+            if let Some(value) = line.split(':').nth(1) {
+                let token = value.trim();
+                // Strip "Bearer " prefix if present
+                let token = if token.to_lowercase().starts_with("bearer ") {
+                    &token[7..].trim()
+                } else {
+                    token
+                };
+                // Lookup tenant by token
+                return config.tenants.get(token);
+            }
+        }
+    }
+    None
+}
+
+// -----------------------------------------------------------------------------------------------------------
+// Validate phext path for multi-tenant mode
+// -----------------------------------------------------------------------------------------------------------
+fn validate_tenant_path_multi(phext_name: &str, data_dir: &str) -> Option<String> {
+    // Reject any path traversal attempts
+    if phext_name.contains("..") || phext_name.contains('/') || phext_name.contains('\\') {
+        return None;
+    }
+    Some(format!("{}/{}.phext", data_dir, phext_name))
 }
 
 // -----------------------------------------------------------------------------------------------------------
