@@ -1312,7 +1312,7 @@ fn handle_multi_tenant_connection_with_reload(
         
         // Flush to disk on mutation
         if is_mutation(&command) {
-            let phext_buffer = phext::implode(state.loaded_map.clone());
+            let phext_buffer = sq::implode_ref(&state.loaded_map);
             if let Err(e) = std::fs::write(&phext_path, &phext_buffer) {
                 eprintln!("Failed to write {}: {}", phext_path, e);
             }
