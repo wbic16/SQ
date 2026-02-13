@@ -159,6 +159,10 @@ pub enum HashAlgorithm {
 fn fetch_source(filename: String) -> HashMap::<phext::Coordinate, String> {
     let exists = std::path::Path::new(&filename).exists();
     if exists == false {
+        // Ensure parent directory exists before creating the file
+        if let Some(parent) = std::path::Path::new(&filename).parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
         let _ = std::fs::write(filename.clone(), "");
     }
     let mut buffer: String = match std::fs::read_to_string(&filename) {
