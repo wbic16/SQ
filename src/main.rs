@@ -268,6 +268,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut auth_key: Option<String> = None;
         let mut data_dir: Option<String> = None;
         let mut mesh_config_path: Option<String> = None;
+        let mut tenant_config_path: Option<String> = None;
         let mut i = 3;
         while i < args.len() {
             match args[i].as_str() {
@@ -288,6 +289,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "--mesh-config" => {
                     if i + 1 < args.len() {
                         mesh_config_path = Some(args[i + 1].clone());
+                        i += 2;
+                    } else { i += 1; }
+                }
+                "--config" => {
+                    if i + 1 < args.len() {
+                        tenant_config_path = Some(args[i + 1].clone());
                         i += 2;
                     } else { i += 1; }
                 }
@@ -327,11 +334,41 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             None => None
         };
         
-        if auth_key.is_some() {
-            println!("Auth enabled (pmb-v1 key required)");
-        }
-        if let Some(ref dir) = data_dir {
-            println!("Tenant data directory: {}", dir);
+        // Load multi-tenant config if provided
+        let tenant_map: Option<Arc<HashMap<String, config::TenantConfig>>> = match tenant_config_path {
+            Some(ref path) => {
+                match config::load_config(path) {
+                    Ok(cfg) => {
+                        println!("╔══════════════════════════════════════════════════════════╗");
+                        println!("║            SQ Multi-Tenant Mode Enabled                  ║");
+                        println!("╚══════════════════════════════════════════════════════════╝");
+                        println!();
+                        println!("Tenants configured: {}", cfg.tenants.len());
+                        // Create data dirs for all tenants
+                        for (token, tenant) in &cfg.tenants {
+                            let _ = std::fs::create_dir_all(&tenant.data_dir);
+                            println!("  {} → {} (token: {}...)", tenant.name, tenant.data_dir, &token[..8.min(token.len())]);
+                        }
+                        println!();
+                        Some(Arc::new(cfg.tenants))
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to load tenant config: {}", e);
+                        eprintln!("   Continuing in single-tenant mode...");
+                        None
+                    }
+                }
+            }
+            None => None,
+        };
+
+        if tenant_map.is_none() {
+            if auth_key.is_some() {
+                println!("Auth enabled (pmb-v1 key required)");
+            }
+            if let Some(ref dir) = data_dir {
+                println!("Tenant data directory: {}", dir);
+            }
         }
 
         let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).unwrap();
@@ -370,9 +407,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let state = Arc::clone(&state);
                     let auth_key = auth_key.clone();
                     let data_dir = data_dir.clone();
+                    let tenants = tenant_map.clone();
                     let cid = connection_id;
                     std::thread::spawn(move || {
-                        handle_tcp_connection(state, cid, stream, &auth_key, &data_dir);
+                        handle_tcp_connection(state, cid, stream, &auth_key, &data_dir, &tenants);
                         ACTIVE_CONNECTIONS.fetch_sub(1, Ordering::Relaxed);
                     });
                 }
@@ -565,9 +603,10 @@ fn handle_tcp_connection(
     mut stream: TcpStream,
     auth_key: &Option<String>,
     data_dir: &Option<String>,
+    tenant_map: &Option<Arc<HashMap<String, config::TenantConfig>>>,
 ) {
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        handle_tcp_connection_inner(state, connection_id, &mut stream, auth_key, data_dir)
+        handle_tcp_connection_inner(state, connection_id, &mut stream, auth_key, data_dir, tenant_map)
     }));
     if let Err(e) = result {
         eprintln!("[#{}] panic: {:?}", connection_id, e);
@@ -584,6 +623,7 @@ fn handle_tcp_connection_inner(
     stream: &mut TcpStream,
     auth_key: &Option<String>,
     data_dir: &Option<String>,
+    tenant_map: &Option<Arc<HashMap<String, config::TenantConfig>>>,
 ) {
     // Phase 1: Read request (no lock needed)
     let http_request = match read_http_request(stream) {
@@ -619,9 +659,31 @@ fn handle_tcp_connection_inner(
         return;
     }
 
-    if !validate_auth(request, auth_key) {
-        send_response(stream, 401, "Unauthorized");
-        return;
+    // Multi-tenant auth: resolve token → tenant data_dir, or fall back to single-key mode
+    let resolved_data_dir: Option<String>;
+    if let Some(ref tenants) = tenant_map {
+        // Multi-tenant mode: extract token and look up tenant
+        let token = extract_header(request, "authorization")
+            .map(|a| {
+                let a = a.trim().to_string();
+                if a.to_lowercase().starts_with("bearer ") { a[7..].trim().to_string() } else { a }
+            });
+        match token {
+            Some(ref t) if tenants.contains_key(t) => {
+                resolved_data_dir = Some(tenants[t].data_dir.clone());
+            }
+            _ => {
+                send_response(stream, 401, "Unauthorized");
+                return;
+            }
+        }
+    } else {
+        // Single-tenant mode: use --key / --data-dir
+        if !validate_auth(request, auth_key) {
+            send_response(stream, 401, "Unauthorized");
+            return;
+        }
+        resolved_data_dir = data_dir.clone();
     }
 
     // Phase 2: Parse request (no lock needed)
@@ -635,7 +697,7 @@ fn handle_tcp_connection_inner(
     let coord = parsed.get("c").unwrap_or(&nothing).clone();
     let phext_name = parsed.get("p").unwrap_or(&nothing).clone();
 
-    let phext = match validate_tenant_path(&phext_name, data_dir) {
+    let phext = match validate_tenant_path(&phext_name, &resolved_data_dir) {
         Some(path) => path,
         None => {
             send_response(stream, 403, "Forbidden: invalid phext path");
