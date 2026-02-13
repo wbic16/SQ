@@ -1038,8 +1038,12 @@ fn run_multi_tenant_server(port: &str, config_path: &str) -> Result<(), Box<dyn 
     
     // Ensure all tenant data directories exist
     for (_token, tenant) in &tenant_config.tenants {
-        let _ = std::fs::create_dir_all(&tenant.data_dir);
-        println!("  - {} ({})", tenant.name, tenant.data_dir);
+        match std::fs::create_dir_all(&tenant.data_dir) {
+            Ok(_) => println!("  - {} ({})", tenant.name, tenant.data_dir),
+            Err(e) => {
+                eprintln!("  - {} ({}) - WARNING: {}", tenant.name, tenant.data_dir, e);
+            }
+        }
     }
     
     let listener = TcpListener::bind(format!("0.0.0.0:{}", port))?;
@@ -1224,8 +1228,15 @@ fn handle_multi_tenant_connection(mut stream: TcpStream, config: &config::Server
     
     // Save if mutation
     if is_mutation(&command) {
+        // Ensure tenant directory exists before writing
+        if let Some(parent) = std::path::Path::new(&phext_path).parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        
         let phext_buffer = phext::implode(loaded_map);
-        let _ = std::fs::write(&phext_path, phext_buffer);
+        if let Err(e) = std::fs::write(&phext_path, phext_buffer) {
+            eprintln!("Failed to write {}: {}", phext_path, e);
+        }
     }
     
     // Send response
