@@ -1223,11 +1223,13 @@ fn handle_multi_tenant_connection(mut stream: TcpStream, config: &config::Server
 
 // -----------------------------------------------------------------------------------------------------------
 // Extract auth token and lookup tenant config
+// Supports both Authorization: Bearer <token> and X-SQ-API-Key: <token>
 // -----------------------------------------------------------------------------------------------------------
 fn extract_auth_token_multi<'a>(header: &str, config: &'a config::ServerConfig) -> Option<&'a config::TenantConfig> {
-    // Extract Authorization header
     for line in header.lines() {
         let lower_line = line.to_lowercase();
+        
+        // Try Authorization header first
         if lower_line.starts_with("authorization:") {
             if let Some(value) = line.split(':').nth(1) {
                 let token = value.trim();
@@ -1238,7 +1240,20 @@ fn extract_auth_token_multi<'a>(header: &str, config: &'a config::ServerConfig) 
                     token
                 };
                 // Lookup tenant by token
-                return config.tenants.get(token);
+                if let Some(tenant) = config.tenants.get(token) {
+                    return Some(tenant);
+                }
+            }
+        }
+        
+        // Fallback to X-SQ-API-Key (backward compatibility with Phext Notepad)
+        if lower_line.starts_with("x-sq-api-key:") {
+            if let Some(value) = line.split(':').nth(1) {
+                let token = value.trim();
+                // Lookup tenant by token
+                if let Some(tenant) = config.tenants.get(token) {
+                    return Some(tenant);
+                }
             }
         }
     }
