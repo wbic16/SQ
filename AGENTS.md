@@ -14,3 +14,17 @@ Phext sync server (Rust). REST API for reading/writing scrolls. Multi-tenant aut
 
 ## Branch
 Default: `exo`
+
+---
+
+## GitSync Protocol (MANDATORY)
+
+**All agents must follow:** `/home/wbic16/.openclaw/workspace/GITSYNC-PROTOCOL.md`
+
+### Quick Reference
+1. `git pull --rebase` — before starting work
+2. `cargo test` — before committing
+3. `git pull --rebase` — before pushing
+4. `git push` — immediately (<60s)
+
+**This is production code.** No shortcuts.
