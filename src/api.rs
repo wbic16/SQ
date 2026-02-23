@@ -218,14 +218,14 @@ fn send_cors_preflight(stream: &mut TcpStream) {
 // Proxy to ollama (local tier)
 // -----------------------------------------------------------------------------------------------------------
 
-fn proxy_to_local(config: &ApiConfig, prompt: &str) -> Result<String, Box<dyn std::error::Error>> {
+fn proxy_to_local(config: &ApiConfig, request_body: &str) -> Result<String, Box<dyn std::error::Error>> {
     let url = format!("{}/v1/chat/completions", config.local_url);
-    let body = serde_json::json!({
-        "model": config.local_model,
-        "messages": [{"role": "user", "content": prompt}],
-        "stream": false
-    });
-    let body_str = body.to_string();
+
+    // Override model in the request, preserve full message history
+    let mut parsed: serde_json::Value = serde_json::from_str(request_body)?;
+    parsed["model"] = serde_json::Value::String(config.local_model.clone());
+    parsed["stream"] = serde_json::Value::Bool(false);
+    let body_str = parsed.to_string();
 
     // Parse host/port from URL
     let url_trimmed = url.trim_start_matches("http://").trim_start_matches("https://");
@@ -267,19 +267,15 @@ fn proxy_to_local(config: &ApiConfig, prompt: &str) -> Result<String, Box<dyn st
 // Proxy to upstream (upstream tier)
 // -----------------------------------------------------------------------------------------------------------
 
-fn proxy_to_upstream(config: &ApiConfig, prompt: &str) -> Result<String, Box<dyn std::error::Error>> {
-    // For now, pass through to upstream as-is via TCP
-    // TODO: support HTTPS via rustls or native-tls
-    // For HTTP-only upstreams (e.g. local LM Studio acting as "upstream"):
+fn proxy_to_upstream(config: &ApiConfig, request_body: &str) -> Result<String, Box<dyn std::error::Error>> {
     let url_trimmed = config.upstream_url.trim_start_matches("http://").trim_start_matches("https://");
     let (host_port, _) = url_trimmed.split_once('/').unwrap_or((url_trimmed, ""));
 
-    let body = serde_json::json!({
-        "model": config.upstream_model,
-        "messages": [{"role": "user", "content": prompt}],
-        "stream": false
-    });
-    let body_str = body.to_string();
+    // Override model in the request, preserve full message history
+    let mut parsed: serde_json::Value = serde_json::from_str(request_body)?;
+    parsed["model"] = serde_json::Value::String(config.upstream_model.clone());
+    parsed["stream"] = serde_json::Value::Bool(false);
+    let body_str = parsed.to_string();
 
     let mut stream = TcpStream::connect(host_port)?;
     stream.set_read_timeout(Some(Duration::from_secs(300)))?;
@@ -313,14 +309,21 @@ fn proxy_to_upstream(config: &ApiConfig, prompt: &str) -> Result<String, Box<dyn
 }
 
 // -----------------------------------------------------------------------------------------------------------
-// Extract the last user message from a chat completion request
+// Extract the last user message (for triage scoring) and full request body (for proxying)
 // -----------------------------------------------------------------------------------------------------------
 
-fn extract_prompt(body: &str) -> Option<String> {
+fn extract_last_user_message(body: &str) -> Option<String> {
     let req: ChatRequest = serde_json::from_str(body).ok()?;
     req.messages.iter().rev()
         .find(|m| m.role == "user")
         .map(|m| m.content.clone())
+}
+
+/// Parse the request body, validate it has messages, return the full body for proxying
+fn validate_request(body: &str) -> Option<String> {
+    let req: ChatRequest = serde_json::from_str(body).ok()?;
+    if req.messages.is_empty() { return None; }
+    Some(body.to_string())
 }
 
 // -----------------------------------------------------------------------------------------------------------
@@ -389,22 +392,46 @@ pub fn run_api(config_path: &str, listen_port: u16) -> Result<(), Box<dyn std::e
                         return;
                     }
 
-                    let prompt = match extract_prompt(&body) {
-                        Some(p) => p,
+                    // Validate request has messages
+                    let request_body = match validate_request(&body) {
+                        Some(b) => b,
                         None => {
-                            send_json_response(&mut client, 400, r#"{"error":"No user message found"}"#);
+                            send_json_response(&mut client, 400, r#"{"error":"Invalid request or no messages"}"#);
                             return;
                         }
                     };
 
-                    // 1. Check static patterns
+                    // Extract last user message for triage scoring + cache key
+                    let prompt = match extract_last_user_message(&body) {
+                        Some(p) => p,
+                        None => {
+                            // No user message — pass through to upstream as-is
+                            match proxy_to_upstream(&config, &request_body) {
+                                Ok(content) => {
+                                    let resp = make_chat_response(&content, &config.upstream_model);
+                                    send_json_response(&mut client, 200, &resp);
+                                }
+                                Err(e) => {
+                                    let err = serde_json::json!({"error": format!("{}", e)});
+                                    send_json_response(&mut client, 500, &err.to_string());
+                                }
+                            }
+                            return;
+                        }
+                    };
+
+                    // 1. Check static patterns (only for single-turn)
                     if let Some(static_resp) = PromptCache::check_static(&prompt) {
-                        let resp = make_chat_response(static_resp, "sq-cache");
-                        send_json_response(&mut client, 200, &resp);
-                        return;
+                        let req: Option<ChatRequest> = serde_json::from_str(&body).ok();
+                        let is_single_turn = req.map(|r| r.messages.len() <= 1).unwrap_or(false);
+                        if is_single_turn {
+                            let resp = make_chat_response(static_resp, "sq-cache");
+                            send_json_response(&mut client, 200, &resp);
+                            return;
+                        }
                     }
 
-                    // 2. Check cache
+                    // 2. Check cache (keyed on last user message — only for short conversations)
                     {
                         let mut c = cache.lock().unwrap();
                         if let Some(cached) = c.get(&prompt) {
@@ -414,7 +441,7 @@ pub fn run_api(config_path: &str, listen_port: u16) -> Result<(), Box<dyn std::e
                         }
                     }
 
-                    // 3. Triage
+                    // 3. Triage (score based on last user message)
                     let should_escalate = feedback.lock().unwrap().should_escalate(config.escalation_threshold);
                     let mut decision = triage::evaluate(&prompt, config.signal_threshold);
 
@@ -426,11 +453,11 @@ pub fn run_api(config_path: &str, listen_port: u16) -> Result<(), Box<dyn std::e
 
                     println!("[triage] {} → {:?} ({})", &prompt[..prompt.len().min(60)], decision.tier, decision.reason);
 
-                    // 4. Dispatch
+                    // 4. Dispatch — full message history forwarded to backend
                     let result = match decision.tier {
                         Tier::Cache => unreachable!(), // handled above
                         Tier::Local => {
-                            match proxy_to_local(&config, &prompt) {
+                            match proxy_to_local(&config, &request_body) {
                                 Ok(resp) => {
                                     feedback.lock().unwrap().record(true);
                                     Ok(resp)
@@ -438,16 +465,16 @@ pub fn run_api(config_path: &str, listen_port: u16) -> Result<(), Box<dyn std::e
                                 Err(e) => {
                                     feedback.lock().unwrap().record(false);
                                     eprintln!("[local error] {} — escalating to upstream", e);
-                                    proxy_to_upstream(&config, &prompt)
+                                    proxy_to_upstream(&config, &request_body)
                                 }
                             }
                         }
-                        Tier::Upstream => proxy_to_upstream(&config, &prompt),
+                        Tier::Upstream => proxy_to_upstream(&config, &request_body),
                     };
 
                     match result {
                         Ok(content) => {
-                            // Cache the response
+                            // Cache the response (keyed on last user message)
                             cache.lock().unwrap().set(&prompt, &content);
                             let model = if decision.tier == Tier::Local {
                                 config.local_model.as_str()
