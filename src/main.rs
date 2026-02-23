@@ -41,6 +41,9 @@ mod tests;
 mod mesh;
 mod router;
 mod config;
+mod cache;
+mod triage;
+mod api;
 
 const SHARED_SEGMENT_SIZE: usize = 1024*1024*1024; // 1 GB limit
 const MAX_BUFFER_SIZE: usize = SHARED_SEGMENT_SIZE/2;
@@ -253,6 +256,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         );
         println!("{}", scroll);
         return Ok(());
+    }
+
+    // API proxy command: sq api <config.json> [listen-port]
+    if command == "api" {
+        let config_path = env::args().nth(2).unwrap_or("api-config.json".to_string());
+        let listen_port: u16 = env::args().nth(3)
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(8100);
+
+        return api::run_api(&config_path, listen_port);
     }
 
     // Route command: sq route <config.json> <listen-port>
