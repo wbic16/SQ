@@ -273,4 +273,4 @@ echo "0 2 * * * /usr/local/bin/sq-backup.sh" | sudo crontab -
 
 **Created:** 2026-02-12  
 **For:** SQ Cloud Feb 13, 2026 Launch  
-**Docs:** See [ROUTER.md](../ROUTER.md) for router architecture
+**Docs:** See [ROUTER.md](../router.md) for router architecture

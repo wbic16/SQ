@@ -68,7 +68,7 @@ curl -H "Authorization: pmb-v1-user1-abc123" \
 - Transparent proxy (same SQ API)
 - Production-ready (systemd services, TLS via nginx/Caddy)
 
-📖 **Full documentation:** See [ROUTER.md](ROUTER.md) for complete setup guide, security features, and production deployment.
+📖 **Full documentation:** See [ROUTER.md](router.md) for complete setup guide, security features, and production deployment.
 
 ## SQ Design Philosophy
 
