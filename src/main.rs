@@ -795,6 +795,7 @@ fn handle_tcp_connection_inner(
         command = "json-export".to_string();
         reload_needed = true;
     } else {
+        eprintln!("404: {}", request.lines().next().unwrap_or(""));
         send_response(stream, 404, "Not Found");
         return;
     }
@@ -1280,6 +1281,7 @@ fn handle_multi_tenant_connection_with_reload(
     } else if request.starts_with("GET /api/v2/json-export") {
         command = "json-export".to_string();
     } else {
+        eprintln!("404: {}", request.lines().next().unwrap_or(""));
         send_response(&mut stream, 404, "Not Found");
         return;
     }
