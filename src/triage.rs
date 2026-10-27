@@ -5,7 +5,7 @@
 // v0.6.0 - Routes prompts to cache, local ollama, or upstream API
 //------------------------------------------------------------------------------------------------------------
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 /// Which tier handles this prompt
 #[derive(Debug, Clone, PartialEq, Serialize)]

@@ -32,7 +32,7 @@ use std::io::Read;
 use std::io::Write;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, RwLock};
-use std::sync::atomic::{AtomicUsize, AtomicBool, Ordering};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::mpsc;
 use std::time::Duration;
 

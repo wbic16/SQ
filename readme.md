@@ -38,6 +38,7 @@ SQ is designed to keep abstractions to a minimum. You can interact with phexts v
 * `Daemon Mode`: If you supply a filename parameter to sq, it will launch in daemon mode - communicating with local system processes via shared memory
 * `Listening Mode`: If you supply a port number to sq, it will launch in web server mode - listening on the TCP socket requested
 * `Router Mode` (**NEW in v0.5.5**): Token-based multi-tenant routing layer - see ROUTER.md for details
+* `API Proxy Mode` (**NEW in v0.6.0**): OpenAI-compatible prompt proxy - triages each prompt to cache, a local Ollama model, or an upstream provider
 
 ## Router Mode (v0.5.5)
 
@@ -69,6 +70,27 @@ curl -H "Authorization: pmb-v1-user1-abc123" \
 - Production-ready (systemd services, TLS via nginx/Caddy)
 
 📖 **Full documentation:** See [ROUTER.md](router.md) for complete setup guide, security features, and production deployment.
+
+## Authentication
+
+When SQ is started with `--key <token>` (or with a tenant config), every request must carry the token in one of these headers:
+
+* `Authorization: <token>` or `Authorization: Bearer <token>`
+* `X-SQ-API-Key: <token>` (used by Phext Notepad)
+
+Requests without a valid token receive `401 Unauthorized`. Unknown routes return `404 Not Found` and are logged to stderr with their request line. Clients must include the full base URI, e.g. `http://host:1337/api/v2`.
+
+## API Proxy Mode (v0.6.0)
+
+`sq api <config.json> [port]` (default port 8100) runs an OpenAI-compatible chat endpoint that routes each prompt to the cheapest tier that can handle it:
+
+1. **Cache** - SHA256-keyed prompt cache with LRU eviction and TTL expiry
+2. **Local** - an Ollama model (e.g. `qwen3-coder-next`) for formatting, translation, and quick tasks
+3. **Upstream** - a hosted provider for complex reasoning, architecture, and phext/Exocortex work
+
+Prompts are scored against local and upstream signal patterns (`src/triage.rs`). If a local request fails it falls back to upstream, and a feedback loop routes all local-tier traffic upstream while the local failure rate over the last `feedback_window` requests exceeds `escalation_threshold`. The full conversation history is forwarded to whichever tier answers; cache lookups are keyed on the last user message.
+
+Config fields: `local_url`, `local_model`, `local_timeout_secs`, `upstream_url`, `upstream_api_key`, `upstream_model`, `cache_max_entries`, `cache_ttl_secs`, `signal_threshold`, `escalation_threshold`, `feedback_window`. Keep `upstream_api_key` out of version control.
 
 ## SQ Design Philosophy
 
