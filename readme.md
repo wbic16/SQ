@@ -117,6 +117,25 @@ SQ offers a simple CRUD-style REST API. The API allows you to interact with mult
 * /api/v2/delta?p=<phext>: Returns the hierarchical map of checksums for the given phext
 * /api/v2/toc?p=<phext>: Returns the table of contents for the given phext
 * /api/v2/get?p=<phext>: Returns a complete copy of the given phext
+* /api/v2/query?p=<phext>&from=<coordinate>&to=<coordinate>: Returns every non-empty scroll in the inclusive coordinate range (**v0.6.0**)
+* /api/v2/query?p=<phext>&set=<coordinate>,<coordinate>,...: Returns the scrolls at an explicit set of coordinates (**v0.6.0**)
+
+## Coordinate Query API (v0.6.0)
+
+Query a phext by coordinate range, by coordinate set, or both at once:
+
+```bash
+# Range: every non-empty scroll from the first coordinate to the second, inclusive
+curl -H "X-SQ-API-Key: $KEY" "http://localhost:1337/api/v2/query?p=world&from=1.1.1/1.1.1/1.1.1&to=1.1.1/1.1.2/1.1.1"
+
+# Set: specific coordinates (missing ones come back with an empty scroll)
+curl -H "X-SQ-API-Key: $KEY" "http://localhost:1337/api/v2/query?p=world&set=1.1.1/1.1.1/1.1.1,2.1.1/1.1.1/1.1.1"
+
+# Large sets: POST the coordinates as the body, separated by commas or newlines
+curl -X POST -H "X-SQ-API-Key: $KEY" --data-binary @coords.txt "http://localhost:1337/api/v2/query?p=world"
+```
+
+The response is a JSON array of `{"coordinate": "...", "scroll": "..."}`, sorted by coordinate from library down to scroll. When a range and a set are combined, the results are merged with duplicates removed. Add `&limit=N` to cap the number of results. Coordinates must be complete (`a.b.c/d.e.f/g.h.i`, every part at least 1); a malformed coordinate, a range with only one end, or a range whose start comes after its end returns `400 Bad Request` with the reason.
 
 # Trivia
 

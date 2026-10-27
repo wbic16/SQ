@@ -430,3 +430,91 @@ fn test_mutation_flush_pressure() {
     assert_eq!(final_ref, final_clone,
         "After 500 mutations, implode_ref must still match implode");
 }
+
+// -----------------------------------------------------------------------------------------------------------
+// Coordinate Query API (v0.6.0)
+// -----------------------------------------------------------------------------------------------------------
+#[cfg(test)]
+fn query_fixture() -> std::collections::HashMap<phext::Coordinate, String> {
+  let mut map = std::collections::HashMap::new();
+  for (c, s) in [
+    ("1.1.1/1.1.1/1.1.1", "origin"),
+    ("1.1.1/1.1.1/1.1.2", "second"),
+    ("1.1.1/1.1.1/1.2.1", "next section"),
+    ("1.1.1/1.1.2/1.1.1", "next book"),
+    ("2.1.1/1.1.1/1.1.1", "next library"),
+    ("1.1.1/1.1.1/1.1.3", ""),
+  ] { map.insert(phext::to_coordinate(c), s.to_string()); }
+  map
+}
+
+#[cfg(test)]
+fn q(from: &str, to: &str, set: &str, limit: &str) -> Result<crate::sq::QuerySpec, String> {
+  let (f, t, s, l) = (from.to_string(), to.to_string(), set.to_string(), limit.to_string());
+  crate::sq::parse_query(Some(&f), Some(&t), Some(&s), Some(&l))
+}
+
+#[test]
+fn test_query_range_inclusive_and_sorted() {
+  let map = query_fixture();
+  let out = crate::sq::run_query(&map, &q("1.1.1/1.1.1/1.1.1", "1.1.1/1.1.2/1.1.1", "", "").unwrap());
+  let v: serde_json::Value = serde_json::from_str(&out).unwrap();
+  let coords: Vec<&str> = v.as_array().unwrap().iter().map(|r| r["coordinate"].as_str().unwrap()).collect();
+  assert_eq!(coords, vec!["1.1.1/1.1.1/1.1.1", "1.1.1/1.1.1/1.1.2", "1.1.1/1.1.1/1.2.1", "1.1.1/1.1.2/1.1.1"]);
+}
+
+#[test]
+fn test_query_range_skips_empty_scrolls() {
+  let map = query_fixture();
+  let out = crate::sq::run_query(&map, &q("1.1.1/1.1.1/1.1.3", "1.1.1/1.1.1/1.1.3", "", "").unwrap());
+  assert_eq!(out, "[]");
+}
+
+#[test]
+fn test_query_set_keeps_missing_coordinates() {
+  let map = query_fixture();
+  let out = crate::sq::run_query(&map, &q("", "", "2.1.1/1.1.1/1.1.1, 9.9.9/9.9.9/9.9.9,1.1.1/1.1.1/1.1.1", "").unwrap());
+  let v: serde_json::Value = serde_json::from_str(&out).unwrap();
+  let rows = v.as_array().unwrap();
+  assert_eq!(rows.len(), 3);
+  assert_eq!(rows[0]["coordinate"], "1.1.1/1.1.1/1.1.1");
+  assert_eq!(rows[1]["scroll"], "next library");
+  assert_eq!(rows[2]["coordinate"], "9.9.9/9.9.9/9.9.9");
+  assert_eq!(rows[2]["scroll"], "");
+}
+
+#[test]
+fn test_query_range_and_set_union_dedups() {
+  let map = query_fixture();
+  let out = crate::sq::run_query(&map, &q("1.1.1/1.1.1/1.1.1", "1.1.1/1.1.1/1.1.2", "1.1.1/1.1.1/1.1.2,2.1.1/1.1.1/1.1.1", "").unwrap());
+  let v: serde_json::Value = serde_json::from_str(&out).unwrap();
+  assert_eq!(v.as_array().unwrap().len(), 3);
+}
+
+#[test]
+fn test_query_limit() {
+  let map = query_fixture();
+  let out = crate::sq::run_query(&map, &q("1.1.1/1.1.1/1.1.1", "9.9.9/9.9.9/9.9.9", "", "2").unwrap());
+  let v: serde_json::Value = serde_json::from_str(&out).unwrap();
+  assert_eq!(v.as_array().unwrap().len(), 2);
+}
+
+#[test]
+fn test_query_escapes_phext_delimiters_and_quotes() {
+  let mut map = std::collections::HashMap::new();
+  map.insert(phext::to_coordinate("1.1.1/1.1.1/1.1.1"), "say \"hi\"\\ \x17 done".to_string());
+  let out = crate::sq::run_query(&map, &q("", "", "1.1.1/1.1.1/1.1.1", "").unwrap());
+  let v: serde_json::Value = serde_json::from_str(&out).unwrap();
+  assert_eq!(v[0]["scroll"], "say \"hi\"\\ \x17 done");
+}
+
+#[test]
+fn test_query_rejects_bad_input() {
+  assert!(q("", "", "", "").is_err());
+  assert!(q("1.1.1/1.1.1/1.1.1", "", "", "").is_err());
+  assert!(q("1.1.1/1.1.1/1.1.2", "1.1.1/1.1.1/1.1.1", "", "").is_err());
+  assert!(q("", "", "1.1.1/1.1.1", "").is_err());
+  assert!(q("", "", "0.1.1/1.1.1/1.1.1", "").is_err());
+  assert!(q("", "", "a.b.c/1.1.1/1.1.1", "").is_err());
+  assert!(q("", "", "1.1.1/1.1.1/1.1.1", "many").is_err());
+}

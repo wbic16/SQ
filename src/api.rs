@@ -319,6 +319,17 @@ fn extract_last_user_message(body: &str) -> Option<String> {
         .map(|m| m.content.clone())
 }
 
+/// Cache key covering the whole conversation (every role + content, in order).
+/// Keying on the last user message alone let different conversations that end
+/// with the same question share one cached answer.
+fn conversation_key(body: &str) -> Option<String> {
+    let req: ChatRequest = serde_json::from_str(body).ok()?;
+    let turns: Vec<serde_json::Value> = req.messages.iter()
+        .map(|m| serde_json::json!([m.role, m.content]))
+        .collect();
+    Some(serde_json::Value::Array(turns).to_string())
+}
+
 /// Parse the request body, validate it has messages, return the full body for proxying
 fn validate_request(body: &str) -> Option<String> {
     let req: ChatRequest = serde_json::from_str(body).ok()?;
@@ -431,10 +442,11 @@ pub fn run_api(config_path: &str, listen_port: u16) -> Result<(), Box<dyn std::e
                         }
                     }
 
-                    // 2. Check cache (keyed on last user message — only for short conversations)
+                    // 2. Check cache (keyed on the full conversation)
+                    let cache_key = conversation_key(&body).unwrap_or_else(|| prompt.clone());
                     {
                         let mut c = cache.lock().unwrap();
-                        if let Some(cached) = c.get(&prompt) {
+                        if let Some(cached) = c.get(&cache_key) {
                             let resp = make_chat_response(&cached, "sq-cache");
                             send_json_response(&mut client, 200, &resp);
                             return;
@@ -474,8 +486,8 @@ pub fn run_api(config_path: &str, listen_port: u16) -> Result<(), Box<dyn std::e
 
                     match result {
                         Ok(content) => {
-                            // Cache the response (keyed on last user message)
-                            cache.lock().unwrap().set(&prompt, &content);
+                            // Cache the response (keyed on the full conversation)
+                            cache.lock().unwrap().set(&cache_key, &content);
                             let model = if decision.tier == Tier::Local {
                                 config.local_model.as_str()
                             } else {
@@ -496,4 +508,30 @@ pub fn run_api(config_path: &str, listen_port: u16) -> Result<(), Box<dyn std::e
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod api_tests {
+    use super::conversation_key;
+
+    #[test]
+    fn same_last_question_different_history_gets_different_keys() {
+        let a = r#"{"messages":[{"role":"user","content":"Tell me about llamas"},{"role":"assistant","content":"Llamas are camelids."},{"role":"user","content":"What do they eat?"}]}"#;
+        let b = r#"{"messages":[{"role":"user","content":"Tell me about sharks"},{"role":"assistant","content":"Sharks are fish."},{"role":"user","content":"What do they eat?"}]}"#;
+        assert_ne!(conversation_key(a), conversation_key(b));
+    }
+
+    #[test]
+    fn identical_conversations_share_a_key() {
+        let a = r#"{"model":"x","messages":[{"role":"user","content":"hi"}]}"#;
+        let b = r#"{"model":"y","messages":[{"role":"user","content":"hi"}]}"#;
+        assert_eq!(conversation_key(a), conversation_key(b));
+    }
+
+    #[test]
+    fn role_is_part_of_the_key() {
+        let a = r#"{"messages":[{"role":"user","content":"hi"}]}"#;
+        let b = r#"{"messages":[{"role":"system","content":"hi"}]}"#;
+        assert_ne!(conversation_key(a), conversation_key(b));
+    }
 }

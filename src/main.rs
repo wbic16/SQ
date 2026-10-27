@@ -2,6 +2,11 @@
 // file: main.rs
 // purpose: provides primary program logic for sq - determining daemon mode vs listening mode
 //
+// v0.6.0 - API proxy mode, Coordinate Query API, libphext 0.3.3
+//   - Added: sq api — OpenAI-compatible prompt proxy (cache → local → upstream)
+//   - Added: /api/v2/query — coordinate ranges (from/to) and coordinate sets (set=, or POST body)
+//   - Fixed: API proxy cache keyed on the full conversation, not just the last user message
+//   - Added: X-SQ-API-Key accepted in single-tenant mode; unmatched routes logged on 404
 // v0.5.3 - Memory pressure fixes
 //   - Fixed: unbounded thread spawning (now capped at MAX_CONCURRENT_CONNECTIONS)
 //   - Fixed: no read/write timeout on TCP streams (slowloris OOM vector)
@@ -794,11 +799,25 @@ fn handle_tcp_connection_inner(
     } else if request.starts_with("GET /api/v2/json-export") {
         command = "json-export".to_string();
         reload_needed = true;
+    } else if request.starts_with("GET /api/v2/query") || request.starts_with("POST /api/v2/query") {
+        command = "query".to_string();
     } else {
         eprintln!("404: {}", request.lines().next().unwrap_or(""));
         send_response(stream, 404, "Not Found");
         return;
     }
+
+    // Coordinate Query API: validate the range/set before taking the lock
+    let query_spec = if command == "query" {
+        let set = parsed.get("set").or_else(|| parsed.get("content"));
+        match sq::parse_query(parsed.get("from"), parsed.get("to"), set, parsed.get("limit")) {
+            Ok(spec) => Some(spec),
+            Err(msg) => {
+                send_response(stream, 400, &format!("Bad Request: {}", msg));
+                return;
+            }
+        }
+    } else { None };
 
     // Phase 3: Acquire lock, process, optionally write to disk
     let output = {
@@ -814,11 +833,15 @@ fn handle_tcp_connection_inner(
         }
 
         let mut output = String::new();
-        let _ = sq::process(
-            connection_id, phext.clone(), &mut output, command.clone(),
-            &mut state.loaded_map, phext::to_coordinate(coord.as_str()),
-            scroll.clone(), phext.clone(), algorithm, limit,
-        );
+        if let Some(spec) = &query_spec {
+            output = sq::run_query(&state.loaded_map, spec);
+        } else {
+            let _ = sq::process(
+                connection_id, phext.clone(), &mut output, command.clone(),
+                &mut state.loaded_map, phext::to_coordinate(coord.as_str()),
+                scroll.clone(), phext.clone(), algorithm, limit,
+            );
+        }
 
         // Only flush to disk when the command actually changed something
         // Uses implode_ref: borrows the map instead of cloning it
@@ -1280,12 +1303,26 @@ fn handle_multi_tenant_connection_with_reload(
         command = "version".to_string();
     } else if request.starts_with("GET /api/v2/json-export") {
         command = "json-export".to_string();
+    } else if request.starts_with("GET /api/v2/query") || request.starts_with("POST /api/v2/query") {
+        command = "query".to_string();
     } else {
         eprintln!("404: {}", request.lines().next().unwrap_or(""));
         send_response(&mut stream, 404, "Not Found");
         return;
     }
     
+    // Coordinate Query API: validate the range/set before taking the lock
+    let query_spec = if command == "query" {
+        let set = parsed.get("set").or_else(|| parsed.get("content"));
+        match sq::parse_query(parsed.get("from"), parsed.get("to"), set, parsed.get("limit")) {
+            Ok(spec) => Some(spec),
+            Err(msg) => {
+                send_response(&mut stream, 400, &format!("Bad Request: {}", msg));
+                return;
+            }
+        }
+    } else { None };
+
     // Ensure tenant data directory exists
     if let Some(parent) = std::path::Path::new(&phext_path).parent() {
         let _ = std::fs::create_dir_all(parent);
@@ -1314,18 +1351,22 @@ fn handle_multi_tenant_connection_with_reload(
         }
         
         let mut output = String::new();
-        let _ = sq::process(
-            0,
-            phext_path.clone(),
-            &mut output,
-            command.clone(),
-            &mut state.loaded_map,
-            phext::to_coordinate(coord.as_str()),
-            scroll.clone(),
-            phext_path.clone(),
-            algorithm,
-            limit
-        );
+        if let Some(spec) = &query_spec {
+            output = sq::run_query(&state.loaded_map, spec);
+        } else {
+            let _ = sq::process(
+                0,
+                phext_path.clone(),
+                &mut output,
+                command.clone(),
+                &mut state.loaded_map,
+                phext::to_coordinate(coord.as_str()),
+                scroll.clone(),
+                phext_path.clone(),
+                algorithm,
+                limit
+            );
+        }
         
         // Flush to disk on mutation
         if is_mutation(&command) {

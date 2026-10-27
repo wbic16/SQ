@@ -332,3 +332,107 @@ Scrolls: {}", source, connection_id, buffer.len(), phext_map.iter().size_hint().
     *scroll = format!("Unexpected command ignored.");
     return false;
 }
+
+//------------------------------------------------------------------------------------------------------------
+// Coordinate Query API (v0.6.0)
+//
+//   GET  /api/v2/query?p=<phext>&from=<coord>&to=<coord>   inclusive coordinate range
+//   GET  /api/v2/query?p=<phext>&set=<coord>,<coord>,...   explicit coordinate set
+//   POST /api/v2/query?p=<phext>  (body = comma/newline-separated set, for large sets)
+//
+// Range and set may be combined; results are the union, deduplicated and sorted by
+// coordinate (library → scroll). Range results include only non-empty scrolls; set
+// results include every requested coordinate, with "" for empty ones. Optional
+// `limit` caps the number of results.
+//------------------------------------------------------------------------------------------------------------
+pub struct QuerySpec {
+    pub range: Option<(phext::Coordinate, phext::Coordinate)>,
+    pub set: Vec<phext::Coordinate>,
+    pub limit: Option<usize>,
+}
+
+/// Strict coordinate parser: exactly 9 positive integers as a.b.c/d.e.f/g.h.i
+pub fn parse_coordinate_strict(text: &str) -> Option<phext::Coordinate> {
+    let text = text.trim();
+    let parts: Vec<&str> = text.split('/').collect();
+    if parts.len() != 3 { return None; }
+    for part in &parts {
+        let nums: Vec<&str> = part.split('.').collect();
+        if nums.len() != 3 { return None; }
+        for n in nums {
+            match n.parse::<usize>() {
+                Ok(v) if v >= 1 => {}
+                _ => return None,
+            }
+        }
+    }
+    Some(phext::to_coordinate(text))
+}
+
+pub fn parse_query(from: Option<&String>, to: Option<&String>, set: Option<&String>, limit: Option<&String>) -> Result<QuerySpec, String> {
+    let from = from.map(|s| s.trim()).filter(|s| !s.is_empty());
+    let to = to.map(|s| s.trim()).filter(|s| !s.is_empty());
+    let range = match (from, to) {
+        (Some(a), Some(b)) => {
+            let start = parse_coordinate_strict(a).ok_or(format!("invalid 'from' coordinate: {}", a))?;
+            let end = parse_coordinate_strict(b).ok_or(format!("invalid 'to' coordinate: {}", b))?;
+            if coord_sort_key(&start) > coord_sort_key(&end) {
+                return Err(format!("'from' ({}) is after 'to' ({})", a, b));
+            }
+            Some((start, end))
+        }
+        (None, None) => None,
+        _ => return Err("a range needs both 'from' and 'to'".to_string()),
+    };
+
+    let mut coords = Vec::new();
+    if let Some(raw) = set {
+        for item in raw.split(|c| c == ',' || c == '\n' || c == ';') {
+            let item = item.trim();
+            if item.is_empty() { continue; }
+            coords.push(parse_coordinate_strict(item).ok_or(format!("invalid coordinate in set: {}", item))?);
+        }
+    }
+
+    if range.is_none() && coords.is_empty() {
+        return Err("query needs a range (from + to) or a set of coordinates".to_string());
+    }
+
+    let limit = match limit.map(|s| s.trim()).filter(|s| !s.is_empty()) {
+        None => None,
+        Some(s) => Some(s.parse::<usize>().map_err(|_| format!("invalid limit: {}", s))?),
+    };
+
+    Ok(QuerySpec { range, set: coords, limit })
+}
+
+/// Runs a query against a loaded phext map and returns a JSON array of {coordinate, scroll}
+pub fn run_query(phext_map: &HashMap<phext::Coordinate, String>, spec: &QuerySpec) -> String {
+    let mut picked: std::collections::BTreeMap<[usize; 9], (phext::Coordinate, &str)> = std::collections::BTreeMap::new();
+
+    if let Some((start, end)) = &spec.range {
+        let lo = coord_sort_key(start);
+        let hi = coord_sort_key(end);
+        for (coord, scroll) in phext_map.iter() {
+            if scroll.is_empty() { continue; }
+            let key = coord_sort_key(coord);
+            if key >= lo && key <= hi {
+                picked.insert(key, (*coord, scroll.as_str()));
+            }
+        }
+    }
+
+    for coord in &spec.set {
+        let scroll = phext_map.get(coord).map(|s| s.as_str()).unwrap_or("");
+        picked.insert(coord_sort_key(coord), (*coord, scroll));
+    }
+
+    let take = spec.limit.unwrap_or(usize::MAX);
+    let results: Vec<serde_json::Value> = picked.values().take(take)
+        .map(|(coord, scroll)| serde_json::json!({
+            "coordinate": coord.to_string(),
+            "scroll": scroll,
+        }))
+        .collect();
+    serde_json::Value::Array(results).to_string()
+}
