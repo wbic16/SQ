@@ -95,7 +95,8 @@ fn validate_auth(header: &str, expected_key: &Option<String>) -> bool {
     match expected_key {
         None => true,
         Some(key) => {
-            match extract_header(header, "authorization") {
+            // Accept Authorization (optionally "Bearer <key>") or X-SQ-API-Key (Phext Notepad)
+            match extract_header(header, "authorization").or_else(|| extract_header(header, "x-sq-api-key")) {
                 Some(provided) => {
                     let provided = provided.trim();
                     let token = if provided.to_lowercase().starts_with("bearer ") {
@@ -701,6 +702,7 @@ fn handle_tcp_connection_inner(
     if let Some(ref tenants) = tenant_map {
         // Multi-tenant mode: extract token and look up tenant
         let token = extract_header(request, "authorization")
+            .or_else(|| extract_header(request, "x-sq-api-key"))
             .map(|a| {
                 let a = a.trim().to_string();
                 if a.to_lowercase().starts_with("bearer ") { a[7..].trim().to_string() } else { a }
