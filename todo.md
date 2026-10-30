@@ -29,3 +29,9 @@
 * mind meld API
   * request-response cycles
   * dopamine training hacks
+## wikibench targets (phext-lattice/bench/wiki/FINDINGS.md, 38k-article / 49 MB phext)
+* HTTP keep-alive: `select` is 86 µs p50 over HTTP vs 0.7 µs in-process; one TCP connection per request dominates
+* durable, O(edit) mutations: `update` takes 72 ms because every mutation implodes and rewrites the whole phext, and it never fsyncs
+* server-side link expansion: a 2-hop BFS through select + /api/v2/query takes 778 µs vs 43 µs in-process; add a links/depth query
+* cold start: first request takes 171 ms (explode into HashMap<Coordinate, String>); host on phext-lattice's MappedLattice instead
+* /api/v2/query ranges scan the whole map; a sorted span index makes them O(log n + k)
