@@ -197,6 +197,19 @@ fn fetch_source(filename: String) -> HashMap::<phext::Coordinate, String> {
         // in-place truncation: avoids allocating a second 512 MB string
         buffer.truncate(MAX_BUFFER_SIZE);
     }
+    // v0.6 chain support: a chain stream hosts ONE universe at a time.
+    // SQ_MEMBER selects the universe (1-based, default 1). Framing facts are reported, never hidden.
+    if buffer.contains(phext::CHAIN_BREAK) || buffer.contains(phext::CHAIN_CLOSE) {
+        let chains = phext::parse_chains(&buffer);
+        let total: usize = chains.iter().map(|c| c.members.len()).sum();
+        let want: usize = std::env::var("SQ_MEMBER").ok().and_then(|v| v.parse().ok()).unwrap_or(1).max(1);
+        let mut idx = 0usize; let mut picked: Option<String> = None; let mut all_closed = true;
+        for c in &chains { all_closed = all_closed && c.closed; for m in &c.members { idx += 1; if idx == want { picked = Some(m.clone()); } } }
+        eprintln!("Chain detected: {} chain(s), {} universe(s), closed={}. Hosting universe {}.", chains.len(), total, all_closed, want);
+        if let Some(member) = picked { return phext::explode(&member); }
+        eprintln!("Warning: SQ_MEMBER={} out of range ({} universes); hosting universe 1.", want, total);
+        if let Some(first) = chains[0].members.first() { return phext::explode(first); }
+    }
     return phext::explode(&buffer);
 }
 
@@ -244,6 +257,10 @@ fn is_mutation(command: &str) -> bool {
 // -----------------------------------------------------------------------------------------------------------
 // sq program loop
 // -----------------------------------------------------------------------------------------------------------
+// libphext 0.6 dropped COORDINATE_MAXIMUM (coordinates are unbounded);
+// slurp rollover is SQ-local layout policy, kept at the historical value.
+const SLURP_ROLLOVER_MAXIMUM: usize = 1000;
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let sq_exists = std::path::Path::new(".sq").exists();
     if sq_exists == false {
@@ -1028,13 +1045,13 @@ fn client(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
         for entry in std::fs::read_dir(dir).ok().into_iter().flat_map(|e| e) {
             if let Ok(entry) = entry {
                 coord.scroll_break();
-                if coord.x.scroll == (phext::COORDINATE_MAXIMUM - 1) {
+                if coord.x.scroll == (SLURP_ROLLOVER_MAXIMUM - 1) {
                     coord.section_break();
                 }
-                if coord.x.section == (phext::COORDINATE_MAXIMUM - 1) {
+                if coord.x.section == (SLURP_ROLLOVER_MAXIMUM - 1) {
                     coord.chapter_break();
                 }
-                if coord.x.chapter == (phext::COORDINATE_MAXIMUM - 1) {
+                if coord.x.chapter == (SLURP_ROLLOVER_MAXIMUM - 1) {
                     coord.book_break();
                     println!("Warning: Slurp exceeded 900M scrolls.");
                 }
