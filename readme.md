@@ -22,6 +22,8 @@ SQ is designed to keep abstractions to a minimum. You can interact with phexts v
 * sq toc: Displays a textmap (list of available scrolls) of the currently-loaded phext
 * sq checksum: Displays the checksum of the current phext
 * sq delta: Displays the hierarchical network of checksums for the current phext
+* sq seed <host:port> <phext>: Prints the seed cache of a hosted phext (client mode, see below)
+* sq fetch <host:port> <phext> <coord>: Cache-aware fetch of one scroll from a hosted phext (client mode, see below)
 * sq push <coord> <file>: Overwrites the specified scroll with the local file
 * sq pull <coord> <file>: Fetches the specified scroll to a local file
 * sq select <coord>: Fetches content from the current phext
@@ -119,6 +121,8 @@ SQ offers a simple CRUD-style REST API. The API allows you to interact with mult
 * /api/v2/get?p=<phext>: Returns a complete copy of the given phext
 * /api/v2/query?p=<phext>&from=<coordinate>&to=<coordinate>: Returns every non-empty scroll in the inclusive coordinate range (**v0.6.0**)
 * /api/v2/query?p=<phext>&set=<coordinate>,<coordinate>,...: Returns the scrolls at an explicit set of coordinates (**v0.6.0**)
+* /api/v2/seed?p=<phext>: Returns the seed cache for the given phext — the xxh3_128 hash of every populated scroll, and nothing else (**seed cache**)
+* /api/v2/fetch?p=<phext>&c=<coordinate>&h=<hash>&has=<0|1>: Cache-aware scroll fetch — a small `unchanged` confirmation when the client holds the scroll at the current hash, otherwise the full scroll plus its current hash (**seed cache**)
 
 ## Coordinate Query API (v0.6.0)
 
@@ -136,6 +140,28 @@ curl -X POST -H "X-SQ-API-Key: $KEY" --data-binary @coords.txt "http://localhost
 ```
 
 The response is a JSON array of `{"coordinate": "...", "scroll": "..."}`, sorted by coordinate from library down to scroll. When a range and a set are combined, the results are merged with duplicates removed. Add `&limit=N` to cap the number of results. Coordinates must be complete (`a.b.c/d.e.f/g.h.i`, every part at least 1); a malformed coordinate, a range with only one end, or a range whose start comes after its end returns `400 Bad Request` with the reason.
+
+## Seed Cache + Cache-Aware Fetch
+
+A **seed cache** is the hash envelope of a phext: for every populated coordinate, the xxh3_128 hash of its scroll (the same per-scroll hash `/api/v2/delta` diffs with, as 32 lowercase hex characters) — and nothing else. Its size is a fixed constant times the number of scrolls, independent of how large any scroll is, and the envelope compresses well because the coordinates are sorted and clustered. A client downloads the seed on load, builds its navigation locally, and then streams scrolls in as they are viewed, verifying each against the seed.
+
+```bash
+# The seed envelope: {"algorithm":"xxh3_128","scrolls":N,"hashes":[{"coordinate":"...","hash":"..."}, ...]}
+curl -H "X-SQ-API-Key: $KEY" "http://localhost:1337/api/v2/seed?p=world"
+```
+
+**Cache-aware fetch** lets a client avoid re-downloading scrolls it already holds. The client presents three things — the coordinate, its current hash for that scroll, and a flag saying whether it holds the content:
+
+```bash
+curl -H "X-SQ-API-Key: $KEY" "http://localhost:1337/api/v2/fetch?p=world&c=1.1.1/1.1.1/1.1.1&h=<hash>&has=1"
+```
+
+* Client holds the content **and** the hash matches the server's current hash → a small confirmation with no content: `{"coordinate":"...","hash":"...","unchanged":true}`
+* Anything else (no local content, or a stale hash) → the normal fetch: `{"coordinate":"...","hash":"...","unchanged":false,"scroll":"..."}`
+
+Batches use the same logic per entry: `POST /api/v2/fetch?p=<phext>` with a JSON array body of `{"coordinate": "...", "hash": "...", "has_content": true|false}` returns a JSON array of the same two shapes.
+
+The `sq seed` and `sq fetch` commands are the reference client: `sq fetch` keeps a disk-backed scroll cache (default `.sq/seed-cache.json`, override with `--cache`), consults the seed first, serves unchanged scrolls locally with no content transfer, and hash-verifies everything it downloads before caching it.
 
 # Trivia
 

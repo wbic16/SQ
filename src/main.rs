@@ -7,6 +7,11 @@
 //   - Added: /api/v2/query — coordinate ranges (from/to) and coordinate sets (set=, or POST body)
 //   - Fixed: API proxy cache keyed on the full conversation, not just the last user message
 //   - Added: X-SQ-API-Key accepted in single-tenant mode; unmatched routes logged on 404
+// Seed cache (post-v0.6.0)
+//   - Added: /api/v2/seed — the hash envelope: xxh3_128 of every populated scroll, nothing else
+//   - Added: /api/v2/fetch — cache-aware fetch (small 'unchanged' answer when the client
+//            holds the scroll at the current hash; full scroll + current hash otherwise)
+//   - Added: sq seed / sq fetch — HTTP client helpers with a disk-backed scroll cache
 // v0.5.3 - Memory pressure fixes
 //   - Fixed: unbounded thread spawning (now capped at MAX_CONCURRENT_CONNECTIONS)
 //   - Fixed: no read/write timeout on TCP streams (slowloris OOM vector)
@@ -42,6 +47,7 @@ use std::sync::mpsc;
 use std::time::Duration;
 
 mod sq;
+mod seed;
 mod tests;
 mod mesh;
 mod router;
@@ -282,6 +288,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .unwrap_or(1337);
         
         return router::run_router(&config_path, listen_port);
+    }
+
+    // Seed cache client commands (HTTP, no daemon IPC):
+    //   sq seed  <host:port> <phext> [--key <key>]
+    //   sq fetch <host:port> <phext> <coordinate> [--key <key>] [--cache <file>]
+    if command == "seed" || command == "fetch" {
+        return run_seed_cli(&command);
     }
 
     // -----------------------------------------------------------------------
@@ -794,6 +807,10 @@ fn handle_tcp_connection_inner(
     } else if request.starts_with("POST /api/v2/delta") {
         command = "delta".to_string();
         if let Some(content) = parsed.get("content") { scroll = content.clone(); }
+    } else if request.starts_with("GET /api/v2/seed") {
+        command = "seed".to_string();
+    } else if request.starts_with("GET /api/v2/fetch") || request.starts_with("POST /api/v2/fetch") {
+        command = "fetch".to_string();
     } else if request.starts_with("GET /api/v2/version") {
         command = "version".to_string();
     } else if request.starts_with("GET /api/v2/json-export") {
@@ -819,6 +836,23 @@ fn handle_tcp_connection_inner(
         }
     } else { None };
 
+    // Cache-aware fetch: validate the coordinate(s) before taking the lock
+    let fetch_spec = if command == "fetch" {
+        let parsed_fetch = if request.starts_with("POST") {
+            let body = parsed.get("content").cloned().unwrap_or_default();
+            seed::parse_fetch_post(&body)
+        } else {
+            seed::parse_fetch_get(&parsed)
+        };
+        match parsed_fetch {
+            Ok(spec) => Some(spec),
+            Err(msg) => {
+                send_response(stream, 400, &format!("Bad Request: {}", msg));
+                return;
+            }
+        }
+    } else { None };
+
     // Phase 3: Acquire lock, process, optionally write to disk
     let output = {
         let mut state = state.lock().unwrap_or_else(|poisoned| {
@@ -833,7 +867,9 @@ fn handle_tcp_connection_inner(
         }
 
         let mut output = String::new();
-        if let Some(spec) = &query_spec {
+        if let Some(spec) = &fetch_spec {
+            output = seed::run_fetch(&state.loaded_map, spec);
+        } else if let Some(spec) = &query_spec {
             output = sq::run_query(&state.loaded_map, spec);
         } else {
             let _ = sq::process(
@@ -1071,6 +1107,68 @@ fn client_response(shmem: *mut u8, length_offset: usize, command: &str, message:
 }
 
 // -----------------------------------------------------------------------------------------------------------
+// Seed cache client commands: sq seed / sq fetch against a listening-mode server
+//
+//   sq seed  <host:port> <phext> [--key <key>]
+//       Prints the phext's seed envelope (coordinate -> xxh3_128 hash) as JSON.
+//   sq fetch <host:port> <phext> <coordinate> [--key <key>] [--cache <file>]
+//       Cache-aware fetch of one scroll. The cache (default .sq/seed-cache.json)
+//       is consulted against a fresh seed first: an unchanged scroll is served
+//       locally with no content transfer; a miss or stale scroll is fetched,
+//       hash-verified, and cached. Progress notes go to stderr; the scroll
+//       itself is the only thing on stdout.
+// -----------------------------------------------------------------------------------------------------------
+fn run_seed_cli(command: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let args: Vec<String> = env::args().collect();
+    let base = args.get(2).cloned().unwrap_or_default();
+    let phext_name = args.get(3).cloned().unwrap_or_default();
+    if base.is_empty() || phext_name.is_empty() {
+        eprintln!("Usage: sq {} <host:port> <phext>{} [--key <key>] [--cache <file>]",
+            command, if command == "fetch" { " <coordinate>" } else { "" });
+        std::process::exit(2);
+    }
+
+    let mut key: Option<String> = None;
+    let mut cache_path = ".sq/seed-cache.json".to_string();
+    let mut i = 4;
+    while i < args.len() {
+        match args[i].as_str() {
+            "--key" if i + 1 < args.len() => { key = Some(args[i + 1].clone()); i += 2; }
+            "--cache" if i + 1 < args.len() => { cache_path = args[i + 1].clone(); i += 2; }
+            _ => { i += 1; }
+        }
+    }
+
+    if command == "seed" {
+        let envelope = seed::http_get(&base, &format!("/api/v2/seed?p={}", phext_name), &key)?;
+        println!("{}", envelope);
+        return Ok(());
+    }
+
+    // fetch
+    let coordinate = args.get(4).cloned().unwrap_or_default();
+    if coordinate.is_empty() || coordinate.starts_with("--") {
+        eprintln!("Usage: sq fetch <host:port> <phext> <coordinate> [--key <key>] [--cache <file>]");
+        std::process::exit(2);
+    }
+    if crate::sq::parse_coordinate_strict(&coordinate).is_none() {
+        eprintln!("Invalid coordinate: {}", coordinate);
+        std::process::exit(2);
+    }
+
+    let mut cache = seed::ScrollCache::load(&cache_path);
+    let (content, local) = seed::fetch_cached(&base, &phext_name, &key, &coordinate, &mut cache)?;
+    cache.save(&cache_path)?;
+    if local {
+        eprintln!("{}: served from cache (hash matches the seed; no content transferred)", coordinate);
+    } else {
+        eprintln!("{}: fetched {} bytes from the server, hash verified against the seed", coordinate, content.len());
+    }
+    println!("{}", content);
+    Ok(())
+}
+
+// -----------------------------------------------------------------------------------------------------------
 // Multi-tenant REST API server (SQ v0.5.5)
 // Loads tenant config and serves requests from single process
 // -----------------------------------------------------------------------------------------------------------
@@ -1299,6 +1397,10 @@ fn handle_multi_tenant_connection_with_reload(
         if parsed.contains_key("content") {
             scroll = &parsed["content"];
         }
+    } else if request.starts_with("GET /api/v2/seed") {
+        command = "seed".to_string();
+    } else if request.starts_with("GET /api/v2/fetch") || request.starts_with("POST /api/v2/fetch") {
+        command = "fetch".to_string();
     } else if request.starts_with("GET /api/v2/version") {
         command = "version".to_string();
     } else if request.starts_with("GET /api/v2/json-export") {
@@ -1315,6 +1417,23 @@ fn handle_multi_tenant_connection_with_reload(
     let query_spec = if command == "query" {
         let set = parsed.get("set").or_else(|| parsed.get("content"));
         match sq::parse_query(parsed.get("from"), parsed.get("to"), set, parsed.get("limit")) {
+            Ok(spec) => Some(spec),
+            Err(msg) => {
+                send_response(&mut stream, 400, &format!("Bad Request: {}", msg));
+                return;
+            }
+        }
+    } else { None };
+
+    // Cache-aware fetch: validate the coordinate(s) before taking the lock
+    let fetch_spec = if command == "fetch" {
+        let parsed_fetch = if request.starts_with("POST") {
+            let body = parsed.get("content").cloned().unwrap_or_default();
+            seed::parse_fetch_post(&body)
+        } else {
+            seed::parse_fetch_get(&parsed)
+        };
+        match parsed_fetch {
             Ok(spec) => Some(spec),
             Err(msg) => {
                 send_response(&mut stream, 400, &format!("Bad Request: {}", msg));
@@ -1351,7 +1470,9 @@ fn handle_multi_tenant_connection_with_reload(
         }
         
         let mut output = String::new();
-        if let Some(spec) = &query_spec {
+        if let Some(spec) = &fetch_spec {
+            output = seed::run_fetch(&state.loaded_map, spec);
+        } else if let Some(spec) = &query_spec {
             output = sq::run_query(&state.loaded_map, spec);
         } else {
             let _ = sq::process(
