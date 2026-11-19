@@ -816,3 +816,76 @@ fn test_fetch_cached_second_fetch_transfers_no_content() {
 
   let _ = std::fs::remove_file(&cache_file);
 }
+
+#[test]
+fn test_toc_progressive_modes() {
+  // alpha 1.1.1/1.1.1/1.1.1, beta 1.1.1/1.1.1/1.1.2, gamma 1.1.1/1.1.1/1.2.1, delta 2.1.1/1.1.1/1.1.1
+  let buffer = format!("alpha{}beta{}gamma{}delta",
+    phext::SCROLL_BREAK, phext::SECTION_BREAK, phext::LIBRARY_BREAK);
+  let mut map = phext::explode(&buffer);
+  let s = |v: &str| v.to_string();
+
+  // no mode -> no spec (legacy default path)
+  assert!(crate::sq::parse_toc_spec(None, None, None, None).unwrap().is_none());
+
+  // children at root, per-dimension
+  let spec = crate::sq::parse_toc_spec(Some(&s("children")), None, None, None).unwrap().unwrap();
+  let out = crate::sq::run_toc(&map, &spec);
+  let v: serde_json::Value = serde_json::from_str(&out).unwrap();
+  assert_eq!(v["children"].as_array().unwrap().len(), 2);
+  assert_eq!(v["children"][0]["value"], serde_json::json!([1]));
+  assert_eq!(v["children"][0]["scrolls"], serde_json::json!(3));
+  assert_eq!(v["children"][1]["scrolls"], serde_json::json!(1));
+
+  // children grouped by triple: the Scrollspace zoom unit
+  let spec = crate::sq::parse_toc_spec(Some(&s("children")), None, Some(&s("3")), None).unwrap().unwrap();
+  let v: serde_json::Value = serde_json::from_str(&crate::sq::run_toc(&map, &spec)).unwrap();
+  assert_eq!(v["children"][0]["value"], serde_json::json!([1, 1, 1]));
+  assert_eq!(v["children"][0]["scrolls"], serde_json::json!(3));
+  assert_eq!(v["children"][1]["value"], serde_json::json!([2, 1, 1]));
+
+  // summary of the whole document and of one library
+  let spec = crate::sq::parse_toc_spec(Some(&s("summary")), None, None, None).unwrap().unwrap();
+  let v: serde_json::Value = serde_json::from_str(&crate::sq::run_toc(&map, &spec)).unwrap();
+  assert_eq!(v["scrolls"], serde_json::json!(4));
+  assert_eq!(v["bytes"], serde_json::json!(19));
+  let spec = crate::sq::parse_toc_spec(Some(&s("summary")), Some(&s("1.1.1")), None, None).unwrap().unwrap();
+  let v: serde_json::Value = serde_json::from_str(&crate::sq::run_toc(&map, &spec)).unwrap();
+  assert_eq!(v["scrolls"], serde_json::json!(3));
+
+  // scrolls: the planet list under one star system
+  let spec = crate::sq::parse_toc_spec(Some(&s("scrolls")), Some(&s("1.1.1")), None, None).unwrap().unwrap();
+  let v: serde_json::Value = serde_json::from_str(&crate::sq::run_toc(&map, &spec)).unwrap();
+  assert_eq!(v["count"], serde_json::json!(3));
+  assert_eq!(v["scrolls"][0]["coord"], serde_json::json!("1.1.1/1.1.1/1.1.1"));
+
+  // matches: suffix kinship across libraries (alpha + delta share 1.1.1)
+  let spec = crate::sq::parse_toc_spec(Some(&s("matches")), Some(&s("1.1.1")), None, Some(&s("3"))).unwrap().unwrap();
+  let v: serde_json::Value = serde_json::from_str(&crate::sq::run_toc(&map, &spec)).unwrap();
+  assert_eq!(v["count"], serde_json::json!(2));
+  // matches: a full coordinate
+  let spec = crate::sq::parse_toc_spec(Some(&s("matches")), Some(&s("1.1.1/1.1.1/1.2.1")), None, Some(&s("9"))).unwrap().unwrap();
+  let v: serde_json::Value = serde_json::from_str(&crate::sq::run_toc(&map, &spec)).unwrap();
+  assert_eq!(v["count"], serde_json::json!(1));
+
+  // validation
+  assert!(crate::sq::parse_toc_spec(Some(&s("bogus")), None, None, None).is_err());
+  assert!(crate::sq::parse_toc_spec(Some(&s("children")), None, Some(&s("2")), None).is_err());
+  assert!(crate::sq::parse_toc_spec(Some(&s("matches")), Some(&s("1.1.1")), None, Some(&s("9"))).is_err());
+
+  // process(): the CLI-packed form reaches run_toc; bare toc stays legacy
+  let mut scroll = String::new();
+  let done = crate::sq::process(0, String::new(), &mut scroll, "toc".to_string(), &mut map,
+    phext::to_coordinate("1.1.1/1.1.1/1.1.1"), "mode=summary&at=&step=1&scale=".to_string(),
+    String::new(), crate::HashAlgorithm::Xor, 100);
+  assert_eq!(done, false);
+  let v: serde_json::Value = serde_json::from_str(&scroll).unwrap();
+  assert_eq!(v["scrolls"], serde_json::json!(4));
+  let mut legacy = String::new();
+  let _ = crate::sq::process(0, String::new(), &mut legacy, "toc".to_string(), &mut map,
+    phext::to_coordinate("1.1.1/1.1.1/1.1.1"), String::new(),
+    String::new(), crate::HashAlgorithm::Xor, 100);
+  let full = crate::sq::run_toc(&map, &crate::sq::TocSpec {
+    mode: crate::sq::TocMode::Full, prefix: vec![], step: 1, scale: None });
+  assert_eq!(legacy, full);
+}

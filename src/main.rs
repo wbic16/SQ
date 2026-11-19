@@ -841,6 +841,17 @@ fn handle_tcp_connection_inner(
         return;
     }
 
+    // Progressive TOC: validate mode/at/step/scale before taking the lock
+    let toc_spec = if command == "toc" {
+        match sq::parse_toc_spec(parsed.get("mode"), parsed.get("at"), parsed.get("step"), parsed.get("scale")) {
+            Ok(spec) => spec,
+            Err(msg) => {
+                send_response(stream, 400, &format!("Bad Request: {}", msg));
+                return;
+            }
+        }
+    } else { None };
+
     // Coordinate Query API: validate the range/set before taking the lock
     let query_spec = if command == "query" {
         let set = parsed.get("set").or_else(|| parsed.get("content"));
@@ -888,6 +899,8 @@ fn handle_tcp_connection_inner(
             output = seed::run_fetch(&state.loaded_map, spec);
         } else if let Some(spec) = &query_spec {
             output = sq::run_query(&state.loaded_map, spec);
+        } else if let Some(spec) = &toc_spec {
+            output = sq::run_toc(&state.loaded_map, spec);
         } else {
             let _ = sq::process(
                 connection_id, phext.clone(), &mut output, command.clone(),
@@ -1079,6 +1092,17 @@ fn client(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> 
         }
         coordinate = toc.to_string();
         message = summary;
+    }
+
+    if command == "toc" && args.len() > 2 {
+        // sq toc <mode> <at> [step] [scale] — pack the progressive-mode
+        // parameters into the message slot for sq::process to unpack
+        let mode = args.get(2).cloned().unwrap_or_default();
+        let at = args.get(3).cloned().unwrap_or_default();
+        let step = args.get(4).cloned().unwrap_or_else(|| "1".to_string());
+        let scale = args.get(5).cloned().unwrap_or_default();
+        coordinate = String::new();
+        message = format!("mode={}&at={}&step={}&scale={}", mode, at, step, scale);
     }
 
     client_submit(command, coordinate.as_str(), message.as_str(), shmem.as_ptr(), length_offset);
@@ -1430,6 +1454,17 @@ fn handle_multi_tenant_connection_with_reload(
         return;
     }
     
+    // Progressive TOC: validate mode/at/step/scale before taking the lock
+    let toc_spec = if command == "toc" {
+        match sq::parse_toc_spec(parsed.get("mode"), parsed.get("at"), parsed.get("step"), parsed.get("scale")) {
+            Ok(spec) => spec,
+            Err(msg) => {
+                send_response(&mut stream, 400, &format!("Bad Request: {}", msg));
+                return;
+            }
+        }
+    } else { None };
+
     // Coordinate Query API: validate the range/set before taking the lock
     let query_spec = if command == "query" {
         let set = parsed.get("set").or_else(|| parsed.get("content"));
@@ -1491,6 +1526,8 @@ fn handle_multi_tenant_connection_with_reload(
             output = seed::run_fetch(&state.loaded_map, spec);
         } else if let Some(spec) = &query_spec {
             output = sq::run_query(&state.loaded_map, spec);
+        } else if let Some(spec) = &toc_spec {
+            output = sq::run_toc(&state.loaded_map, spec);
         } else {
             let _ = sq::process(
                 0,
