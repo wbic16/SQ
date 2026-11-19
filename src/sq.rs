@@ -152,6 +152,7 @@ pub fn process(connection_id: u64, source: String, scroll: &mut String, command:
 * share <file>: Hosts a new phext on startup if no daemon is running yet (creates a .sq directory)
 * host <port>: Starts sq in listening mode (bypassing daemon setup) - see the REST API reference
 * toc: Dumps the current navigation table for the loaded phext
+* toc <mode> <at> [step]: Progressive TOC — mode full|children|summary|scrolls|matches, at = coordinate prefix (e.g. 1.1.1), step 1|3 (children grouping), scale 9|6|3 (matches)
 * seed: Dumps the seed cache (the xxh3_128 hash of every populated scroll)
 * get <file>: Returns the contents of the given phext in one response
 * slurp <coord> <directory>: Creates a TOC for files in the given directory, and imports any plain-text files found
@@ -210,6 +211,35 @@ Scrolls: {}", source, connection_id, buffer.len(), phext_map.iter().size_hint().
     }
 
     if command == "toc" {
+        // Progressive modes ride in the update slot as
+        // "mode=children&at=1.1.1&step=3&scale=9" (the CLI packs them there;
+        // HTTP routes via run_toc directly). No mode= → legacy dump.
+        if update.contains("mode=") {
+            let mut mode = None;
+            let mut at = None;
+            let mut step = None;
+            let mut scale = None;
+            for kv in update.split('&') {
+                if let Some((k, v)) = kv.split_once('=') {
+                    match k {
+                        "mode" => mode = Some(v.to_string()),
+                        "at" => at = Some(v.to_string()),
+                        "step" => step = Some(v.to_string()),
+                        "scale" => scale = Some(v.to_string()),
+                        _ => {}
+                    }
+                }
+            }
+            match parse_toc_spec(mode.as_ref(), at.as_ref(), step.as_ref(), scale.as_ref()) {
+                Ok(Some(spec)) => { *scroll = run_toc(phext_map, &spec); }
+                Ok(None) => {
+                    let buffer = implode_ref(phext_map);
+                    *scroll = phext::textmap(buffer.as_str());
+                }
+                Err(msg) => { *scroll = format!("Bad Request: {}", msg); }
+            }
+            return false;
+        }
         // use implode_ref instead of cloning
         let buffer = implode_ref(phext_map);
         *scroll = phext::textmap(buffer.as_str());
@@ -442,4 +472,144 @@ pub fn run_query(phext_map: &HashMap<phext::Coordinate, String>, spec: &QuerySpe
         }))
         .collect();
     serde_json::Value::Array(results).to_string()
+}
+
+//------------------------------------------------------------------------------------------------------------
+// Progressive TOC: structure-only table-of-contents modes for clients that walk
+// a phext one level at a time (Scrollspace). All structure comes from libphext's
+// toc_* functions over the imploded buffer — SQ never walks the format itself.
+//
+// Modes (HTTP: GET /api/v2/toc?mode=...&at=...&step=...&scale=... ;
+//       CLI:  sq toc <mode> <at> [step]):
+//   full     - the legacy textmap dump (also the default when mode is absent)
+//   children - distinct values of the next dimension(s) under the `at` prefix,
+//              each with scroll count + total bytes; step=3 groups by triple
+//   summary  - scroll count + total bytes of the subtree under `at`
+//   scrolls  - coordinates + byte sizes of the scrolls under `at` (no bodies)
+//   matches  - relationship query within this phext: scale=9 finds the scroll
+//              at a full coordinate, scale=6 lists the subtree at a 6-dimension
+//              prefix, scale=3 finds scrolls sharing a chapter.section.scroll
+//              suffix (cross-phext aggregation lives in phext-lattice)
+//------------------------------------------------------------------------------------------------------------
+#[derive(Debug, Clone, PartialEq)]
+pub enum TocMode { Full, Children, Summary, Scrolls, Matches }
+
+#[derive(Debug, Clone)]
+pub struct TocSpec {
+    pub mode: TocMode,
+    pub prefix: Vec<usize>,
+    pub step: usize,
+    pub scale: Option<usize>,
+}
+
+pub fn parse_toc_prefix(text: &str) -> Result<Vec<usize>, String> {
+    let cleaned = text.trim().replace(';', "/");
+    if cleaned.is_empty() { return Ok(Vec::new()); }
+    let mut prefix = Vec::new();
+    for part in cleaned.split(|c| c == '/' || c == '.') {
+        if part.is_empty() { continue; }
+        match part.parse::<usize>() {
+            Ok(v) => prefix.push(v),
+            Err(_) => return Err(format!("invalid coordinate prefix component: {}", part)),
+        }
+    }
+    if prefix.len() > 9 { return Err("coordinate prefix longer than 9 dimensions".to_string()); }
+    Ok(prefix)
+}
+
+pub fn parse_toc_spec(mode: Option<&String>, at: Option<&String>, step: Option<&String>, scale: Option<&String>) -> Result<Option<TocSpec>, String> {
+    let mode_str = match mode { None => return Ok(None), Some(m) => m.trim().to_lowercase() };
+    if mode_str.is_empty() { return Ok(None); }
+    let mode = match mode_str.as_str() {
+        "full" => TocMode::Full,
+        "children" => TocMode::Children,
+        "summary" => TocMode::Summary,
+        "scrolls" => TocMode::Scrolls,
+        "matches" => TocMode::Matches,
+        other => return Err(format!("unknown toc mode: {}", other)),
+    };
+    let prefix = match at { None => Vec::new(), Some(a) => parse_toc_prefix(a)? };
+    let step: usize = match step { None => 1, Some(s) if s.trim().is_empty() => 1, Some(s) => s.trim().parse().map_err(|_| format!("invalid toc step: {}", s))? };
+    if step != 1 && step != 3 { return Err(format!("toc step must be 1 or 3, got {}", step)); }
+    if mode == TocMode::Children && prefix.len() + step > 9 {
+        return Err("toc children prefix + step exceeds 9 dimensions".to_string());
+    }
+    let scale: Option<usize> = match scale {
+        None => None,
+        Some(s) if s.trim().is_empty() => None,
+        Some(s) => Some(s.trim().parse().map_err(|_| format!("invalid toc scale: {}", s))?),
+    };
+    if mode == TocMode::Matches {
+        let scale = scale.unwrap_or(prefix.len());
+        if scale != 9 && scale != 6 && scale != 3 {
+            return Err(format!("toc matches scale must be 9, 6 or 3, got {}", scale));
+        }
+        if prefix.len() != scale {
+            return Err(format!("toc matches at prefix has {} components but scale is {}", prefix.len(), scale));
+        }
+    }
+    Ok(Some(TocSpec { mode, prefix, step, scale }))
+}
+
+fn toc_json_prefix(prefix: &[usize]) -> serde_json::Value {
+    serde_json::Value::Array(prefix.iter().map(|v| serde_json::json!(v)).collect())
+}
+
+pub fn run_toc(phext_map: &HashMap<phext::Coordinate, String>, spec: &TocSpec) -> String {
+    if spec.mode == TocMode::Full {
+        let buffer = implode_ref(phext_map);
+        return phext::textmap(buffer.as_str());
+    }
+    let buffer = implode_ref(phext_map);
+    match spec.mode {
+        TocMode::Summary => {
+            let s = phext::toc_summary(buffer.as_str(), &spec.prefix);
+            serde_json::json!({"mode": "summary", "at": toc_json_prefix(&spec.prefix),
+                "scrolls": s.scrolls, "bytes": s.bytes}).to_string()
+        }
+        TocMode::Children => {
+            let children: Vec<serde_json::Value> = if spec.step == 1 {
+                phext::toc_children(buffer.as_str(), &spec.prefix).iter()
+                    .map(|c| serde_json::json!({"value": [c.value], "scrolls": c.scrolls, "bytes": c.bytes}))
+                    .collect()
+            } else {
+                // triple grouping: one spans pass via toc_scrolls, grouped by the next three components
+                let mut groups: std::collections::BTreeMap<[usize; 3], (usize, usize)> = Default::default();
+                for entry in phext::toc_scrolls(buffer.as_str(), &spec.prefix) {
+                    let key = coord_sort_key(&entry.coord);
+                    let d = spec.prefix.len();
+                    let triple = [key[d], key[d + 1], key[d + 2]];
+                    let slot = groups.entry(triple).or_insert((0, 0));
+                    slot.0 += 1;
+                    slot.1 += entry.bytes;
+                }
+                groups.iter()
+                    .map(|(t, (n, b))| serde_json::json!({"value": [t[0], t[1], t[2]], "scrolls": n, "bytes": b}))
+                    .collect()
+            };
+            serde_json::json!({"mode": "children", "at": toc_json_prefix(&spec.prefix),
+                "step": spec.step, "children": children}).to_string()
+        }
+        TocMode::Scrolls => {
+            let entries = phext::toc_scrolls(buffer.as_str(), &spec.prefix);
+            let list: Vec<serde_json::Value> = entries.iter()
+                .map(|e| serde_json::json!({"coord": e.coord.to_string(), "bytes": e.bytes}))
+                .collect();
+            serde_json::json!({"mode": "scrolls", "at": toc_json_prefix(&spec.prefix),
+                "count": list.len(), "scrolls": list}).to_string()
+        }
+        TocMode::Matches => {
+            let scale = spec.scale.unwrap_or(spec.prefix.len());
+            let entries = match scale {
+                3 => phext::toc_scrolls_by_suffix(buffer.as_str(), &spec.prefix),
+                _ => phext::toc_scrolls(buffer.as_str(), &spec.prefix),
+            };
+            let list: Vec<serde_json::Value> = entries.iter()
+                .map(|e| serde_json::json!({"coord": e.coord.to_string(), "bytes": e.bytes}))
+                .collect();
+            serde_json::json!({"mode": "matches", "scale": scale, "at": toc_json_prefix(&spec.prefix),
+                "count": list.len(), "matches": list}).to_string()
+        }
+        TocMode::Full => unreachable!(),
+    }
 }
