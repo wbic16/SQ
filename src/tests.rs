@@ -889,3 +889,38 @@ fn test_toc_progressive_modes() {
     mode: crate::sq::TocMode::Full, prefix: vec![], step: 1, scale: None });
   assert_eq!(legacy, full);
 }
+
+#[test]
+fn test_generate_systemd_unit_defaults() {
+  let unit = crate::generate_systemd_unit("sq", 18999, "/var/lib/sq", None, std::path::Path::new("/usr/local/bin/sq"));
+  assert!(unit.contains("Description=SQ phext server (sq)\n"));
+  assert!(unit.contains("ExecStart=/usr/local/bin/sq host 18999\n"));
+  assert!(unit.contains("WorkingDirectory=/var/lib/sq\n"));
+  assert!(unit.contains("Restart=on-failure\n"));
+  assert!(unit.contains("RestartSec=2s\n"));
+  assert!(unit.contains("TimeoutStopSec=10s\n"));
+  assert!(unit.contains("KillMode=control-group\n"));
+  assert!(unit.contains("SyslogIdentifier=sq\n"));
+  assert!(unit.contains("WantedBy=multi-user.target\n"));
+  assert_eq!(unit.contains("User="), false);
+}
+
+#[test]
+fn test_generate_systemd_unit_with_user() {
+  let unit = crate::generate_systemd_unit("sq-backend-demo", 1339, "/var/lib/sq/tenants/demo", Some("sq"), std::path::Path::new("/usr/local/bin/sq"));
+  assert!(unit.contains("Description=SQ phext server (sq-backend-demo)\n"));
+  assert!(unit.contains("User=sq\n"));
+  assert!(unit.contains("WorkingDirectory=/var/lib/sq/tenants/demo\n"));
+  assert!(unit.contains("ExecStart=/usr/local/bin/sq host 1339\n"));
+  assert!(unit.contains("SyslogIdentifier=sq-backend-demo\n"));
+}
+
+#[test]
+fn test_valid_unit_name() {
+  assert_eq!(crate::valid_unit_name("sq"), true);
+  assert_eq!(crate::valid_unit_name("sq-backend-wbic16"), true);
+  assert_eq!(crate::valid_unit_name("../evil"), false);
+  assert_eq!(crate::valid_unit_name("a/b"), false);
+  assert_eq!(crate::valid_unit_name(""), false);
+  assert_eq!(crate::valid_unit_name("a b"), false);
+}

@@ -151,6 +151,7 @@ pub fn process(connection_id: u64, source: String, scroll: &mut String, command:
 * basic: launch a phext4d editor running on port 1337
 * share <file>: Hosts a new phext on startup if no daemon is running yet (creates a .sq directory)
 * host <port>: Starts sq in listening mode (bypassing daemon setup) - see the REST API reference
+* install [--name <unit>] [--port <port>] [--dir <path>] [--user <user>] [--enable] [--start] [--dry-run]: Deploy sq as a systemd service (superuser only)
 * toc: Dumps the current navigation table for the loaded phext
 * toc <mode> <at> [step]: Progressive TOC — mode full|children|summary|scrolls|matches, at = coordinate prefix (e.g. 1.1.1), step 1|3 (children grouping), scale 9|6|3 (matches)
 * seed: Dumps the seed cache (the xxh3_128 hash of every populated scroll)

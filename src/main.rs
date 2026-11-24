@@ -12,6 +12,9 @@
 //   - Added: /api/v2/fetch — cache-aware fetch (small 'unchanged' answer when the client
 //            holds the scroll at the current hash; full scroll + current hash otherwise)
 //   - Added: sq seed / sq fetch — HTTP client helpers with a disk-backed scroll cache
+// sq install (post-v0.6.1)
+//   - Added: sq install — deploys a systemd unit running `sq host <port>` (superuser only;
+//            --dry-run prints the unit, non-root runs print the exact sudo invocation)
 // v0.5.3 - Memory pressure fixes
 //   - Fixed: unbounded thread spawning (now capped at MAX_CONCURRENT_CONNECTIONS)
 //   - Fixed: no read/write timeout on TCP streams (slowloris OOM vector)
@@ -312,6 +315,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     //   sq fetch <host:port> <phext> <coordinate> [--key <key>] [--cache <file>]
     if command == "seed" || command == "fetch" {
         return run_seed_cli(&command);
+    }
+
+    // Install command: sq install [--name <unit>] [--port <port>] [--dir <path>]
+    //                              [--user <user>] [--enable] [--start] [--dry-run]
+    // Deploys SQ as a systemd service (superuser only; no daemon IPC).
+    if command == "install" {
+        return run_install();
     }
 
     // -----------------------------------------------------------------------
@@ -1681,4 +1691,187 @@ fn checksum_to_coordinate(text: &str) -> phext::Coordinate
             scroll: get_component(16),
         },
     }
+}
+
+// -----------------------------------------------------------------------------------------------------------
+// sq install: deploy SQ as a supervised systemd service (superuser only)
+//
+//   sq install [--name <unit>] [--port <port>] [--dir <path>] [--user <user>]
+//              [--enable] [--start] [--dry-run]
+//
+// Generates a unit running `sq host <port>` from the chosen working directory.
+// A real install writes /etc/systemd/system/<name>.service and reloads systemd;
+// it never enables or starts the service unless asked. Without root (or with
+// --dry-run), the unit is printed along with the exact sudo invocation a
+// superuser would run.
+// -----------------------------------------------------------------------------------------------------------
+pub fn generate_systemd_unit(name: &str, port: u16, dir: &str, user: Option<&str>, exe: &Path) -> String {
+    let mut unit = String::new();
+    unit.push_str("[Unit]\n");
+    unit.push_str(&format!("Description=SQ phext server ({})\n", name));
+    unit.push_str("Documentation=https://github.com/wbic16/SQ\n");
+    unit.push_str("After=network.target\n");
+    unit.push_str("Requires=network.target\n");
+    unit.push_str("\n");
+    unit.push_str("[Service]\n");
+    unit.push_str("Type=simple\n");
+    if let Some(user) = user {
+        unit.push_str(&format!("User={}\n", user));
+    }
+    unit.push_str(&format!("WorkingDirectory={}\n", dir));
+    unit.push_str(&format!("ExecStart={} host {}\n", exe.display(), port));
+    unit.push_str("Restart=on-failure\n");
+    unit.push_str("RestartSec=2s\n");
+    unit.push_str("TimeoutStopSec=10s\n");
+    unit.push_str("KillMode=control-group\n");
+    unit.push_str("\n");
+    unit.push_str("# Logging\n");
+    unit.push_str("StandardOutput=journal\n");
+    unit.push_str("StandardError=journal\n");
+    unit.push_str(&format!("SyslogIdentifier={}\n", name));
+    unit.push_str("\n");
+    unit.push_str("[Install]\n");
+    unit.push_str("WantedBy=multi-user.target\n");
+    return unit;
+}
+
+// -----------------------------------------------------------------------------------------------------------
+// Returns the effective uid of this process (u32::MAX when it cannot be read)
+// -----------------------------------------------------------------------------------------------------------
+fn effective_uid() -> u32 {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        if let Ok(metadata) = std::fs::metadata("/proc/self") {
+            return metadata.uid();
+        }
+    }
+    return u32::MAX;
+}
+
+// -----------------------------------------------------------------------------------------------------------
+// Unit names become file names under /etc/systemd/system - keep them tame
+// -----------------------------------------------------------------------------------------------------------
+fn valid_unit_name(name: &str) -> bool {
+    if name.is_empty() || name.contains("..") {
+        return false;
+    }
+    return name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-' || c == '.' || c == '@');
+}
+
+fn run_install() -> Result<(), Box<dyn std::error::Error>> {
+    let args: Vec<String> = env::args().skip(2).collect();
+
+    let mut name = "sq".to_string();
+    let mut port: u16 = 18999;
+    let mut dir = env::current_dir()
+        .map(|p| p.display().to_string())
+        .unwrap_or_else(|_| ".".to_string());
+    let mut user: Option<String> = None;
+    let mut enable = false;
+    let mut start = false;
+    let mut dry_run = false;
+
+    let usage = "Usage: sq install [--name <unit>] [--port <port>] [--dir <path>] [--user <user>] [--enable] [--start] [--dry-run]";
+
+    let mut i = 0;
+    while i < args.len() {
+        let arg = args[i].as_str();
+        match arg {
+            "--enable" => { enable = true; }
+            "--start" => { start = true; }
+            "--dry-run" => { dry_run = true; }
+            "--name" | "--port" | "--dir" | "--user" => {
+                if i + 1 >= args.len() {
+                    eprintln!("install: {} requires a value\n{}", arg, usage);
+                    std::process::exit(2);
+                }
+                let value = args[i + 1].clone();
+                i += 1;
+                match arg {
+                    "--name" => { name = value; }
+                    "--port" => {
+                        port = match value.parse::<u16>() {
+                            Ok(parsed) => parsed,
+                            Err(_) => {
+                                eprintln!("install: invalid port '{}'\n{}", value, usage);
+                                std::process::exit(2);
+                            }
+                        };
+                    }
+                    "--dir" => { dir = value; }
+                    _ => { user = Some(value); }
+                }
+            }
+            _ => {
+                eprintln!("install: unknown argument '{}'\n{}", arg, usage);
+                std::process::exit(2);
+            }
+        }
+        i += 1;
+    }
+
+    if valid_unit_name(&name) == false {
+        eprintln!("install: invalid unit name '{}' (letters, digits, '_', '-', '.', '@' only)", name);
+        std::process::exit(2);
+    }
+
+    let exe = env::current_exe().unwrap_or_else(|_| std::path::PathBuf::from("sq"));
+    let unit = generate_systemd_unit(&name, port, &dir, user.as_deref(), &exe);
+    let is_root = effective_uid() == 0;
+
+    if dry_run || is_root == false {
+        print!("{}", unit);
+        if is_root == false {
+            let mut sudo_line = format!("sudo {} install --name {} --port {} --dir {}", exe.display(), name, port, dir);
+            if let Some(user) = &user {
+                sudo_line.push_str(&format!(" --user {}", user));
+            }
+            if enable { sudo_line.push_str(" --enable"); }
+            if start { sudo_line.push_str(" --start"); }
+            println!("To deploy this unit as a superuser, run:");
+            println!("  {}", sudo_line);
+            if dry_run == false {
+                eprintln!("install: root privileges are required to install the systemd unit (see the sudo invocation above)");
+                std::process::exit(1);
+            }
+        }
+        return Ok(());
+    }
+
+    // Root install: write the unit, reload systemd, optionally enable/start.
+    // Re-running simply overwrites the unit and reloads again (idempotent).
+    let unit_path = format!("/etc/systemd/system/{}.service", name);
+    std::fs::write(&unit_path, &unit)?;
+    println!("Installed {}", unit_path);
+
+    let reload = std::process::Command::new("systemctl").arg("daemon-reload").status()?;
+    if reload.success() == false {
+        eprintln!("install: systemctl daemon-reload failed");
+        std::process::exit(1);
+    }
+    println!("Reloaded systemd (daemon-reload)");
+
+    if enable {
+        let status = std::process::Command::new("systemctl").args(["enable", &name]).status()?;
+        if status.success() == false {
+            eprintln!("install: systemctl enable {} failed", name);
+            std::process::exit(1);
+        }
+        println!("Enabled {}", name);
+    }
+
+    if start {
+        let status = std::process::Command::new("systemctl").args(["start", &name]).status()?;
+        if status.success() == false {
+            eprintln!("install: systemctl start {} failed", name);
+            std::process::exit(1);
+        }
+        println!("Started {}", name);
+    }
+
+    if enable == false && start == false {
+        println!("Service not enabled or started (pass --enable and/or --start to do so)");
+    }
+    return Ok(());
 }
