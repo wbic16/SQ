@@ -111,9 +111,9 @@ checksum = "65cd87c9a6d60536580b316ad985726104730a5151c99845f2490428ef91240a"
 
 [[package]]
 name = "libphext"
-version = "0.3.3"
+version = "0.6.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69fb9e930cf01a71abb6c6abb7717ab76818c5286e9e88555533dd54270eb474"
+checksum = "2490ad362ca897a667122bd7e2db61b851d9162797473e7420a2a4d684bf8e63"
 dependencies = [
  "xxhash-rust",
 ]
@@ -321,7 +321,7 @@ checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
 
 [[package]]
 name = "sq"
-version = "0.6.0"
+version = "0.6.3"
 dependencies = [
  "libphext",
  "percent-encoding",
