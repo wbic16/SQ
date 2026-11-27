@@ -31,8 +31,7 @@
 //------------------------------------------------------------------------------------------------------------
 
 use libphext::phext;
-use raw_sync::{events::*, Timeout};
-use shared_memory::*;
+use ipc::{Event, EventState, IpcError, SharedSegment, Timeout};
 use std::env;
 use std::fs;
 use std::path::Path;
@@ -55,6 +54,7 @@ mod config;
 mod cache;
 mod triage;
 mod api;
+mod ipc;
 
 const SHARED_SEGMENT_SIZE: usize = 1024*1024*1024; // 1 GB limit
 const MAX_BUFFER_SIZE: usize = SHARED_SEGMENT_SIZE/2;
@@ -224,15 +224,15 @@ fn recreate_sq_work_files() {
 // -----------------------------------------------------------------------------------------------------------
 // Creates a 1 GB shared memory segment available at .sq/link
 // -----------------------------------------------------------------------------------------------------------
-fn create_shared_segment() -> Result<Shmem, ShmemError> {
-    ShmemConf::new().size(SHARED_SEGMENT_SIZE).flink(SHARED_NAME).create()
+fn create_shared_segment() -> Result<SharedSegment, IpcError> {
+    SharedSegment::create(SHARED_NAME, SHARED_SEGMENT_SIZE)
 }
 
 // -----------------------------------------------------------------------------------------------------------
 // Creates a 1 KB shared memory segment available at .sq/work
 // -----------------------------------------------------------------------------------------------------------
-fn create_work_segment() -> Result<Shmem, ShmemError> {
-    ShmemConf::new().size(WORK_SEGMENT_SIZE).flink(WORK_NAME).create()
+fn create_work_segment() -> Result<SharedSegment, IpcError> {
+    SharedSegment::create(WORK_NAME, WORK_SEGMENT_SIZE)
 }
 
 fn is_basic_or_share(command: String) -> bool {
@@ -504,14 +504,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let (shmem, wkmem) = loop {
-        let shmem: Shmem = match create_shared_segment() {
+        let shmem: SharedSegment = match create_shared_segment() {
             Ok(s) => { s }
-            Err(ShmemError::LinkExists) => { ShmemConf::new().flink(SHARED_NAME).open()? }
+            Err(IpcError::LinkExists) => { SharedSegment::open(SHARED_NAME)? }
             Err(e) => { return Err(Box::new(e)); }
         };
-        let wkmem: Shmem = match create_work_segment() {
+        let wkmem: SharedSegment = match create_work_segment() {
             Ok(w) => { w }
-            Err(ShmemError::LinkExists) => { ShmemConf::new().flink(WORK_NAME).open()? }
+            Err(IpcError::LinkExists) => { SharedSegment::open(WORK_NAME)? }
             Err(e) => { return Err(Box::new(e)); }
         };
 
@@ -940,7 +940,7 @@ fn event_byte_offset(offset: usize) -> usize {
 // -----------------------------------------------------------------------------------------------------------
 // daemon mode server processing loop
 // -----------------------------------------------------------------------------------------------------------
-fn server(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> {
+fn server(shmem: SharedSegment, wkmem: SharedSegment) -> Result<(), Box<dyn std::error::Error>> {
     let mut connection_id: u64 = 0;
 
     let (evt, evt_used_bytes) = unsafe { Event::new(shmem.as_ptr(), true)? };
@@ -1017,7 +1017,7 @@ fn is_media_resource(filename: &str) -> bool {
 // -----------------------------------------------------------------------------------------------------------
 // daemon mode client processing loop
 // -----------------------------------------------------------------------------------------------------------
-fn client(shmem: Shmem, wkmem: Shmem) -> Result<(), Box<dyn std::error::Error>> {
+fn client(shmem: SharedSegment, wkmem: SharedSegment) -> Result<(), Box<dyn std::error::Error>> {
 
     let (evt, evt_used_bytes) = unsafe { Event::from_existing(shmem.as_ptr())? };
     let (work, _work_used_bytes) = unsafe { Event::from_existing(wkmem.as_ptr())? };
